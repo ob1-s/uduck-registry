@@ -10,15 +10,6 @@ interface BehaviorCardProps {
   behavior: Behavior;
 }
 
-const categoryMarks: Record<string, string> = {
-  "roller-skate": "◌",
-  manipulation: "✦",
-  "agility-tricks": "↗",
-  recovery: "↺",
-  locomotion: "⌁",
-  experimental: "✳",
-};
-
 const accessoryLabels: Record<string, string> = {
   roller_skate_blades: "roller skates",
   "70mm_practice_ball": "70 mm ball",
@@ -26,11 +17,11 @@ const accessoryLabels: Record<string, string> = {
 
 export function BehaviorCard({ behavior }: BehaviorCardProps) {
   return (
-    <article className="behavior-card">
+    <article className="behavior-card" data-category={behavior.category}>
       <div className="behavior-media">
         <div className="behavior-placeholder" aria-hidden="true">
           <div className="behavior-placeholder-icon">
-            {behavior.category === "locomotion" ? <DuckMark size={42} /> : categoryMarks[behavior.category] || "✳"}
+            <DuckMark size={48} accent="var(--tone)" />
           </div>
         </div>
       </div>

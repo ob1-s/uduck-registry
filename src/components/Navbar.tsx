@@ -14,7 +14,7 @@ export function Navbar() {
             <span className="brand-wordmark">
               uDuck <em>registry</em>
             </span>
-            <span className="brand-subtitle">behaviors for Microduck</span>
+            <span className="brand-subtitle">community moves for Microduck</span>
           </span>
         </Link>
 

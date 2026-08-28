@@ -52,7 +52,9 @@
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
-    "terrain": ["flat"],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "sitstand"
   },
   "artifacts": {
@@ -65,7 +67,8 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck smooth sit and stand transition cycle"
+    "caption": "MicroDuck smooth sit and stand transition cycle",
+    "thumbnail_url": "/media/thumbs/sit-stand.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

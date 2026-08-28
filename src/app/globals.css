@@ -491,8 +491,6 @@ code {
 .behavior-card[data-category="manipulation"] { --tone: var(--purple); }
 .behavior-card[data-category="experimental"] { --tone: var(--teal); }
 
-.behavior-card { border-left: 3px solid color-mix(in srgb, var(--tone) 55%, transparent); }
-
 .behavior-card:hover {
   border-color: color-mix(in srgb, var(--tone) 55%, transparent);
   transform: translateY(-2px);
@@ -500,14 +498,37 @@ code {
 }
 
 .behavior-media {
+  position: relative;
   display: grid;
   min-height: 6.5rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
+  overflow: hidden;
+  border: 1px solid var(--line);
   border-radius: 1rem 1rem 1rem 0.35rem;
   background:
     var(--halftone) 0 0 / 14px 14px,
-    color-mix(in srgb, var(--tone) 10%, var(--bg-inset));
+    var(--bg-inset);
+}
+
+.behavior-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.behavior-thumb-play {
+  position: absolute;
+  bottom: 0.45rem;
+  right: 0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  color: var(--bg-inset);
+  background: color-mix(in srgb, var(--orange) 88%, white 12%);
 }
 
 .behavior-placeholder { display: grid; place-items: center; }

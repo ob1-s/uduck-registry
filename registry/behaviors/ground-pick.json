@@ -53,7 +53,9 @@
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
-    "terrain": ["flat"],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "groundpick"
   },
   "artifacts": {
@@ -65,9 +67,10 @@
     }
   },
   "media": {
-    "video_url": "https://github.com/user-attachments/assets/7e70c1da-e120-428f-ae0b-f4de62f25984",
+    "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm",
     "hero_type": "video",
-    "caption": "MicroDuck picking up small object from the floor with its beak"
+    "caption": "MicroDuck picking up small object from the floor with its beak",
+    "thumbnail_url": "/media/thumbs/ground-pick.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

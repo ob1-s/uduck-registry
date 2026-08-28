@@ -51,7 +51,9 @@
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
-    "terrain": ["flat"],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "stand"
   },
   "artifacts": {
@@ -64,7 +66,8 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck modulating torso roll and pitch while maintaining stable foot contact"
+    "caption": "MicroDuck modulating torso roll and pitch while maintaining stable foot contact",
+    "thumbnail_url": "/media/thumbs/standing-body-control.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/TommyZihao/microduck_runtime",

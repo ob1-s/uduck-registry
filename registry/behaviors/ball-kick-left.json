@@ -51,8 +51,12 @@
   "compatibility": {
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_allcollisions.xml",
-    "accessories_required": ["70mm_practice_ball"],
-    "terrain": ["flat"],
+    "accessories_required": [
+      "70mm_practice_ball"
+    ],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "kick"
   },
   "artifacts": {
@@ -65,7 +69,8 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck left foot impulse kick striking a mini soccer ball"
+    "caption": "MicroDuck left foot impulse kick striking a mini soccer ball",
+    "thumbnail_url": "/media/thumbs/ball-kick-left.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

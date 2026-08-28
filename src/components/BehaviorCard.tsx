@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Play } from "lucide-react";
 import { VerificationBadge } from "./VerificationBadge";
 import { DuckMark } from "./DuckMark";
 import type { Behavior } from "@registry/schema/behavior";
@@ -16,14 +16,30 @@ const accessoryLabels: Record<string, string> = {
 };
 
 export function BehaviorCard({ behavior }: BehaviorCardProps) {
+  const thumb = behavior.media?.thumbnail_url;
+
   return (
     <article className="behavior-card" data-category={behavior.category}>
       <div className="behavior-media">
-        <div className="behavior-placeholder" aria-hidden="true">
-          <div className="behavior-placeholder-icon">
-            <DuckMark size={48} accent="var(--tone)" />
+        {thumb ? (
+          <>
+            <img
+              src={thumb}
+              alt={behavior.media?.caption ?? behavior.name}
+              loading="lazy"
+              className="behavior-thumb"
+            />
+            <span className="behavior-thumb-play" aria-hidden="true">
+              <Play size={11} fill="currentColor" />
+            </span>
+          </>
+        ) : (
+          <div className="behavior-placeholder" aria-hidden="true">
+            <div className="behavior-placeholder-icon">
+              <DuckMark size={48} accent="var(--tone)" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="behavior-body">

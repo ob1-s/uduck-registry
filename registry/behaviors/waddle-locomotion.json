@@ -51,7 +51,9 @@
     "robot_model": "custom-duck",
     "mjcf_model": "robot_walk.xml",
     "accessories_required": [],
-    "terrain": ["flat"],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "walk"
   },
   "artifacts": {
@@ -64,7 +66,8 @@
   "media": {
     "video_url": "https://github.com/user-attachments/assets/e9a0d4de-8a3d-4e44-b490-e873728cf2bf",
     "hero_type": "video",
-    "caption": "Waddle gait simulated in MuJoCo viewer displaying rhythmic sway"
+    "caption": "Waddle gait simulated in MuJoCo viewer displaying rhythmic sway",
+    "thumbnail_url": "/media/thumbs/waddle-locomotion.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/nickoenig37/mjlab_microduck_waddle",

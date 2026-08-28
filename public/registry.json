@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated_at": "2026-08-28T00:05:25.717Z",
+  "updated_at": "2026-08-28T23:03:48.970Z",
   "count": 16,
   "behaviors": [
     {
@@ -154,7 +154,8 @@
         }
       },
       "media": {
-        "video_url": "https://github.com/user-attachments/assets/356a6011-8e0d-4b28-bda9-da78646583a3",
+        "thumbnail_url": "/media/thumbs/alpha-walking.jpg",
+        "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/walk.webm",
         "hero_type": "video",
         "caption": "MicroDuck walking under gamepad velocity control on hardware"
       },
@@ -239,7 +240,8 @@
         }
       },
       "media": {
-        "video_url": "https://github.com/user-attachments/assets/7e70c1da-e120-428f-ae0b-f4de62f25984",
+        "thumbnail_url": "/media/thumbs/ground-pick.jpg",
+        "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm",
         "hero_type": "video",
         "caption": "MicroDuck picking up small object from the floor with its beak"
       },
@@ -324,7 +326,8 @@
         }
       },
       "media": {
-        "video_url": "https://github.com/user-attachments/assets/3eef63a5-6f84-47cf-90de-e717e6d7f8f0",
+        "thumbnail_url": "/media/thumbs/fall-recovery.jpg",
+        "video_url": "https://pollen-robotics.com/assets/microduck/gallery/balance-recovery.mp4",
         "hero_type": "video",
         "caption": "MicroDuck pushed over on carpet recovering to standing posture"
       },
@@ -410,6 +413,7 @@
         }
       },
       "media": {
+        "thumbnail_url": "/media/thumbs/ball-kick-left.jpg",
         "hero_type": "badge",
         "caption": "MicroDuck left foot impulse kick striking a mini soccer ball"
       },
@@ -666,7 +670,8 @@
         }
       },
       "media": {
-        "video_url": "https://github.com/user-attachments/assets/abfbf250-1b1c-42cb-8430-00267e2b148a",
+        "thumbnail_url": "/media/thumbs/roller-drive.jpg",
+        "video_url": "https://pollen-robotics.com/assets/microduck/gallery/roller-skating.mp4",
         "hero_type": "video",
         "caption": "MicroDuck gliding on roller skate wheels across smooth floor"
       },
@@ -750,6 +755,7 @@
         }
       },
       "media": {
+        "thumbnail_url": "/media/thumbs/sit-stand.jpg",
         "hero_type": "badge",
         "caption": "MicroDuck smooth sit and stand transition cycle"
       },
@@ -832,6 +838,7 @@
         }
       },
       "media": {
+        "thumbnail_url": "/media/thumbs/standing-body-control.jpg",
         "hero_type": "badge",
         "caption": "MicroDuck modulating torso roll and pitch while maintaining stable foot contact"
       },
@@ -1324,6 +1331,7 @@
         }
       },
       "media": {
+        "thumbnail_url": "/media/thumbs/waddle-locomotion.jpg",
         "video_url": "https://github.com/user-attachments/assets/e9a0d4de-8a3d-4e44-b490-e873728cf2bf",
         "hero_type": "video",
         "caption": "Waddle gait simulated in MuJoCo viewer displaying rhythmic sway"

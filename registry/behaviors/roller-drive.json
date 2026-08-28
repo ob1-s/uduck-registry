@@ -51,8 +51,12 @@
   "compatibility": {
     "robot_model": "microduck-rollers",
     "mjcf_model": "robot_allcollisions_rollers.xml",
-    "accessories_required": ["roller_skate_blades"],
-    "terrain": ["flat"],
+    "accessories_required": [
+      "roller_skate_blades"
+    ],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "rollers"
   },
   "artifacts": {
@@ -64,9 +68,10 @@
     }
   },
   "media": {
-    "video_url": "https://github.com/user-attachments/assets/abfbf250-1b1c-42cb-8430-00267e2b148a",
+    "video_url": "https://pollen-robotics.com/assets/microduck/gallery/roller-skating.mp4",
     "hero_type": "video",
-    "caption": "MicroDuck gliding on roller skate wheels across smooth floor"
+    "caption": "MicroDuck gliding on roller skate wheels across smooth floor",
+    "thumbnail_url": "/media/thumbs/roller-drive.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { getBehaviorById } from "@/lib/registry";
+import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
+
+// The catalog is bundled at build time and served as static Pages assets.
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return getAllBehaviors().map((behavior) => ({ id: behavior.id }));
+}
 
 interface Props {
   params: Promise<{ id: string }>;

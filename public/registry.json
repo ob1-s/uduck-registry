@@ -1,0 +1,1343 @@
+{
+  "version": "0.1.0",
+  "updated_at": "2026-08-28T00:00:59.928Z",
+  "count": 16,
+  "behaviors": [
+    {
+      "id": "roulade",
+      "name": "Acrobatic Roulade (Forward Roll)",
+      "version": "1.0.0",
+      "description": "Dynamic forward somersault over the duck's head, rolling on its back and landing back onto its feet in a standing position.",
+      "details": "A high-agility maneuver demonstrating full-body dynamic balance and shock resilience. Trained in MuJoCo Warp with full contact physics (robot_allcollisions.xml). Shipped in the official Pollen Alpha stack and hot-swapped by robotd during an explicit rolling trigger window.",
+      "category": "agility-tricks",
+      "tags": [
+        "official",
+        "somersault",
+        "gymnastics",
+        "acrobatic",
+        "full-body-dynamics",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware on padded mats and carpet. Shipped in official MicroDuck release video montage.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Recommend performing on padded surface, yoga mat, or carpet to avoid cosmetic shell scratches."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "roulade"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "roulade.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/roulade.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck performing forward roll and recovering to feet"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Roulade-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nroulade = \"/opt/robot/policies/roulade.onnx\"",
+        "cli_command": "duckctl action roulade",
+        "python_infer_command": "uv run scripts/infer_policy.py --roulade roulade.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "alpha-walking",
+      "name": "Alpha Dynamic Walk",
+      "version": "1.0.0",
+      "description": "Standard bipedal walking gait with 50 Hz velocity tracking (vx, vy, yaw_rate) and active head-pose orientation control.",
+      "details": "The flagship locomotion policy for MicroDuck. Trained in MuJoCo Warp via mjlab and PPO using the BAM M6 actuator model for Dynamixel XL330 servos. Includes domain randomization on battery voltage, friction, and motor command delay. Exports a baked observation normalizer into the ONNX computational graph.",
+      "category": "locomotion",
+      "tags": [
+        "official",
+        "bipedal",
+        "velocity-tracking",
+        "head-control",
+        "50hz",
+        "flat-ground"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Operates at 50 Hz control loop. Velocity envelope: -0.2 to +0.25 m/s forward/back, ±1.0 rad/s angular yaw rate."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "BEST_alpha_walking.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_walking.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "video_url": "https://github.com/user-attachments/assets/356a6011-8e0d-4b28-bda9-da78646583a3",
+        "hero_type": "video",
+        "caption": "MicroDuck walking under gamepad velocity control on hardware"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Velocity-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/BEST_alpha_walking.onnx\"",
+        "cli_command": "duckctl policy load walk BEST_alpha_walking.onnx",
+        "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_alpha_walking.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "ground-pick",
+      "name": "Autonomous Ground Pick",
+      "version": "1.0.0",
+      "description": "One-shot crouching behavior that reaches beak to the floor to pick up objects with its articulated mouth gripper, then smoothly returns to stand.",
+      "details": "Triggered via gamepad 'A' button or RPC call. Driven by a phase parameter [cos(2pi*t), sin(2pi*t), 0] fed into the velocity command channels over a 3.5-second gesture window. Coordinates beak opening, deep leg squat, and pitch compensation so the soft beak contacts the ground reliably without tipping.",
+      "category": "manipulation",
+      "tags": [
+        "official",
+        "peck",
+        "pick-and-place",
+        "gripper",
+        "mouth-beak",
+        "one-shot",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware picking up objects from carpet and hard flooring with the beak gripper.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077 + Beak Gripper)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "groundpick"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "alpha_ground_pick.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/alpha_ground_pick.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "video_url": "https://github.com/user-attachments/assets/7e70c1da-e120-428f-ae0b-f4de62f25984",
+        "hero_type": "video",
+        "caption": "MicroDuck picking up small object from the floor with its beak"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-GroundPick-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\ngroundpick = \"/opt/robot/policies/alpha_ground_pick.onnx\"",
+        "cli_command": "duckctl action ground-pick",
+        "python_infer_command": "uv run scripts/infer_policy.py --groundpick alpha_ground_pick.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "fall-recovery",
+      "name": "Dynamic Fall Recovery",
+      "version": "1.0.0",
+      "description": "Automatic fall recovery policy capable of restoring MicroDuck to standing posture from face-down, face-up, or sitting positions.",
+      "details": "Triggered automatically when the onboard IMU's projected gravity vector exceeds tilt thresholds (or commanded via gamepad recovery button). The policy executes robust arm-less biped pushups, righting the duck without human intervention before handing off control back to the standing/walking state machine.",
+      "category": "recovery",
+      "tags": [
+        "official",
+        "fall-recovery",
+        "getup",
+        "self-righting",
+        "50hz",
+        "safety"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Requires full body contact physics. Uses robot_allcollisions.xml in simulation."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat",
+          "rough"
+        ],
+        "robotd_slot": "stand"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "BEST_alpha_stand.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_stand.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "video_url": "https://github.com/user-attachments/assets/3eef63a5-6f84-47cf-90de-e717e6d7f8f0",
+        "hero_type": "video",
+        "caption": "MicroDuck pushed over on carpet recovering to standing posture"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-StandUp-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/BEST_alpha_stand.onnx\"",
+        "cli_command": "duckctl policy load stand BEST_alpha_stand.onnx",
+        "python_infer_command": "uv run scripts/infer_policy.py --standing BEST_alpha_stand.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "ball-kick-left",
+      "name": "Impulse Ball Kick (Left Foot)",
+      "version": "1.0.0",
+      "description": "One-shot dynamic kick with the left foot designed to strike a 70mm / 15g ball forward while maintaining single-leg biped balance.",
+      "details": "Actor is ball-blind (the operator or higher-level vision aims the robot). The runtime hot-swaps this policy for a 0.5-second execution window with command channels zeroed. Runs at standing gain tuning to maintain stance leg stability while the swing leg delivers an impulse strike.",
+      "category": "manipulation",
+      "tags": [
+        "official",
+        "kick",
+        "soccer",
+        "impulse",
+        "single-leg-balance",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Targeted for 70mm diameter, 15g mass spheres."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [
+          "70mm_practice_ball"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "kick"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "ball_kick_left.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_left.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck left foot impulse kick striking a mini soccer ball"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-BallKick-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nkick_left = \"/opt/robot/policies/ball_kick_left.onnx\"",
+        "cli_command": "duckctl action kick --leg left",
+        "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_alpha_walking.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "ball-kick-right",
+      "name": "Impulse Ball Kick (Right Foot)",
+      "version": "1.0.0",
+      "description": "One-shot dynamic kick with the right foot designed to strike a 70mm / 15g ball forward while maintaining single-leg biped balance.",
+      "details": "Actor is ball-blind (the operator or higher-level vision aims the robot). The runtime hot-swaps this policy for a 0.5-second execution window with command channels zeroed. Runs at standing gain tuning to maintain stance leg stability while the right swing leg delivers an impulse strike.",
+      "category": "manipulation",
+      "tags": [
+        "official",
+        "kick",
+        "soccer",
+        "impulse",
+        "single-leg-balance",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Targeted for 70mm diameter, 15g mass spheres."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [
+          "70mm_practice_ball"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "kick"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "ball_kick_right.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_right.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck right foot impulse kick striking a mini soccer ball"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-BallKick-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nkick_right = \"/opt/robot/policies/ball_kick_right.onnx\"",
+        "cli_command": "duckctl action kick --leg right",
+        "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_alpha_walking.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "roller-crouch",
+      "name": "Roller Blade Crouch Glide",
+      "version": "1.0.0",
+      "description": "Aerodynamic tuck crouch maneuver while coasting on roller skates, lowering center of gravity for high-speed stability.",
+      "details": "A 3.5-second one-shot gesture on rollers. Driven by phase encoding [cos(2pi*t), sin(2pi*t), 0] in the command slots (matching ground-pick architecture). The duck folds its legs, lowers its center of mass near the wheel axles, and smoothly returns to an upright skating tuck.",
+      "category": "roller-skate",
+      "tags": [
+        "official",
+        "roller-skate",
+        "crouch",
+        "glide",
+        "low-cg",
+        "aerodynamic",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",
+        "hardware_target": "MicroDuck v1 + Roller Skate Blades",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Cycle duration: 3.5 seconds (period 5.0s, end phase 0.7)."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-rollers",
+        "mjcf_model": "robot_allcollisions_rollers.xml",
+        "accessories_required": [
+          "roller_skate_blades"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "rollers"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "BEST_roller_crouch.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller_crouch.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck crouching into a low tuck while gliding on wheels"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-RollerCrouch-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nroller_crouch = \"/opt/robot/policies/BEST_roller_crouch.onnx\"",
+        "cli_command": "duckctl action crouch",
+        "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_roller.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "roller-drive",
+      "name": "Roller Skate Velocity Drive",
+      "version": "1.0.0",
+      "description": "High-speed skating locomotion utilizing passive roller skate wheels mounted under the feet, featuring asymmetric velocity limits and turn rate damping.",
+      "details": "Converts MicroDuck into a mobile skating robot. When passive roller blade attachments are installed and D-pad up is held, robotd switches to the roller policy suite. Velocity profile allows up to +0.6 m/s forward acceleration and -0.5 m/s braking, with angular velocity clamped to 0.3 rad/s to prevent tipping.",
+      "category": "roller-skate",
+      "tags": [
+        "official",
+        "roller-skate",
+        "wheels",
+        "high-speed",
+        "skating",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck equipped with official Pollen 3D-printed roller skate foot accessories.",
+        "hardware_target": "MicroDuck v1 + Roller Skate Accessories (passive bearings/wheels)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Requires passive roller foot frames and 22x16x4 bearings. Robot model is robot_allcollisions_rollers.xml."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-rollers",
+        "mjcf_model": "robot_allcollisions_rollers.xml",
+        "accessories_required": [
+          "roller_skate_blades"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "rollers"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "BEST_roller.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "video_url": "https://github.com/user-attachments/assets/abfbf250-1b1c-42cb-8430-00267e2b148a",
+        "hero_type": "video",
+        "caption": "MicroDuck gliding on roller skate wheels across smooth floor"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Velocity-Flat-MicroDuck-Rollers",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nmode = \"rollers\"\nroller_walk = \"/opt/robot/policies/BEST_roller.onnx\"",
+        "cli_command": "robotctl configure --mode rollers",
+        "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_roller.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "sit-stand",
+      "name": "Smooth Sit ↔ Stand",
+      "version": "1.0.0",
+      "description": "Controlled bi-directional transition between upright standing and rested sitting posture with continuous head commandability.",
+      "details": "A unified policy trained in MuJoCo to handle both gentle sitting down and standing back up. Softens motor gains during transition to ensure the duck does not slam into the ground. While sitting, head orientation remains commandable through the 4-dim head pose observation slot.",
+      "category": "locomotion",
+      "tags": [
+        "official",
+        "sit-down",
+        "stand-up",
+        "gentle-transition",
+        "posture",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_hardware",
+        "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "sitstand"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "BEST_alpha_sitstand.onnx",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_sitstand.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck smooth sit and stand transition cycle"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-SitStand-Flat-MicroDuck",
+        "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nsitstand = \"/opt/robot/policies/BEST_alpha_sitstand.onnx\"",
+        "cli_command": "duckctl action sit-stand",
+        "python_infer_command": "uv run scripts/infer_policy.py --sitstand BEST_alpha_sitstand.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "standing-body-control",
+      "name": "Standing 6-DOF Body Pose Controller",
+      "version": "1.0.0",
+      "description": "Fine-grained torso orientation and height controller while standing, continuously mapping roll, pitch, yaw, and squat commands to compliant leg and neck adjustments.",
+      "details": "Developed for the community microduck_runtime port. Utilizes the full 6-dim body_pose command vector (tx, ty, tz, roll, pitch, yaw) in the standard 61-dim observation contract. Allows interactive puppeteering of the duck's stance height, torso tilt, and look-around angles without shifting foot contact locations.",
+      "category": "agility-tricks",
+      "tags": [
+        "community",
+        "body-control",
+        "pose-tracking",
+        "puppeteering",
+        "kinematic-compliance",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Tommy Zihao",
+          "github": "TommyZihao",
+          "url": "https://github.com/TommyZihao"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "claimed_hardware",
+        "summary": "Reported running on Raspberry Pi microduck_runtime port controlling Dynamixel XL330 bus directly.",
+        "hardware_target": "MicroDuck Raspberry Pi SBC / Dynamixel XL330",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Community policy. Tested on custom Raspberry Pi controller stack."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "stand"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "standing_body_control.onnx",
+          "url": "https://raw.githubusercontent.com/TommyZihao/microduck_runtime/main/policies/standing_body_control.onnx",
+          "size_bytes": 772527,
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck modulating torso roll and pitch while maintaining stable foot contact"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/TommyZihao/microduck_runtime",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-StandUp-Flat-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/standing_body_control.onnx\"",
+        "cli_command": "duckctl policy load stand standing_body_control.onnx",
+        "python_infer_command": "uv run scripts/infer_policy.py --standing standing_body_control.onnx --new-cmd-obs"
+      }
+    },
+    {
+      "id": "backlash-walking",
+      "name": "Backlash-Compensated Walking",
+      "version": "1.0.0",
+      "description": "Velocity-tracking walking policy trained specifically to withstand ±1° gear play (2° total) in series with every XL330 servo gearbox.",
+      "details": "Models mechanical gear lash explicitly via passive_<joint>_backlash hinges in the MJCF model (robot_*_backlash.xml). Because the physical Dynamixel encoder sits on the output side of the gear play, both the BAM firmware PD emulation and joint observations read directly through the backlash, resulting in extreme sim2real fidelity even on worn gearboxes.",
+      "category": "locomotion",
+      "tags": [
+        "official",
+        "backlash-compensated",
+        "hardware-hardened",
+        "gear-play",
+        "sim2real",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Trained and verified with explicit ±1° backlash hinge physics and domain randomized friction.",
+        "hardware_target": "MicroDuck v1 (Dynamixel XL330 with gear train backlash)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Observation and action dimensions are strictly identical to standard 61-D contract."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "BacklashEncoderBamActuator (±1° backlash + BAM M6)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk_backlash.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "backlash_walking.onnx",
+          "url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/docs/models/backlash_walking.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "Backlash-compensated walking gait maintaining stability despite servo gear slop"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Velocity-Flat-Backlash-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash_walking.onnx\"",
+        "cli_command": "duckctl policy load walk backlash_walking.onnx",
+        "python_infer_command": "uv run play Mjlab-Velocity-Flat-Backlash-MicroDuck"
+      }
+    },
+    {
+      "id": "roller-swizzle",
+      "name": "Classic Swizzle Skating",
+      "version": "1.0.0",
+      "description": "Symmetric rhythmic swizzle gait on passive roller wheels, generating forward propulsion without lifting feet off the ground.",
+      "details": "Emulates human inline skating swizzles (hourglass foot patterns). Uses continuous lateral leg splaying and converging arcs to convert leg extension forces into forward rolling momentum without foot lift-off. Trained in mjlab using full roller wheel contacts.",
+      "category": "roller-skate",
+      "tags": [
+        "official",
+        "roller-skate",
+        "swizzle",
+        "rhythmic",
+        "continuous-contact",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Verified in MuJoCo Warp / mjlab simulation over 4096 parallel environments with BAM actuator friction physics.",
+        "hardware_target": "MicroDuck v1 + Roller Skate Accessories",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Targeted for smooth surfaces like wood or polished concrete where passive wheel friction is minimal."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-rollers",
+        "mjcf_model": "robot_allcollisions_rollers.xml",
+        "accessories_required": [
+          "roller_skate_blades"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "rollers"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "swizzle_rollers.onnx",
+          "url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/docs/models/swizzle_rollers.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck executing symmetric swizzle skating strokes"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Velocity-Swizzle-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nroller_swizzle = \"/opt/robot/policies/swizzle_rollers.onnx\"",
+        "cli_command": "duckctl policy load roller_swizzle swizzle_rollers.onnx",
+        "python_infer_command": "uv run play Mjlab-Velocity-Swizzle-MicroDuck"
+      }
+    },
+    {
+      "id": "spin-in-place",
+      "name": "In-Place Roller Spin",
+      "version": "1.0.0",
+      "description": "High-angular-velocity in-place spin pirouette executed on roller wheels using counter-opposed leg torque.",
+      "details": "A trick behavior demonstrating agility on wheels. Commands high yaw angular rates while maintaining centered weight distribution over the wheel contact points, spinning 360 degrees smoothly before braking back to neutral balance.",
+      "category": "agility-tricks",
+      "tags": [
+        "official",
+        "roller-skate",
+        "spin",
+        "pirouette",
+        "high-speed",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Verified in mjlab simulation reaching up to 3.0 rad/s controlled yaw spin without loss of wheel ground contact.",
+        "hardware_target": "MicroDuck v1 + Roller Skate Accessories",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Requires low-friction floor surface."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-rollers",
+        "mjcf_model": "robot_allcollisions_rollers.xml",
+        "accessories_required": [
+          "roller_skate_blades"
+        ],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "rollers"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "roller_spin.onnx",
+          "url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/docs/models/roller_spin.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck performing high-speed in-place pirouette on wheels"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Spin-Flat-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nroller_spin = \"/opt/robot/policies/roller_spin.onnx\"",
+        "cli_command": "duckctl action spin",
+        "python_infer_command": "uv run play Mjlab-Spin-Flat-MicroDuck"
+      }
+    },
+    {
+      "id": "roller-slope",
+      "name": "Roller Slope Descent",
+      "version": "1.0.0",
+      "description": "Downhill slope gliding policy on roller skates with dynamic pitch stabilization and proactive speed moderation.",
+      "details": "Trained specifically for inclined surfaces (5° to 15° slopes). Adjusts the duck's center of mass backward and applies staggered foot drags to prevent runaway speed down ramps while stabilizing roll and pitch angles against gravitational pull.",
+      "category": "roller-skate",
+      "tags": [
+        "official",
+        "roller-skate",
+        "slopes",
+        "ramps",
+        "braking",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Verified in mjlab simulation descending varying slope angles up to 15 degrees without destabilization.",
+        "hardware_target": "MicroDuck v1 + Roller Skate Blades",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Experimental ramp policy; ensure run-out area is clear of obstacles during initial hardware trials."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-rollers",
+        "mjcf_model": "robot_allcollisions_rollers.xml",
+        "accessories_required": [
+          "roller_skate_blades"
+        ],
+        "terrain": [
+          "slope"
+        ],
+        "robotd_slot": "rollers"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "roller_slope.onnx",
+          "url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/docs/models/roller_slope.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck descending an inclined ramp on roller skates"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-RollerSlope-Flat-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nroller_slope = \"/opt/robot/policies/roller_slope.onnx\"",
+        "cli_command": "duckctl policy load roller_slope roller_slope.onnx",
+        "python_infer_command": "uv run play Mjlab-RollerSlope-Flat-MicroDuck"
+      }
+    },
+    {
+      "id": "rough-terrain-walk",
+      "name": "Rough Terrain Adaptive Gait",
+      "version": "1.0.0",
+      "description": "Robust bipedal walking policy trained with severe terrain height variation, uneven steps, and external lateral pushes.",
+      "details": "Extends the baseline velocity policy with continuous heightfield domain randomization in MuJoCo Warp. Features higher foot clearance during the swing phase and aggressive compliance response when the leading foot strikes premature obstacles or depressions.",
+      "category": "locomotion",
+      "tags": [
+        "official",
+        "rough-terrain",
+        "heightfield",
+        "high-clearance",
+        "push-recovery",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Pollen Robotics",
+          "affiliation": "Pollen Robotics / Hugging Face",
+          "github": "pollen-robotics",
+          "url": "https://pollen-robotics.com"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Verified in mjlab simulation traversing procedural heightfield terrain and surviving continuous lateral disturbance forces.",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Higher energy consumption due to elevated swing trajectory."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk.xml",
+        "accessories_required": [],
+        "terrain": [
+          "rough",
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "rough_walking.onnx",
+          "url": "https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/docs/models/rough_walking.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "MicroDuck stepping over irregular heightfield blocks in simulation"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+        "training_code_url": "https://github.com/pollen-robotics/microduck_rl",
+        "task_id": "Mjlab-Velocity-Rough-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough_walking.onnx\"",
+        "cli_command": "duckctl policy load walk rough_walking.onnx",
+        "python_infer_command": "uv run play Mjlab-Velocity-Rough-MicroDuck"
+      }
+    },
+    {
+      "id": "waddle-locomotion",
+      "name": "Waddle Custom Locomotion",
+      "version": "0.9.0",
+      "description": "Independent community-developed walking gait featuring a pronounced rhythmic waddling sway tuned for biped compliance.",
+      "details": "Developed by Nick Koenig (nickoenig37) as an exploration of duck-like biomimetic locomotion. Modifies reward terms on lateral torso oscillation and foot contact cadence to produce a distinctive waddle gait while preserving the standard 61-dim observation and 14-actuator contract.",
+      "category": "locomotion",
+      "tags": [
+        "community",
+        "waddle",
+        "biomimetic",
+        "sway",
+        "capstone",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Nick Koenig",
+          "github": "nickoenig37",
+          "url": "https://github.com/nickoenig37"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "verified_simulation",
+        "summary": "Simulated and validated in mjlab across 4096 parallel environments on multi-GPU cluster with video recording.",
+        "hardware_target": "MicroDuck v1 / Waddle Custom Biped Platform",
+        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "notes": "Community policy. Exhibits higher lateral roll oscillation than the official Alpha walk."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "custom-duck",
+        "mjcf_model": "robot_walk.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "waddle_walking.onnx",
+          "url": "https://raw.githubusercontent.com/nickoenig37/mjlab_microduck_waddle/main/docs/waddle_walking.onnx",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "video_url": "https://github.com/user-attachments/assets/e9a0d4de-8a3d-4e44-b490-e873728cf2bf",
+        "hero_type": "video",
+        "caption": "Waddle gait simulated in MuJoCo viewer displaying rhythmic sway"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/nickoenig37/mjlab_microduck_waddle",
+        "training_code_url": "https://github.com/nickoenig37/mjlab_microduck_waddle",
+        "task_id": "Mjlab-Velocity-Flat-Waddle"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/waddle_walking.onnx\"",
+        "cli_command": "duckctl policy load walk waddle_walking.onnx",
+        "python_infer_command": "uv run play Mjlab-Velocity-Flat-Waddle"
+      }
+    }
+  ]
+}

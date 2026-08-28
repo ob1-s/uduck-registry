@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uduck.dev/schema/behavior.schema.json",
+  "title": "MicroDuckBehavior",
+  "description": "Schema definition for MicroDuck behavioral policies and environment artifacts in uDuck Registry",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "version",
+    "description",
+    "category",
+    "tags",
+    "authors",
+    "license",
+    "verification",
+    "contract",
+    "compatibility",
+    "artifacts",
+    "media",
+    "sources",
+    "deployment"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique kebab-case identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Display name of the behavior"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$",
+      "description": "Semantic versioning"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Crisp summary of what the duck does"
+    },
+    "details": {
+      "type": "string",
+      "description": "Extended markdown explanation, training recipe, or notes"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "locomotion",
+        "agility-tricks",
+        "manipulation",
+        "recovery",
+        "roller-skate",
+        "experimental"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "affiliation": { "type": "string" },
+          "github": { "type": "string" },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "default": "Apache-2.0"
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status", "summary", "hardware_target"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "verified_hardware",
+            "claimed_hardware",
+            "verified_simulation",
+            "community_experimental"
+          ]
+        },
+        "summary": { "type": "string" },
+        "hardware_target": { "type": "string" },
+        "sim_framework": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "required": [
+        "observation_dim",
+        "observation_breakdown",
+        "action_dim",
+        "action_breakdown",
+        "control_frequency_hz",
+        "actuator_model",
+        "action_scale"
+      ],
+      "properties": {
+        "observation_dim": { "type": "integer", "const": 61 },
+        "observation_breakdown": {
+          "type": "object",
+          "required": ["proprioception", "twist", "head_pose", "body_pose"],
+          "properties": {
+            "proprioception": { "type": "integer", "const": 48 },
+            "twist": { "type": "integer", "const": 3 },
+            "head_pose": { "type": "integer", "const": 4 },
+            "body_pose": { "type": "integer", "const": 6 }
+          }
+        },
+        "action_dim": { "type": "integer", "const": 14 },
+        "action_breakdown": {
+          "type": "object",
+          "required": ["left_leg", "neck_head", "right_leg"],
+          "properties": {
+            "left_leg": { "type": "integer", "const": 5 },
+            "neck_head": { "type": "integer", "const": 4 },
+            "right_leg": { "type": "integer", "const": 5 }
+          }
+        },
+        "control_frequency_hz": { "type": "number", "const": 50 },
+        "decimation": { "type": "integer", "default": 4 },
+        "actuator_model": { "type": "string" },
+        "action_scale": { "type": "number", "default": 1.0 }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["robot_model", "mjcf_model", "accessories_required", "terrain", "robotd_slot"],
+      "properties": {
+        "robot_model": {
+          "type": "string",
+          "enum": ["microduck-standard", "microduck-rollers", "custom-duck"]
+        },
+        "mjcf_model": { "type": "string" },
+        "accessories_required": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "terrain": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["flat", "rough", "slope", "any"]
+          }
+        },
+        "robotd_slot": {
+          "type": "string",
+          "enum": [
+            "walk",
+            "stand",
+            "sitstand",
+            "roulade",
+            "kick",
+            "groundpick",
+            "rollers",
+            "custom"
+          ]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["onnx"],
+      "properties": {
+        "onnx": {
+          "type": "object",
+          "required": ["filename", "url"],
+          "properties": {
+            "filename": { "type": "string" },
+            "url": { "type": "string", "format": "uri" },
+            "size_bytes": { "type": "integer" },
+            "sha256": { "type": "string" },
+            "baked_normalizer": { "type": "boolean", "default": true }
+          }
+        },
+        "checkpoint": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "framework": { "type": "string" }
+          }
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "url": { "type": "string", "format": "uri" }
+          }
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "required": ["hero_type"],
+      "properties": {
+        "thumbnail_url": { "type": "string" },
+        "video_url": { "type": "string" },
+        "hero_type": {
+          "type": "string",
+          "enum": ["video", "image", "badge"]
+        },
+        "caption": { "type": "string" }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "required": ["upstream_repo"],
+      "properties": {
+        "upstream_repo": { "type": "string", "format": "uri" },
+        "training_code_url": { "type": "string", "format": "uri" },
+        "task_id": { "type": "string" },
+        "huggingface_space": { "type": "string", "format": "uri" },
+        "discussion_url": { "type": "string", "format": "uri" }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "required": ["robotd_toml"],
+      "properties": {
+        "robotd_toml": { "type": "string" },
+        "cli_command": { "type": "string" },
+        "python_infer_command": { "type": "string" }
+      }
+    }
+  }
+}

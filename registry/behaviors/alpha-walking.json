@@ -69,7 +69,8 @@
     "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/walk.webm",
     "hero_type": "video",
     "caption": "MicroDuck walking under gamepad velocity control on hardware",
-    "thumbnail_url": "/media/thumbs/alpha-walking.jpg"
+    "thumbnail_url": "/media/thumbs/alpha-walking.jpg",
+    "loop_url": "/media/loops/alpha-walking.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

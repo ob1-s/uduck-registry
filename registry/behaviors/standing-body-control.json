@@ -67,7 +67,8 @@
   "media": {
     "hero_type": "badge",
     "caption": "MicroDuck modulating torso roll and pitch while maintaining stable foot contact",
-    "thumbnail_url": "/media/thumbs/standing-body-control.jpg"
+    "thumbnail_url": "/media/thumbs/standing-body-control.jpg",
+    "loop_url": "/media/loops/standing-body-control.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/TommyZihao/microduck_runtime",

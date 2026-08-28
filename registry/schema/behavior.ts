@@ -113,6 +113,7 @@ export const BehaviorSchema = z.object({
 
   media: z.object({
     thumbnail_url: z.string().optional(),
+    loop_url: z.string().optional(),
     video_url: z.string().optional(),
     hero_type: z.enum(["video", "image", "badge"]).default("video"),
     caption: z.string().optional(),

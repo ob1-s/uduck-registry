@@ -68,7 +68,8 @@
   "media": {
     "hero_type": "badge",
     "caption": "MicroDuck smooth sit and stand transition cycle",
-    "thumbnail_url": "/media/thumbs/sit-stand.jpg"
+    "thumbnail_url": "/media/thumbs/sit-stand.jpg",
+    "loop_url": "/media/loops/sit-stand.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

@@ -70,7 +70,8 @@
   "media": {
     "hero_type": "badge",
     "caption": "MicroDuck left foot impulse kick striking a mini soccer ball",
-    "thumbnail_url": "/media/thumbs/ball-kick-left.jpg"
+    "thumbnail_url": "/media/thumbs/ball-kick-left.jpg",
+    "loop_url": "/media/loops/ball-kick-left.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

@@ -70,7 +70,8 @@
     "video_url": "https://pollen-robotics.com/assets/microduck/gallery/balance-recovery.mp4",
     "hero_type": "video",
     "caption": "MicroDuck pushed over on carpet recovering to standing posture",
-    "thumbnail_url": "/media/thumbs/fall-recovery.jpg"
+    "thumbnail_url": "/media/thumbs/fall-recovery.jpg",
+    "loop_url": "/media/loops/fall-recovery.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

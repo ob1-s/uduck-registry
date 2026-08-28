@@ -70,7 +70,8 @@
     "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm",
     "hero_type": "video",
     "caption": "MicroDuck picking up small object from the floor with its beak",
-    "thumbnail_url": "/media/thumbs/ground-pick.jpg"
+    "thumbnail_url": "/media/thumbs/ground-pick.jpg",
+    "loop_url": "/media/loops/ground-pick.mp4"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

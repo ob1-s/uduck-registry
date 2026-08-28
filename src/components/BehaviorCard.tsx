@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
 import { VerificationBadge } from "./VerificationBadge";
@@ -17,11 +18,35 @@ const accessoryLabels: Record<string, string> = {
 
 export function BehaviorCard({ behavior }: BehaviorCardProps) {
   const thumb = behavior.media?.thumbnail_url;
+  const loop = behavior.media?.loop_url;
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (
+      videoRef.current &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      videoRef.current.pause();
+    }
+  }, []);
 
   return (
     <article className="behavior-card" data-category={behavior.category}>
       <div className="behavior-media">
-        {thumb ? (
+        {loop ? (
+          <video
+            ref={videoRef}
+            className="behavior-thumb"
+            src={loop}
+            poster={thumb}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={behavior.media?.caption ?? behavior.name}
+          />
+        ) : thumb ? (
           <>
             <img
               src={thumb}

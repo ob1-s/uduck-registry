@@ -28,14 +28,30 @@ export default function HomePage() {
             <div className="hero-figure-ring hero-figure-ring-back" />
             <div className="hero-figure-ring hero-figure-ring-front" />
             <div className="hero-figure">
-              <DuckMark size={168} />
+              <DuckMark size={186} />
               <span className="hero-figure-label">walk · roll · recover</span>
             </div>
-            <span className="hero-sticker hero-sticker-left">hello!</span>
+            <span className="hero-sticker hero-sticker-left">quack!</span>
             <span className="hero-sticker hero-sticker-right">50 Hz</span>
           </div>
         </div>
       </section>
+
+      <div className="ticker" aria-hidden="true">
+        <div className="ticker-track">
+          {[0, 1].map((copy) => (
+            <div className="ticker-group" key={copy}>
+              <span>{stats.total} moves in the shelf</span><i>◆</i>
+              <span>61-D observation</span><i>◆</i>
+              <span>14 servos</span><i>◆</i>
+              <span>50 Hz control loop</span><i>◆</i>
+              <span>sim2real</span><i>◆</i>
+              <span>hardware verified</span><i>◆</i>
+              <span>open source</span><i>◆</i>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <section id="catalog" className="section catalog-section">
         <div className="site-container">

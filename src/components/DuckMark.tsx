@@ -1,9 +1,16 @@
 interface DuckMarkProps {
   size?: number;
   className?: string;
+  /** colorway accent for the donut camera eye ring and feet (any CSS color) */
+  accent?: string;
 }
 
-export function DuckMark({ size = 34, className }: DuckMarkProps) {
+/**
+ * MicroDuck product mark, on-model: flattened capsule shell head,
+ * fat donut camera eye (colored ring + recessed pupil), hinged orange beak,
+ * exposed dark mech neck/legs, colorway feet.
+ */
+export function DuckMark({ size = 34, className, accent = "#FFD23F" }: DuckMarkProps) {
   return (
     <svg
       aria-hidden="true"
@@ -14,13 +21,27 @@ export function DuckMark({ size = 34, className }: DuckMarkProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <ellipse cx="21.5" cy="28" rx="13.5" ry="9.5" fill="#F8C85D" />
-      <circle cx="32.5" cy="18.5" r="8.5" fill="#FFD978" />
-      <path d="M38.7 19.4c2.8-.1 5.1.7 6.1 2.1.9 1.2-1.2 2.9-3.2 3.1l-5.3-.2 2.4-5Z" fill="#ED9850" />
-      <circle cx="34.4" cy="16.5" r="1.3" fill="#1D2B25" />
-      <path d="M14.8 26.7c2.3-2.2 5.9-2.6 8.7-.8 1.3.9 2.2 2.1 2.6 3.6-3.1 1.3-6.9 1.4-10.1.2-.8-.3-1.3-1.5-1.2-3Z" fill="#EAB34B" />
-      <path d="M8 38.5c5.1 2.3 15.3 2.8 24.9.4" stroke="#4F8297" strokeWidth="2" strokeLinecap="round" />
-      <path d="M12.5 42c4.2 1.1 9.5 1.2 13.8.2" stroke="#A9CAD0" strokeWidth="1.5" strokeLinecap="round" />
+      {/* legs */}
+      <rect x="16.5" y="32.5" width="3.2" height="8.5" fill="#26262f" />
+      <rect x="28.3" y="32.5" width="3.2" height="8.5" fill="#26262f" />
+      {/* feet */}
+      <rect x="11" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+      <rect x="25.5" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+      {/* mech neck */}
+      <rect x="20.2" y="23" width="7.6" height="11.5" rx="1.6" fill="#26262f" />
+      <rect x="22" y="26.2" width="4" height="1.7" fill="#3d3d49" />
+      <rect x="22" y="29.8" width="4" height="1.7" fill="#3d3d49" />
+      {/* shell head: flattened capsule, wider than tall */}
+      <rect x="5.5" y="7.5" width="37" height="18" rx="9" fill="#F2ECDD" />
+      {/* face panel seam */}
+      <path d="M5.5 20h37" stroke="#D9D1BC" strokeWidth="1.2" />
+      {/* beak: hinged lip wrapping the front */}
+      <rect x="3.5" y="24" width="41" height="6.4" rx="3.2" fill="#FF7A2F" />
+      <path d="M5 28.1h38" stroke="#C2500A" strokeWidth="1.3" />
+      {/* donut camera eye: fat ring + recessed pupil */}
+      <circle cx="30.5" cy="16.5" r="6.4" fill={accent} />
+      <circle cx="30.5" cy="16.5" r="3.4" fill="#101018" />
+      <circle cx="30.5" cy="16.5" r="3.4" stroke="#26262f" strokeWidth="0.8" />
     </svg>
   );
 }

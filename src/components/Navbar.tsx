@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Code2, Compass, GitFork, ShieldCheck } from "lucide-react";
+import { BookOpen, Compass, GitFork } from "lucide-react";
 import { DuckMark } from "./DuckMark";
 
 export function Navbar() {
@@ -24,25 +24,12 @@ export function Navbar() {
             <span>Explore</span>
           </Link>
           <Link href="/docs/specification" className="nav-link" aria-label="Read the runtime contract">
-            <ShieldCheck size={15} aria-hidden="true" />
-            <span>Contract</span>
-          </Link>
-          <Link href="/docs/schema" className="nav-link" aria-label="Read the manifest schema">
             <BookOpen size={15} aria-hidden="true" />
-            <span>Schema</span>
+            <span>Docs</span>
           </Link>
           <Link href="/docs/contribute" className="nav-link" aria-label="Contribute a behavior">
             <GitFork size={15} aria-hidden="true" />
             <span>Contribute</span>
-          </Link>
-          <Link
-            href="/registry.json"
-            target="_blank"
-            className="nav-endpoint"
-            title="Open the machine-readable registry"
-          >
-            <Code2 size={13} aria-hidden="true" />
-            <span>JSON</span>
           </Link>
         </nav>
       </div>

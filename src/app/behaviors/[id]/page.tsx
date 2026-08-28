@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, ChevronDown, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal } from "lucide-react";
 import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { ContractSpec } from "@/components/ContractSpec";
@@ -49,7 +49,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <h1>{behavior.name}</h1>
           <p className="detail-description">{behavior.description}</p>
           <div className="author-strip">
-            <span>Built by <strong>{behavior.authors.map((item) => item.name).join(", ")}</strong>{author?.affiliation ? ` · ${author.affiliation}` : ""}</span>
+            <span>By <strong>{behavior.authors.map((item) => item.name).join(", ")}</strong></span>
             {author?.github && (
               <a href={`https://github.com/${author.github}`} target="_blank" rel="noreferrer">
                 <GitFork size={13} aria-hidden="true" /> @{author.github} <ArrowUpRight size={12} aria-hidden="true" />
@@ -116,7 +116,12 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span>
             </div>
             <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>Try the simulation first. Hardware testing assumes a matching Microduck, clear space, and a safe surface. uDuck does not guarantee that a community policy is safe to run.</span></div>
-            <div className="deployment-steps">
+            <details className="deployment-disclosure">
+              <summary className="deployment-summary">
+                <span>Deployment steps</span>
+                <span className="deployment-summary-action"><span>Show instructions</span><ChevronDown size={14} aria-hidden="true" /></span>
+              </summary>
+              <div className="deployment-steps">
               <div className="deployment-step">
                 <div className="deployment-step-label">
                   <span><b className="deployment-step-number">1</b> Download the ONNX model</span>
@@ -138,7 +143,8 @@ export default async function BehaviorDetailPage({ params }: Props) {
                   <pre className="code-block deployment-code"><code>{behavior.deployment.python_infer_command}</code></pre>
                 </div>
               )}
-            </div>
+              </div>
+            </details>
           </section>
 
           <section className="surface detail-card">

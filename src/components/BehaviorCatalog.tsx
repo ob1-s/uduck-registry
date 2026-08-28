@@ -62,8 +62,8 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
       {initialBehaviors.length === 0 ? (
         <div className="empty-state" role="status">
           <div className="empty-state-mark"><DuckMark size={42} /></div>
-          <h3>The shelf is empty</h3>
-          <p>No behavior manifests are available yet. Add the first recipe to the registry.</p>
+          <h3>No moves yet</h3>
+          <p>Add the first behavior manifest to the registry.</p>
         </div>
       ) : filteredBehaviors.length > 0 ? (
         <div className="behavior-grid">
@@ -72,8 +72,8 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
       ) : (
         <div className="empty-state" role="status">
           <div className="empty-state-mark"><DuckMark size={42} /></div>
-          <h3>No behaviors in this puddle</h3>
-          <p>Try a different search or loosen one of the filters to see more recipes.</p>
+          <h3>No moves match that search.</h3>
+          <p>Try another word or clear a filter.</p>
           <button type="button" className="button-secondary" onClick={resetFilters}>Clear filters</button>
         </div>
       )}

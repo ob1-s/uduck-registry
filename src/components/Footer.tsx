@@ -1,70 +1,30 @@
 import Link from "next/link";
-import { AlertTriangle, ExternalLink, Heart } from "lucide-react";
 import { DuckMark } from "./DuckMark";
 
 export function Footer() {
   return (
     <footer className="site-footer">
-      <div className="footer-disclaimer">
-        <div className="site-container footer-disclaimer-inner">
-          <AlertTriangle size={15} aria-hidden="true" />
-          <span>
-            uDuck is an independent community catalog. Microduck comes from{" "}
-            <a href="https://pollen-robotics.com/microduck" target="_blank" rel="noreferrer">
-              Pollen Robotics
-            </a>{" "}
-            (the robotics team at Hugging Face). This project is not affiliated with or endorsed by either organization.
-          </span>
-        </div>
-      </div>
-
-      <div className="site-container footer-inner">
-        <div className="footer-brand">
-          <div className="footer-brand-title">
-            <DuckMark size={29} />
-            <span>uDuck Registry</span>
-          </div>
-          <p>
-            A small, readable shelf for Microduck behaviors: find a move, check its contract, and follow the links back to its source.
-          </p>
-          <div className="footer-contract">61 observations · 14 policy outputs · 50 Hz · 15 motors including the beak</div>
+      <div className="site-container footer-compact">
+        <div className="footer-compact-brand">
+          <DuckMark size={27} />
+          <span>uDuck <em>registry</em></span>
         </div>
 
-        <div className="footer-column">
-          <h3>Upstream</h3>
-          <ul>
-            <li>
-              <a href="https://github.com/pollen-robotics/microduck" target="_blank" rel="noreferrer">
-                microduck <ExternalLink size={11} aria-hidden="true" />
-              </a>
-            </li>
-            <li>
-              <a href="https://github.com/pollen-robotics/microduck_rl" target="_blank" rel="noreferrer">
-                microduck_rl <ExternalLink size={11} aria-hidden="true" />
-              </a>
-            </li>
-            <li>
-              <a href="https://huggingface.co/spaces/pollen-robotics/microduck-simulator" target="_blank" rel="noreferrer">
-                simulator <ExternalLink size={11} aria-hidden="true" />
-              </a>
-            </li>
-          </ul>
-        </div>
+        <p className="footer-compact-copy">
+          Community moves for Microduck, with the links and evidence kept close to the work.
+        </p>
 
-        <div className="footer-column">
-          <h3>Read next</h3>
-          <ul>
-            <li><Link href="/docs/specification">Contract specification</Link></li>
-            <li><Link href="/docs/schema">Manifest schema</Link></li>
-            <li><Link href="/docs/contribute">Add a behavior</Link></li>
-            <li><Link href="/registry.json" target="_blank">Raw registry JSON</Link></li>
-          </ul>
-        </div>
-      </div>
+        <nav className="footer-compact-links" aria-label="Footer navigation">
+          <Link href="/docs/specification">Contract</Link>
+          <Link href="/docs/schema">Schema</Link>
+          <Link href="/docs/contribute">Contribute</Link>
+          <Link href="/registry.json" target="_blank">JSON</Link>
+          <a href="https://pollen-robotics.com/microduck" target="_blank" rel="noreferrer">Microduck ↗</a>
+        </nav>
 
-      <div className="site-container footer-bottom">
-        <p>© 2026 uDuck Community · Apache 2.0</p>
-        <p className="footer-heart">Made with care for tiny robots <Heart size={13} fill="currentColor" aria-hidden="true" /></p>
+        <p className="footer-compact-meta">
+          Independent community project · not affiliated with Pollen Robotics or Hugging Face · Apache 2.0
+        </p>
       </div>
     </footer>
   );

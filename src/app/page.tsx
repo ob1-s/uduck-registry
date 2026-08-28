@@ -31,7 +31,7 @@ export default function HomePage() {
               <DuckMark size={186} />
               <span className="hero-figure-label">walk · roll · recover</span>
             </div>
-            <span className="hero-sticker hero-sticker-left">hello!</span>
+            <span className="hero-sticker hero-sticker-left">quack!</span>
             <span className="hero-sticker hero-sticker-right">50 Hz</span>
           </div>
         </div>

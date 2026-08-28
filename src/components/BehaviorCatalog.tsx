@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FilterBar } from "./FilterBar";
 import { BehaviorCard } from "./BehaviorCard";
 import type { Behavior } from "@registry/schema/behavior";
-import { Sparkles, Terminal } from "lucide-react";
+import { DuckMark } from "./DuckMark";
 
 interface BehaviorCatalogProps {
   initialBehaviors: Behavior[];
@@ -16,48 +16,35 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
   const [verification, setVerification] = useState("all");
   const [accessory, setAccessory] = useState("all");
 
-  const filteredBehaviors = useMemo(() => {
-    return initialBehaviors.filter((b) => {
-      // Category filter
-      if (category !== "all" && b.category !== category) {
-        return false;
-      }
+  const filteredBehaviors = useMemo(() => initialBehaviors.filter((behavior) => {
+    if (category !== "all" && behavior.category !== category) return false;
+    if (verification !== "all" && behavior.verification.status !== verification) return false;
 
-      // Verification filter
-      if (verification !== "all" && b.verification.status !== verification) {
-        return false;
-      }
+    if (accessory === "none" && behavior.compatibility.accessories_required.length > 0) return false;
+    if (accessory !== "all" && accessory !== "none" && !behavior.compatibility.accessories_required.includes(accessory)) return false;
 
-      // Accessory filter
-      if (accessory === "none") {
-        if (b.compatibility.accessories_required.length > 0) return false;
-      } else if (accessory !== "all") {
-        if (!b.compatibility.accessories_required.includes(accessory)) return false;
-      }
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    return [
+      behavior.name,
+      behavior.id,
+      behavior.description,
+      ...behavior.tags,
+      ...behavior.authors.map((author) => author.name),
+      behavior.sources.task_id || "",
+    ].some((value) => value.toLowerCase().includes(query));
+  }), [accessory, category, initialBehaviors, search, verification]);
 
-      // Search query filter
-      if (search.trim() !== "") {
-        const q = search.toLowerCase();
-        const matchesName = b.name.toLowerCase().includes(q);
-        const matchesId = b.id.toLowerCase().includes(q);
-        const matchesDesc = b.description.toLowerCase().includes(q);
-        const matchesTags = b.tags.some((t) => t.toLowerCase().includes(q));
-        const matchesAuthor = b.authors.some((a) => a.name.toLowerCase().includes(q));
-        const matchesTaskId = b.sources.task_id?.toLowerCase().includes(q);
-
-        if (!matchesName && !matchesId && !matchesDesc && !matchesTags && !matchesAuthor && !matchesTaskId) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [initialBehaviors, search, category, verification, accessory]);
+  const resetFilters = () => {
+    setSearch("");
+    setCategory("all");
+    setVerification("all");
+    setAccessory("all");
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Filter Bar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 sm:p-5 backdrop-blur-sm">
+    <div className="space-y-4">
+      <div className="surface filter-panel">
         <FilterBar
           search={search}
           setSearch={setSearch}
@@ -72,33 +59,22 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
         />
       </div>
 
-      {/* Behaviors Grid */}
-      {filteredBehaviors.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBehaviors.map((b) => (
-            <BehaviorCard key={b.id} behavior={b} />
-          ))}
+      {initialBehaviors.length === 0 ? (
+        <div className="empty-state" role="status">
+          <div className="empty-state-mark"><DuckMark size={42} /></div>
+          <h3>The shelf is empty</h3>
+          <p>No behavior manifests are available yet. Add the first recipe to the registry.</p>
+        </div>
+      ) : filteredBehaviors.length > 0 ? (
+        <div className="behavior-grid">
+          {filteredBehaviors.map((behavior) => <BehaviorCard key={behavior.id} behavior={behavior} />)}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-800 p-12 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-2xl">
-            🦆
-          </div>
-          <h3 className="text-base font-semibold text-white">No matching behaviors found</h3>
-          <p className="mt-1 text-xs text-slate-400 max-w-sm mx-auto">
-            Try adjusting your search terms or resetting the category and verification filters.
-          </p>
-          <button
-            onClick={() => {
-              setSearch("");
-              setCategory("all");
-              setVerification("all");
-              setAccessory("all");
-            }}
-            className="mt-4 rounded-xl bg-slate-800 px-4 py-2 text-xs font-medium text-white hover:bg-slate-700 transition-colors"
-          >
-            Reset Filters
-          </button>
+        <div className="empty-state" role="status">
+          <div className="empty-state-mark"><DuckMark size={42} /></div>
+          <h3>No behaviors in this puddle</h3>
+          <p>Try a different search or loosen one of the filters to see more recipes.</p>
+          <button type="button" className="button-secondary" onClick={resetFilters}>Clear filters</button>
         </div>
       )}
     </div>

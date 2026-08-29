@@ -14,7 +14,7 @@ import onnx
 # activations, normalization, shape gymnastics). Everything else fails.
 OP_ALLOWLIST = {
     "Add", "Sub", "Mul", "Div", "Neg", "Abs", "Sign", "Exp", "Log", "Sqrt",
-    "Sin", "Cos", "Tanh", "Sigmoid", "Relu", "LeakyRelu", "Erf", "Min",
+    "Sin", "Cos", "Tanh", "Sigmoid", "Relu", "LeakyRelu", "Elu", "Erf", "Min",
     "Max", "Clip", "MatMul", "Gemm", "Transpose", "Reshape", "Concat",
     "Slice", "Gather", "Unsqueeze", "Squeeze", "Cast", "Identity",
     "ReduceMean", "ReduceSum", "ReduceMax", "Flatten", "Shape", "Constant",
@@ -35,6 +35,11 @@ FORBIDDEN_OPS = {
 EXTERNAL_DATA_FIELDS = {"external_data", "location"}
 
 
+ALLOWED_METADATA_KEYS = {
+    "run_path", "joint_names", "joint_stiffness", "joint_damping",
+    "default_joint_pos", "command_names", "observation_names", "action_scale",
+}
+
 def check(path: str) -> list[str]:
     errors: list[str] = []
     try:
@@ -42,12 +47,28 @@ def check(path: str) -> list[str]:
     except Exception as e:
         return [f"cannot parse ONNX model: {e}"]
 
-    if model.external_data:
-        errors.append("model references external data files — not allowed")
+    # External data check: in onnx >=1.12, per-tensor data_location==1 means EXTERNAL
+    # plus optional model-level external_data (older). Handle both.
+    try:
+        if hasattr(model, "external_data") and getattr(model, "external_data"):
+            # model-level external_data is rare; treat as error
+            errors.append("model references external data files — not allowed")
+    except Exception:
+        pass
+    for init in model.graph.initializer:
+        # data_location: 0=DEFAULT, 1=EXTERNAL
+        if getattr(init, "data_location", 0) == 1:
+            errors.append(f"initializer '{init.name}' uses external data — not allowed")
+        if getattr(init, "external_data", None):
+            # repeated field; if any entries with key == "location"
+            for ext in init.external_data:
+                if getattr(ext, "key", "") == "location":
+                    errors.append(f"initializer '{init.name}' references external location {ext.value}")
 
-    # Embedded metadata / doc strings can carry payloads; require them absent.
+    # Embedded metadata: allow known training export keys, reject unknown
     for prop in model.metadata_props:
-        errors.append(f"unexpected metadata entry: {prop.key}")
+        if prop.key not in ALLOWED_METADATA_KEYS:
+            errors.append(f"unexpected metadata entry: {prop.key}")
 
     graph = model.graph
     ops = set()

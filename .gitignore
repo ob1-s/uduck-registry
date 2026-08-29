@@ -29,3 +29,5 @@ pnpm-debug.log*
 
 # Policies cache if downloaded locally
 policies/
+__pycache__/
+*.pyc

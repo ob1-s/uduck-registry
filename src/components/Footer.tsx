@@ -19,6 +19,7 @@ export function Footer() {
           <Link href="/docs/schema">Schema</Link>
           <Link href="/docs/contribute">Contribute</Link>
           <Link href="/registry.json" target="_blank">JSON</Link>
+          <a href="https://github.com/ob1-s/awesome-microduck" target="_blank" rel="noreferrer">Awesome ↗</a>
           <a href="https://pollen-robotics.com/microduck" target="_blank" rel="noreferrer">Microduck ↗</a>
         </nav>
 

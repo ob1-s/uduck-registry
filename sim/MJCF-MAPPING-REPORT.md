@@ -5,18 +5,19 @@
 **Tooling**: `mjlab==1.3.0` (`pyproject.toml`), `mujoco==3.12.0` (`sim/requirements-hashes.txt:5` hash `7ec16ce408871a0a9157cc556958ab66cd34db9fc1dccd3ef07717170163a4e0`)  
 **Workdir**: `/tmp/mjcf-work` (43 unique `assets/*.stl`, `assets.sha256`) + `/tmp/mjcvenv` (`mujoco 3.12.0` verified via `python -c "import mujoco; print(mujoco.__version__)"`)
 
-## 1. Behaviors → MJCF Mapping (16 behaviors)
+## 1. Behaviors → MJCF Mapping (20 behaviors)
 
 Source: `registry/behaviors/*.json` field `compatibility.mjcf_model` (`registry/schema/behavior.ts:130`). Count verified via `grep mjcf_model registry/behaviors/*.json | sort | uniq -c`.
 
 | MJCF model | Count | Behaviors (id) | Typical terrain / slot |
 |------------|-------|----------------|------------------------|
-| `robot_walk.xml` | 3 | `alpha-walking` (verified_hardware), `rough-terrain-walk` (community_experimental), `waddle-locomotion` (community_experimental) | flat, walk |
-| `robot_allcollisions.xml` | 7 | `ball-kick-left`, `ball-kick-right`, `fall-recovery`, `ground-pick`, `roulade`, `sit-stand` (all verified_hardware), `standing-body-control` (experimental reference) | flat, all-collisions (standup/ground-pick) |
+| `robot_walk.xml` | 4 | `alpha-walking` (verified_hardware), `genesis-rough`, `genesis-velocity`, `rough-terrain-walk` (community_experimental) | flat, walk |
+| `robot_allcollisions.xml` | 8 | `ball-kick-left`, `ball-kick-right`, `fall-recovery`, `ground-pick`, `jump`, `roulade`, `sit-stand` (all verified_hardware except `jump`), `standing-body-control` (experimental reference) | flat, all-collisions (standup/ground-pick) |
 | `robot_allcollisions_rollers.xml` | 5 | `roller-drive`, `roller-crouch` (verified_hardware), `roller-slope`, `roller-swizzle`, `spin-in-place` (community_experimental) | rollers, slope/swizzle |
-| `robot_walk_backlash.xml` | 1 | `backlash-walking` (community_experimental) | backlash hinge variant |
+| `robot_walk_backlash.xml` | 2 | `backlash-walking`, `genesis-backlash` (community_experimental) | backlash hinge variant |
+| `scene_apartment.xml` | 1 | `courier` (community_experimental) | flat, custom apartment task |
 
-Matches `SPIKE-PROGRESS.md:5-6` claim 3/7/5/1 exactly.
+The four pinned upstream MJCF models remain the registry's current simulation closure. `scene_apartment.xml` is a community task scene and is not yet included in the pinned registry simulation assets.
 
 ## 2. Closure Method
 

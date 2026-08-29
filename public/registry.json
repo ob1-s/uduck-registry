@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "updated_at": "2026-08-29T05:32:26.202Z",
-  "count": 16,
+  "count": 20,
   "behaviors": [
     {
       "id": "roulade",
@@ -929,6 +929,246 @@
       }
     },
     {
+      "id": "genesis-backlash",
+      "name": "Genesis Backlash Walk",
+      "version": "1.0.0",
+      "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every MicroDuck servo in Genesis.",
+      "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "category": "locomotion",
+      "tags": [
+        "community",
+        "genesis",
+        "backlash",
+        "sim2real",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Macmachi",
+          "github": "Macmachi",
+          "url": "https://github.com/Macmachi"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "community_experimental",
+        "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test reported.",
+        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
+        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law; ±1° simulated backlash)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk_backlash.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "backlash.onnx",
+          "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/backlash.onnx",
+          "size_bytes": 793295,
+          "sha256": "3f8db8bc2c11b2e41665633c1780af21bae3fda7db229eb5035e6c2d5698c075",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "Community Genesis backlash-tolerant walking policy"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/Macmachi/microduck-rl-genesis",
+        "training_code_url": "https://github.com/Macmachi/microduck-rl-genesis",
+        "task_id": "microduck-backlash"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\"",
+        "cli_command": "python export_onnx.py -e microduck-backlash -o policies/backlash.onnx"
+      }
+    },
+    {
+      "id": "genesis-velocity",
+      "name": "Genesis Flat Walk",
+      "version": "1.0.0",
+      "description": "Velocity-tracking walking policy trained in a Genesis port of the MicroDuck environment for flat terrain.",
+      "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "category": "locomotion",
+      "tags": [
+        "community",
+        "genesis",
+        "velocity-tracking",
+        "flat-ground",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Macmachi",
+          "github": "Macmachi",
+          "url": "https://github.com/Macmachi"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "community_experimental",
+        "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test reported.",
+        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
+        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "velocity.onnx",
+          "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/velocity.onnx",
+          "size_bytes": 793295,
+          "sha256": "c315b9159a1b6f30976c90074ed6df2a33e7e1d14ef1505aed6c2c673f59061d",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "Community Genesis flat-terrain walking policy"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/Macmachi/microduck-rl-genesis",
+        "training_code_url": "https://github.com/Macmachi/microduck-rl-genesis",
+        "task_id": "microduck-velocity"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\"",
+        "cli_command": "python export_onnx.py -e microduck-velocity -o policies/velocity.onnx"
+      }
+    },
+    {
+      "id": "genesis-rough",
+      "name": "Genesis Rough-Terrain Walk",
+      "version": "1.0.0",
+      "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the MicroDuck environment.",
+      "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "category": "locomotion",
+      "tags": [
+        "community",
+        "genesis",
+        "rough-terrain",
+        "velocity-tracking",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Macmachi",
+          "github": "Macmachi",
+          "url": "https://github.com/Macmachi"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "community_experimental",
+        "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test reported.",
+        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
+        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_walk.xml",
+        "accessories_required": [],
+        "terrain": [
+          "rough"
+        ],
+        "robotd_slot": "walk"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "rough.onnx",
+          "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/rough.onnx",
+          "size_bytes": 793295,
+          "sha256": "04261902d3651dc02303e3e9e5ab756062c4d93c45400f431a0ae68b5969185c",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "Community Genesis rough-terrain walking policy"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/Macmachi/microduck-rl-genesis",
+        "training_code_url": "https://github.com/Macmachi/microduck-rl-genesis",
+        "task_id": "microduck-rough"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\"",
+        "cli_command": "python export_onnx.py -e microduck-rough -o policies/rough.onnx"
+      }
+    },
+    {
       "id": "spin-in-place",
       "name": "In-Place Roller Spin",
       "version": "1.0.0",
@@ -1007,6 +1247,86 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nmode = \"roller\"\nwalk = \"/opt/robot/policies/roller_spin.onnx\""
+      }
+    },
+    {
+      "id": "courier",
+      "name": "MicroDuck Courier",
+      "version": "1.0.0",
+      "description": "Pick, carry, and place a duck-scale paperback in a simulated MicroDuck apartment.",
+      "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one deployable ONNX export. The publisher reports 16/16 and 32/32 successful simulated delivery rollouts. The task-specific command slots carry book and reader targets; no physical robot deployment is claimed.",
+      "category": "manipulation",
+      "tags": [
+        "community",
+        "courier",
+        "pick-carry-place",
+        "apartment",
+        "simulation-only",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "selinayfilizp",
+          "github": "selinayfilizp",
+          "url": "https://github.com/selinayfilizp"
+        }
+      ],
+      "license": "Not separately specified",
+      "verification": {
+        "status": "community_experimental",
+        "summary": "Publisher-reported successful simulated courier rollouts; no physical hardware evidence reported.",
+        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "sim_framework": "mjlab (MuJoCo) at 50 Hz",
+        "notes": "The source repository has a vendored Apache-2.0 microduck_rl component but no separate top-level artifact license. Its custom apartment scene is outside the registry's current generic simulation verifier; registry simulation verification has not been run."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "mjcf_model": "scene_apartment.xml",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "custom"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "courier-policy.onnx",
+          "url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/ba02a6b507b13c19bded8af0cbb2dd4a1eeb5cb1/artifacts/courier-policy.onnx",
+          "size_bytes": 793776,
+          "sha256": "c95396269a48bbab3ebd46032f6c40bc1323ccb7a6a933487ad75810d8785c47",
+          "baked_normalizer": true
+        }
+      },
+      "media": {
+        "hero_type": "badge",
+        "caption": "Community MicroDuck courier task policy"
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/selinayfilizp/microduck-courier",
+        "training_code_url": "https://github.com/selinayfilizp/microduck-courier/tree/ba02a6b507b13c19bded8af0cbb2dd4a1eeb5cb1/microduck_rl",
+        "task_id": "Mjlab-Courier-Flat-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/courier-policy.onnx\""
       }
     },
     {
@@ -1251,34 +1571,33 @@
       }
     },
     {
-      "id": "waddle-locomotion",
-      "name": "Waddle Custom Locomotion",
-      "version": "0.9.0",
-      "description": "Independent community-developed walking gait featuring a pronounced rhythmic waddling sway tuned for biped compliance.",
-      "details": "Developed by Nick Koenig (nickoenig37) as an exploration of duck-like biomimetic locomotion. Modifies reward terms on lateral torso oscillation and foot contact cadence to produce a distinctive waddle gait while preserving the standard 61-dim observation and 14-actuator contract.",
-      "category": "locomotion",
+      "id": "jump",
+      "name": "Vertical Jump",
+      "version": "1.0.0",
+      "description": "One-shot vertical jump policy that crouches, launches, lands, and returns to a standing pose.",
+      "details": "Custom policy from a browser simulator fork. The fork runs MicroDuck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
+      "category": "agility-tricks",
       "tags": [
         "community",
-        "waddle",
-        "biomimetic",
-        "sway",
-        "capstone",
+        "jump",
+        "vertical-hop",
+        "simulation-only",
         "50hz"
       ],
       "authors": [
         {
-          "name": "Nick Koenig",
-          "github": "nickoenig37",
-          "url": "https://github.com/nickoenig37"
+          "name": "Liyucheng1997",
+          "github": "Liyucheng1997",
+          "url": "https://github.com/Liyucheng1997"
         }
       ],
-      "license": "Apache-2.0",
+      "license": "Not specified by publisher",
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulated and validated in mjlab across 4096 parallel environments on multi-GPU cluster with video recording.",
-        "hardware_target": "MicroDuck v1 / Waddle Custom Biped Platform",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-        "notes": "Community policy. Exhibits higher lateral roll oscillation than the official Alpha walk. Artifact URL is dead (upstream moved); no vendored bytes available, so the verified_simulation tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
+        "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
+        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "sim_framework": "MuJoCo WebAssembly with onnxruntime-web at 50 Hz",
+        "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file, and registry simulation verification has not been run."
       },
       "contract": {
         "observation_dim": 61,
@@ -1296,39 +1615,38 @@
         },
         "control_frequency_hz": 50,
         "decimation": 4,
-        "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
         "action_scale": 1
       },
       "compatibility": {
-        "robot_model": "custom-duck",
-        "mjcf_model": "robot_walk.xml",
+        "robot_model": "microduck-standard",
+        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
         ],
-        "robotd_slot": "walk"
+        "robotd_slot": "custom"
       },
       "artifacts": {
         "onnx": {
-          "filename": "waddle_walking.onnx",
-          "url": "https://raw.githubusercontent.com/nickoenig37/mjlab_microduck_waddle/main/docs/waddle_walking.onnx",
+          "filename": "jump.onnx",
+          "url": "https://raw.githubusercontent.com/Liyucheng1997/318_lab-microduck-simulator/512d4bec6fc3ba321d29c93312be72856ad21268/app/public/policies/jump.onnx",
+          "size_bytes": 793756,
+          "sha256": "0b10d7f50f2225467771c1fd11e027490e775b762c2e50c9e25f82c0f488e5c4",
           "baked_normalizer": true
         }
       },
       "media": {
-        "thumbnail_url": "/media/thumbs/waddle-locomotion.jpg",
-        "loop_url": "/media/loops/waddle-locomotion.mp4",
-        "video_url": "https://github.com/user-attachments/assets/e9a0d4de-8a3d-4e44-b490-e873728cf2bf",
-        "hero_type": "video",
-        "caption": "Waddle gait simulated in MuJoCo viewer displaying rhythmic sway"
+        "hero_type": "badge",
+        "caption": "Community vertical-jump policy in the MicroDuck browser simulator"
       },
       "sources": {
-        "upstream_repo": "https://github.com/nickoenig37/mjlab_microduck_waddle",
-        "training_code_url": "https://github.com/nickoenig37/mjlab_microduck_waddle",
-        "task_id": "Mjlab-Velocity-Flat-Waddle"
+        "upstream_repo": "https://github.com/Liyucheng1997/318_lab-microduck-simulator",
+        "training_code_url": "https://github.com/Liyucheng1997/318_lab-microduck-simulator/tree/512d4bec6fc3ba321d29c93312be72856ad21268/training",
+        "task_id": "Mjlab-Jump-Flat-MicroDuck"
       },
       "deployment": {
-        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/waddle_walking.onnx\""
+        "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/jump.onnx\""
       }
     }
   ]

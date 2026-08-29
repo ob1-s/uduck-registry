@@ -1,0 +1,79 @@
+{
+  "id": "jump",
+  "name": "Vertical Jump",
+  "version": "1.0.0",
+  "description": "One-shot vertical jump policy that crouches, launches, lands, and returns to a standing pose.",
+  "details": "Custom policy from a browser simulator fork. The fork runs MicroDuck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
+  "category": "agility-tricks",
+  "tags": [
+    "community",
+    "jump",
+    "vertical-hop",
+    "simulation-only",
+    "50hz"
+  ],
+  "authors": [
+    {
+      "name": "Liyucheng1997",
+      "github": "Liyucheng1997",
+      "url": "https://github.com/Liyucheng1997"
+    }
+  ],
+  "license": "Not specified by publisher",
+  "verification": {
+    "status": "community_experimental",
+    "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
+    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "sim_framework": "MuJoCo WebAssembly with onnxruntime-web at 50 Hz",
+    "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file, and registry simulation verification has not been run."
+  },
+  "contract": {
+    "observation_dim": 61,
+    "observation_breakdown": {
+      "proprioception": 48,
+      "twist": 3,
+      "head_pose": 4,
+      "body_pose": 6
+    },
+    "action_dim": 14,
+    "action_breakdown": {
+      "left_leg": 5,
+      "neck_head": 4,
+      "right_leg": 5
+    },
+    "control_frequency_hz": 50,
+    "decimation": 4,
+    "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+    "action_scale": 1.0
+  },
+  "compatibility": {
+    "robot_model": "microduck-standard",
+    "mjcf_model": "robot_allcollisions.xml",
+    "accessories_required": [],
+    "terrain": [
+      "flat"
+    ],
+    "robotd_slot": "custom"
+  },
+  "artifacts": {
+    "onnx": {
+      "filename": "jump.onnx",
+      "url": "https://raw.githubusercontent.com/Liyucheng1997/318_lab-microduck-simulator/512d4bec6fc3ba321d29c93312be72856ad21268/app/public/policies/jump.onnx",
+      "size_bytes": 793756,
+      "sha256": "0b10d7f50f2225467771c1fd11e027490e775b762c2e50c9e25f82c0f488e5c4",
+      "baked_normalizer": true
+    }
+  },
+  "media": {
+    "hero_type": "badge",
+    "caption": "Community vertical-jump policy in the MicroDuck browser simulator"
+  },
+  "sources": {
+    "upstream_repo": "https://github.com/Liyucheng1997/318_lab-microduck-simulator",
+    "training_code_url": "https://github.com/Liyucheng1997/318_lab-microduck-simulator/tree/512d4bec6fc3ba321d29c93312be72856ad21268/training",
+    "task_id": "Mjlab-Jump-Flat-MicroDuck"
+  },
+  "deployment": {
+    "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/jump.onnx\""
+  }
+}

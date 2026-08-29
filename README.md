@@ -55,7 +55,7 @@ All policies indexed in uDuck adhere to the unified ecosystem standard:
 
 ## Seeded Behaviors
 
-uDuck Registry ships populated with 16 indexed behaviors:
+uDuck Registry ships populated with 20 indexed behaviors:
 
 1. `alpha-walking` — **Alpha Dynamic Walk** *(Pollen Robotics · Verified Hardware)*
 2. `fall-recovery` — **Dynamic Fall Recovery** *(Pollen Robotics · Verified Hardware)*
@@ -71,8 +71,12 @@ uDuck Registry ships populated with 16 indexed behaviors:
 12. `spin-in-place` — **In-Place Roller Spin** *(Pollen Robotics · Experimental)*
 13. `rough-terrain-walk` — **Rough Terrain Adaptive Gait** *(Pollen Robotics · Experimental)*
 14. `backlash-walking` — **Backlash-Compensated Walking** *(Pollen Robotics · Experimental)*
-15. `waddle-locomotion` — **Waddle Custom Locomotion** *(Nick Koenig · Experimental)*
-16. `standing-body-control` — **Standing 6-DOF Body Pose Controller** *(Tommy Zihao · Experimental; legacy 51-D artifact)*
+15. `standing-body-control` — **Standing 6-DOF Body Pose Controller** *(Tommy Zihao · Experimental; legacy 51-D artifact)*
+16. `genesis-velocity` — **Genesis Flat Walk** *(Macmachi · Experimental)*
+17. `genesis-rough` — **Genesis Rough-Terrain Walk** *(Macmachi · Experimental)*
+18. `genesis-backlash` — **Genesis Backlash Walk** *(Macmachi · Experimental)*
+19. `jump` — **Vertical Jump** *(Liyucheng1997 · Experimental)*
+20. `courier` — **MicroDuck Courier** *(selinayfilizp · Experimental)*
 
 ---
 
@@ -81,8 +85,11 @@ uDuck Registry ships populated with 16 indexed behaviors:
 The entire registry is accessible via simple HTTP GET requests without an API key:
 
 ```bash
-# Fetch the generated catalog from GitHub
-curl -s https://raw.githubusercontent.com/ob1-s/uduck-registry/main/public/registry.json | jq .
+# Fetch the deployed catalog (no repository access required)
+curl -s https://uduck-registry.pages.dev/registry.json | jq .
+
+# In a checkout with repository access, the same snapshot is:
+# cat public/registry.json | jq .
 
 # Or serve `out/` from your deployment host and request:
 #   /registry.json

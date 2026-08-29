@@ -38,13 +38,13 @@ describe("CLI status and artifact UX", () => {
   });
 
   it("keeps the safe pull default while making the explicit opt-in parseable", () => {
-    expect(parsePullArgs(["waddle-locomotion"])).toMatchObject({
-      id: "waddle-locomotion",
+    expect(parsePullArgs(["genesis-velocity"])).toMatchObject({
+      id: "genesis-velocity",
       destDir: "./policies",
       allowUnverified: false,
     });
-    expect(parsePullArgs(["waddle-locomotion", "./tmp", "--allow-unverified"])).toMatchObject({
-      id: "waddle-locomotion",
+    expect(parsePullArgs(["genesis-velocity", "./tmp", "--allow-unverified"])).toMatchObject({
+      id: "genesis-velocity",
       destDir: "./tmp",
       allowUnverified: true,
     });
@@ -75,7 +75,7 @@ describe("submission remediation", () => {
   });
 
   it("returns status 1 when manual instructions are printed instead of a PR", async () => {
-    const candidate = JSON.parse(fs.readFileSync("registry/behaviors/waddle-locomotion.json", "utf8"));
+    const candidate = JSON.parse(fs.readFileSync("registry/behaviors/genesis-velocity.json", "utf8"));
     candidate.id = "manual-submit-test";
     candidate.name = "Manual Submit Test";
     const file = path.join(tempDir, "manual-submit-test.json");

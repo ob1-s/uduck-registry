@@ -1,0 +1,80 @@
+{
+  "id": "genesis-rough",
+  "name": "Genesis Rough-Terrain Walk",
+  "version": "1.0.0",
+  "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the MicroDuck environment.",
+  "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+  "category": "locomotion",
+  "tags": [
+    "community",
+    "genesis",
+    "rough-terrain",
+    "velocity-tracking",
+    "50hz"
+  ],
+  "authors": [
+    {
+      "name": "Macmachi",
+      "github": "Macmachi",
+      "url": "https://github.com/Macmachi"
+    }
+  ],
+  "license": "Apache-2.0",
+  "verification": {
+    "status": "community_experimental",
+    "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test reported.",
+    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
+    "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+  },
+  "contract": {
+    "observation_dim": 61,
+    "observation_breakdown": {
+      "proprioception": 48,
+      "twist": 3,
+      "head_pose": 4,
+      "body_pose": 6
+    },
+    "action_dim": 14,
+    "action_breakdown": {
+      "left_leg": 5,
+      "neck_head": 4,
+      "right_leg": 5
+    },
+    "control_frequency_hz": 50,
+    "decimation": 4,
+    "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+    "action_scale": 1.0
+  },
+  "compatibility": {
+    "robot_model": "microduck-standard",
+    "mjcf_model": "robot_walk.xml",
+    "accessories_required": [],
+    "terrain": [
+      "rough"
+    ],
+    "robotd_slot": "walk"
+  },
+  "artifacts": {
+    "onnx": {
+      "filename": "rough.onnx",
+      "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/rough.onnx",
+      "size_bytes": 793295,
+      "sha256": "04261902d3651dc02303e3e9e5ab756062c4d93c45400f431a0ae68b5969185c",
+      "baked_normalizer": true
+    }
+  },
+  "media": {
+    "hero_type": "badge",
+    "caption": "Community Genesis rough-terrain walking policy"
+  },
+  "sources": {
+    "upstream_repo": "https://github.com/Macmachi/microduck-rl-genesis",
+    "training_code_url": "https://github.com/Macmachi/microduck-rl-genesis",
+    "task_id": "microduck-rough"
+  },
+  "deployment": {
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\"",
+    "cli_command": "python export_onnx.py -e microduck-rough -o policies/rough.onnx"
+  }
+}

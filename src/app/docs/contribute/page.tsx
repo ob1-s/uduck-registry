@@ -22,8 +22,21 @@ const exampleJson = `{
   },
   "contract": {
     "observation_dim": 61,
+    "observation_breakdown": {
+      "proprioception": 48,
+      "twist": 3,
+      "head_pose": 4,
+      "body_pose": 6
+    },
     "action_dim": 14,
-    "control_frequency_hz": 50
+    "action_breakdown": {
+      "left_leg": 5,
+      "neck_head": 4,
+      "right_leg": 5
+    },
+    "control_frequency_hz": 50,
+    "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
+    "action_scale": 1
   },
   "compatibility": {
     "robot_model": "microduck-standard",
@@ -32,7 +45,7 @@ const exampleJson = `{
     "terrain": ["flat"],
     "robotd_slot": "custom"
   },
-  "artifacts": { "onnx": { "filename": "my_cool_trick.onnx", "url": "https://…" } },
+  "artifacts": { "onnx": { "filename": "my_cool_trick.onnx", "url": "https://huggingface.co/your-org/my-cool-trick/resolve/main/my_cool_trick.onnx" } },
   "media": { "hero_type": "badge" },
   "sources": { "upstream_repo": "https://github.com/yourgithub/my_duck_repo" },
   "deployment": { "robotd_toml": "[policy]\\ncustom = \\\"/opt/robot/policies/my_cool_trick.onnx\\\"" }

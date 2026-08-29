@@ -124,18 +124,23 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <div className="deployment-steps">
               <div className="deployment-step">
                 <div className="deployment-step-label">
-                  <span><b className="deployment-step-number">1</b> Download the ONNX model</span>
+                  <span><b className="deployment-step-number">1</b> Stage the policy via the updater</span>
                   <a className="download-link" href={behavior.artifacts.onnx.url} target="_blank" rel="noreferrer"><Download size={13} aria-hidden="true" /> {behavior.artifacts.onnx.filename}</a>
                 </div>
-                <pre className="code-block deployment-code"><code>{`curl -L "${behavior.artifacts.onnx.url}" -o "/opt/robot/policies/${behavior.artifacts.onnx.filename}"`}</code></pre>
+                <pre className="code-block deployment-code"><code>{`robotctl update apply --slot ${behavior.compatibility.robotd_slot} --url "${behavior.artifacts.onnx.url}"${behavior.artifacts.onnx.sha256 ? ` --sha256 ${behavior.artifacts.onnx.sha256}` : ""}`}</code></pre>
+                {behavior.artifacts.onnx.sha256 ? (
+                  <p className="mono-value" style={{ marginTop: "0.5rem", fontSize: "0.62rem", wordBreak: "break-all" }}>sha256: {behavior.artifacts.onnx.sha256}</p>
+                ) : (
+                  <p style={{ marginTop: "0.5rem", color: "var(--quiet)", fontFamily: "var(--font-mono)", fontSize: "0.62rem" }}>no sha256 recorded — artifact unverified</p>
+                )}
               </div>
               <div className="deployment-step">
-                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Add the policy to robotd</span></div>
-                <pre className="code-block deployment-code"><code>{behavior.deployment.robotd_toml}</code></pre>
+                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Policy slot</span><span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span></div>
+                <pre className="code-block deployment-code"><code>{`${behavior.compatibility.robotd_slot} → /opt/robot/policies/${behavior.artifacts.onnx.filename}`}</code></pre>
               </div>
               <div className="deployment-step">
-                <div className="deployment-step-label"><span><b className="deployment-step-number">3</b> Restart the control loop</span></div>
-                <pre className="code-block deployment-code"><code>{"sudo systemctl restart robotd\nrobotctl health"}</code></pre>
+                <div className="deployment-step-label"><span><b className="deployment-step-number">3</b> Reload the control loop</span></div>
+                <pre className="code-block deployment-code"><code>{"sudo systemctl reload robotd\nrobotctl health"}</code></pre>
               </div>
               {behavior.deployment.python_infer_command && (
                 <div className="deployment-step">

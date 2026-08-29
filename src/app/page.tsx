@@ -32,7 +32,7 @@ export default function HomePage() {
               <span className="hero-figure-label">walk · roll · recover</span>
             </div>
             <span className="hero-sticker hero-sticker-left">quack!</span>
-            <span className="hero-sticker hero-sticker-right">50 Hz</span>
+            <span className="hero-sticker hero-sticker-right">{stats.hardware} verified</span>
           </div>
         </div>
       </section>
@@ -42,12 +42,11 @@ export default function HomePage() {
           {[0, 1].map((copy) => (
             <div className="ticker-group" key={copy}>
               <span>{stats.total} moves in the shelf</span><i>◆</i>
-              <span>61-D observation</span><i>◆</i>
-              <span>14 servos</span><i>◆</i>
-              <span>50 Hz control loop</span><i>◆</i>
-              <span>sim2real</span><i>◆</i>
-              <span>hardware verified</span><i>◆</i>
-              <span>open source</span><i>◆</i>
+              <span>{stats.hardware} hardware verified</span><i>◆</i>
+              <span>{stats.community} community</span><i>◆</i>
+              <span>standard+rollers+ball</span><i>◆</i>
+              <span>ONNX</span><i>◆</i>
+              <Link href="/docs/specification">contract</Link><i>◆</i>
             </div>
           ))}
         </div>

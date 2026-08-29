@@ -10,6 +10,7 @@ export const metadata = {
 
 const fields = [
   ["id", "string · kebab-case", "The unique slug and matching manifest filename."],
+  ["identity", "string · array · object", "Display and provenance: name, version, description, category, tags, authors, license, media, and sources."],
   ["verification", "object", "Status, target hardware, evidence, and optional simulation framework."],
   ["contract", "object", "Observation and action breakdowns, timing, actuator model, and scale."],
   ["compatibility", "object", "Robot model, MJCF model, accessories, terrain, and robotd slot."],

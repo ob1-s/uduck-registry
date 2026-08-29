@@ -3,7 +3,7 @@ import { AlertCircle, ArrowLeft, GitFork } from "lucide-react";
 
 export const metadata = {
   title: "Add a behavior — uDuck Registry",
-  description: "How to add a Microduck behavior manifest to the registry.",
+  description: "How to add a Microduck behavior JSON record to the registry.",
 };
 
 const exampleJson = `{
@@ -16,8 +16,8 @@ const exampleJson = `{
   "authors": [{ "name": "Your Name", "github": "yourgithub" }],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
-    "summary": "Simulated in mjlab.",
+    "status": "community_experimental",
+    "summary": "Early community policy; simulation and hardware evidence pending.",
     "hardware_target": "Microduck v1"
   },
   "contract": {
@@ -35,6 +35,7 @@ const exampleJson = `{
       "right_leg": 5
     },
     "control_frequency_hz": 50,
+    "decimation": 4,
     "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
     "action_scale": 1
   },
@@ -43,12 +44,12 @@ const exampleJson = `{
     "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": ["flat"],
-    "robotd_slot": "custom"
+    "robotd_slot": "walk"
   },
-  "artifacts": { "onnx": { "filename": "my_cool_trick.onnx", "url": "https://huggingface.co/your-org/my-cool-trick/resolve/main/my_cool_trick.onnx" } },
+  "artifacts": { "onnx": { "filename": "my_cool_trick.onnx", "url": "https://huggingface.co/your-org/my-cool-trick/resolve/main/my_cool_trick.onnx", "baked_normalizer": true } },
   "media": { "hero_type": "badge" },
   "sources": { "upstream_repo": "https://github.com/yourgithub/my_duck_repo" },
-  "deployment": { "robotd_toml": "[policy]\\ncustom = \\\"/opt/robot/policies/my_cool_trick.onnx\\\"" }
+  "deployment": { "robotd_toml": "[policy]\\nwalk = \\\"/opt/robot/policies/my_cool_trick.onnx\\\"" }
 }`;
 
 export default function ContributePage() {
@@ -59,18 +60,18 @@ export default function ContributePage() {
         <header className="doc-header">
           <div className="doc-header-meta"><span className="doc-badge doc-badge-lilac">Contribution guide</span><small>Bring a new move</small></div>
           <h1>Give the shelf a new trick.</h1>
-          <p>Add one validated JSON manifest, keep the source link close, and tell us what the duck actually ran.</p>
+          <p>Add one validated behavior JSON file, keep the source link close, and tell us what the duck actually ran.</p>
         </header>
 
         <div className="steps">
-          <section className="step"><span className="step-number">01</span><h2>Make a manifest</h2><p>Create <code>registry/behaviors/&lt;your-id&gt;.json</code>. Use a lowercase kebab-case <code>id</code> that matches the filename.</p></section>
-          <section className="step"><span className="step-number">02</span><h2>Keep the contract honest</h2><p>Policies in this catalog use 61 observations, 14 joint outputs, and a 50 Hz control loop. Point to the canonical ONNX artifact rather than copying it here.</p><div className="callout"><AlertCircle size={15} aria-hidden="true" /><span>Only use <code>verified_hardware</code> when the behavior has run on a physical Microduck with evidence in the pull request. Use <code>verified_simulation</code> for a tested simulator run.</span></div></section>
+          <section className="step"><span className="step-number">01</span><h2>Make a behavior record</h2><p>Create <code>registry/behaviors/&lt;your-id&gt;.json</code>. Use a lowercase kebab-case <code>id</code> that matches the filename.</p></section>
+          <section className="step"><span className="step-number">02</span><h2>Keep the contract honest</h2><p>Policies in this catalog use 61 observations, 14 joint outputs, and a 50 Hz control loop. Point to the canonical ONNX artifact rather than copying it here.</p><div className="callout"><AlertCircle size={15} aria-hidden="true" /><span>Only use <code>verified_hardware</code> when the behavior has run on a physical MicroDuck with evidence in the pull request, or is clearly shipped by the upstream project. Use <code>verified_simulation</code> for a tested simulator run.</span></div></section>
           <section className="step"><span className="step-number">03</span><h2>Validate before opening a PR</h2><p>Run the registry checks from the repository root.</p><pre className="code-block"><code>pnpm validate{`\n`}pnpm test</code></pre></section>
-          <section className="step"><span className="step-number">04</span><h2>Open the pull request</h2><p>Include a short description, evidence, and the upstream links. Once merged, the catalog index is regenerated automatically.</p></section>
+          <section className="step"><span className="step-number">04</span><h2>Open the pull request</h2><p>Include a short description, evidence, and the upstream links. Regenerate the catalog index before opening the PR; CI checks that it matches.</p></section>
         </div>
 
         <section className="surface doc-section">
-          <h2><GitFork size={17} aria-hidden="true" /> Starter manifest</h2>
+          <h2><GitFork size={17} aria-hidden="true" /> Starter behavior JSON</h2>
           <p>Copy this shape, then fill in the fields required by the full schema.</p>
           <pre className="code-block"><code>{exampleJson}</code></pre>
         </section>

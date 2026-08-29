@@ -59,7 +59,7 @@ describe("Obs contract (61-D)", () => {
   it("sim/verify_rollout.py wires obs_builder and handles batched obs", () => {
     const p = path.resolve("sim/verify_rollout.py");
     const txt = fs.readFileSync(p, "utf-8");
-    expect(txt).toContain("from sim.obs_builder import ObsBuilder");
+    expect(txt).toContain("from sim.obs_builder import DEFAULT_QPOS, ObsBuilder");
     expect(txt).toContain("obs[None, :]");
     expect(txt).toContain("has_plane");
   });

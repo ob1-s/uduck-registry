@@ -2,7 +2,7 @@
 
 /*
   uDuck Registry — Microduck visual identity
-  Dark product canvas · Anton display / DM Sans body (as pollen-robotics.com)
+  Dark product canvas · condensed display / sans-serif body
   Lead accent #ff7a2f · colorways #ffd23f / #2ff0e6 / #ff2fa8 / #9d87e8 · cream #f2ecdd
   Motifs: donut camera eye, shell radii, mech mono labels, halftone dots, comic offset shadows
 */
@@ -28,8 +28,8 @@
   --teal: #7ecfd8;
   --cream: #f2ecdd;
   --halftone: radial-gradient(rgba(250, 248, 242, 0.055) 1px, transparent 1.4px);
-  --font-sans: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: var(--font-anton), "Anton", "Arial Narrow", sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Arial Narrow", "Roboto Condensed", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
@@ -442,7 +442,7 @@ code {
 .filter-pill:hover { border-color: var(--line-strong); color: var(--ink); }
 .filter-pill-active, .filter-pill-active:hover { border-color: var(--orange); background: rgba(255, 122, 47, 0.12); color: var(--orange); }
 
-.filter-compact-row { display: flex; align-items: center; gap: 0.55rem; }
+.filter-compact-row { display: flex; min-width: 0; margin: 0; border: 0; padding: 0; align-items: center; gap: 0.55rem; }
 
 .filter-compact-row > label { min-width: 0; flex: 1 1 12rem; }
 
@@ -520,19 +520,6 @@ code {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.behavior-thumb-play {
-  position: absolute;
-  bottom: 0.45rem;
-  right: 0.45rem;
-  display: grid;
-  place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 50%;
-  color: var(--bg-inset);
-  background: color-mix(in srgb, var(--orange) 88%, white 12%);
 }
 
 .behavior-placeholder { display: grid; place-items: center; }
@@ -699,8 +686,14 @@ code {
 .author-strip a { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--cyan); }
 .author-strip a:hover { color: var(--ink); }
 
+.detail-media-figure { margin: 2rem 0 0; }
 .media-frame { overflow: hidden; border: 1px solid var(--line); border-radius: 1.2rem 1.2rem 1.2rem 0.45rem; background: #000; }
-.media-frame video { display: block; width: 100%; height: auto; }
+.media-frame video, .media-frame img { display: block; width: 100%; height: auto; }
+.media-frame .detail-media { min-height: 18rem; object-fit: contain; background: #000; }
+.media-fallback { display: grid; place-items: center; gap: 0.55rem; color: var(--orange); background: var(--bg-inset); }
+.media-fallback-card { position: absolute; inset: 0; }
+.media-fallback-detail { min-height: 18rem; padding: 2rem; }
+.media-fallback-copy { color: var(--quiet); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .media-caption { margin-top: 0.55rem; color: var(--quiet); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.04em; }
 .media-badge { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.3rem 0.65rem; color: var(--cyan); font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
 
@@ -1089,8 +1082,7 @@ code {
 
 @media (max-width: 760px) {
   .brand-subtitle { display: none; }
-  .nav-link { padding: 0.5rem 0.6rem; }
-  .nav-link span { display: none; }
+  .nav-link { padding: 0.5rem 0.55rem; font-size: 0.6rem; }
   .hero-quiet .display { font-size: clamp(2.9rem, 14vw, 4.2rem); }
   .hero-art { min-height: 16rem; }
   .hero-sticker-left { left: 0.15rem; }

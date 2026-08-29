@@ -3,17 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, ChevronDown, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal } from "lucide-react";
 import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
+import { formatAccessory, formatCategory } from "@/lib/labels";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { ContractSpec } from "@/components/ContractSpec";
+import { MediaPreview } from "@/components/MediaPreview";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-const accessoryLabels: Record<string, string> = {
-  roller_skate_blades: "roller skates",
-  "70mm_practice_ball": "70 mm ball",
-};
 
 export async function generateStaticParams() {
   return getAllBehaviors().map((behavior) => ({ id: behavior.id }));
@@ -32,7 +29,12 @@ export default async function BehaviorDetailPage({ params }: Props) {
   if (!behavior) notFound();
 
   const author = behavior.authors[0];
-  const formatCategory = behavior.category.replace("-", " ");
+  const authorUrl = author?.url ?? (author?.github ? `https://github.com/${author.github}` : undefined);
+  const artifact = behavior.artifacts.onnx;
+  const downloadCommand = `curl --fail --location --output "${artifact.filename}" "${artifact.url}"`;
+  const artifactCommand = artifact.sha256
+    ? `${downloadCommand}\nprintf '%s  %s\\n' '${artifact.sha256}' '${artifact.filename}' | sha256sum --check -`
+    : downloadCommand;
 
   return (
     <div className="detail-page">
@@ -42,7 +44,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
         <header className="detail-header">
           <div className="detail-meta">
             <VerificationBadge status={behavior.verification.status} summary={behavior.verification.summary} />
-            <span className="detail-chip">{formatCategory}</span>
+            <span className="detail-chip">{formatCategory(behavior.category)}</span>
             <span className="detail-chip">v{behavior.version}</span>
             <span className="detail-chip">{behavior.license}</span>
           </div>
@@ -50,29 +52,20 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <p className="detail-description">{behavior.description}</p>
           <div className="author-strip">
             <span>By <strong>{behavior.authors.map((item) => item.name).join(", ")}</strong></span>
-            {author?.github && (
-              <a href={`https://github.com/${author.github}`} target="_blank" rel="noreferrer">
-                <GitFork size={13} aria-hidden="true" /> @{author.github} <ArrowUpRight size={12} aria-hidden="true" />
+            {authorUrl && (
+              <a href={authorUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${author.name}'s profile in a new tab`}>
+                <GitFork size={13} aria-hidden="true" /> {author.github ? `@${author.github}` : author.name} <ArrowUpRight size={12} aria-hidden="true" />
               </a>
             )}
           </div>
         </header>
 
-        {behavior.media.video_url && (
-          <figure>
-            <div className="media-frame">
-              <video
-                src={behavior.media.video_url}
-                controls
-                muted
-                playsInline
-                preload="metadata"
-                aria-label={`${behavior.name} demonstration`}
-              />
-            </div>
-            {behavior.media.caption && <figcaption className="media-caption">{behavior.media.caption}</figcaption>}
-          </figure>
-        )}
+        <figure className="detail-media-figure">
+          <div className="media-frame">
+            <MediaPreview media={behavior.media} title={behavior.name} variant="detail" />
+          </div>
+          {behavior.media.caption && <figcaption className="media-caption">{behavior.media.caption}</figcaption>}
+        </figure>
 
         <div className="detail-stack">
           {behavior.details && (
@@ -102,7 +95,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
                 <div><dt>Robot model</dt><dd className="mono-value">{behavior.compatibility.robot_model}</dd></div>
                 <div><dt>MJCF model</dt><dd className="mono-value">{behavior.compatibility.mjcf_model}</dd></div>
                 <div><dt>Terrain</dt><dd><span className="tag-row">{behavior.compatibility.terrain.map((terrain) => <span className="tag" key={terrain}>{terrain}</span>)}</span></dd></div>
-                <div><dt>Required accessories</dt><dd>{behavior.compatibility.accessories_required.length > 0 ? <span className="tag-row">{behavior.compatibility.accessories_required.map((item) => <span className="tag tag-sun" key={item}>{accessoryLabels[item] || item}</span>)}</span> : "None — standard duck setup"}</dd></div>
+                <div><dt>Required accessories</dt><dd>{behavior.compatibility.accessories_required.length > 0 ? <span className="tag-row">{behavior.compatibility.accessories_required.map((item) => <span className="tag tag-sun" key={item}>{formatAccessory(item)}</span>)}</span> : "None — standard duck setup"}</dd></div>
               </dl>
             </section>
           </div>
@@ -124,27 +117,33 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <div className="deployment-steps">
               <div className="deployment-step">
                 <div className="deployment-step-label">
-                  <span><b className="deployment-step-number">1</b> Stage the policy via the updater</span>
-                  <a className="download-link" href={behavior.artifacts.onnx.url} target="_blank" rel="noreferrer"><Download size={13} aria-hidden="true" /> {behavior.artifacts.onnx.filename}</a>
+                  <span><b className="deployment-step-number">1</b> Download the policy artifact</span>
+                  <a className="download-link" href={behavior.artifacts.onnx.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${behavior.artifacts.onnx.filename} in a new tab`}><Download size={13} aria-hidden="true" /> {behavior.artifacts.onnx.filename}</a>
                 </div>
-                <pre className="code-block deployment-code"><code>{`robotctl update apply --slot ${behavior.compatibility.robotd_slot} --url "${behavior.artifacts.onnx.url}"${behavior.artifacts.onnx.sha256 ? ` --sha256 ${behavior.artifacts.onnx.sha256}` : ""}`}</code></pre>
-                {behavior.artifacts.onnx.sha256 ? (
-                  <p className="mono-value" style={{ marginTop: "0.5rem", fontSize: "0.62rem", wordBreak: "break-all" }}>sha256: {behavior.artifacts.onnx.sha256}</p>
+                <pre className="code-block deployment-code"><code>{artifactCommand}</code></pre>
+                {artifact.sha256 ? (
+                  <p className="mono-value" style={{ marginTop: "0.5rem", fontSize: "0.62rem", wordBreak: "break-all" }}>sha256: {artifact.sha256}</p>
                 ) : (
-                  <p style={{ marginTop: "0.5rem", color: "var(--quiet)", fontFamily: "var(--font-mono)", fontSize: "0.62rem" }}>no sha256 recorded — artifact unverified</p>
+                  <p style={{ marginTop: "0.5rem", color: "var(--quiet)", fontFamily: "var(--font-mono)", fontSize: "0.62rem" }}>No SHA-256 recorded — do not treat this artifact as verified.</p>
                 )}
               </div>
               <div className="deployment-step">
-                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Policy slot</span><span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span></div>
-                <pre className="code-block deployment-code"><code>{`${behavior.compatibility.robotd_slot} → /opt/robot/policies/${behavior.artifacts.onnx.filename}`}</code></pre>
+                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Apply the descriptor’s robotd config</span><span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span></div>
+                <pre className="code-block deployment-code"><code>{behavior.deployment.robotd_toml}</code></pre>
               </div>
               <div className="deployment-step">
-                <div className="deployment-step-label"><span><b className="deployment-step-number">3</b> Reload the control loop</span></div>
-                <pre className="code-block deployment-code"><code>{"sudo systemctl reload robotd\nrobotctl health"}</code></pre>
+                <div className="deployment-step-label"><span><b className="deployment-step-number">3</b> Restart the control loop</span></div>
+                <pre className="code-block deployment-code"><code>{"sudo systemctl restart robotd"}</code></pre>
               </div>
+              {behavior.deployment.cli_command && (
+                <div className="deployment-step">
+                  <div className="deployment-step-label"><span><b className="deployment-step-number">⌁</b> Recorded runtime command</span></div>
+                  <pre className="code-block deployment-code"><code>{behavior.deployment.cli_command}</code></pre>
+                </div>
+              )}
               {behavior.deployment.python_infer_command && (
                 <div className="deployment-step">
-                  <div className="deployment-step-label"><span><b className="deployment-step-number">⌁</b> Try it in simulation</span></div>
+                  <div className="deployment-step-label"><span><b className="deployment-step-number">⌁</b> Recorded simulation command</span></div>
                   <pre className="code-block deployment-code"><code>{behavior.deployment.python_infer_command}</code></pre>
                 </div>
               )}
@@ -155,12 +154,12 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <section className="surface detail-card">
             <h2><CheckCircle2 size={17} aria-hidden="true" /> Sources</h2>
             <div className="provenance-grid">
-              <a className="provenance-link" href={behavior.sources.upstream_repo} target="_blank" rel="noreferrer">
+              <a className="provenance-link" href={behavior.sources.upstream_repo} target="_blank" rel="noopener noreferrer" aria-label="Open upstream repository in a new tab">
                 <span><small>Upstream repository</small>{behavior.sources.upstream_repo.replace("https://github.com/", "")}</span><ExternalLink size={14} aria-hidden="true" />
               </a>
-              {behavior.sources.training_code_url && <a className="provenance-link" href={behavior.sources.training_code_url} target="_blank" rel="noreferrer"><span><small>Training code</small>{behavior.sources.task_id || "Open source"}</span><ExternalLink size={14} aria-hidden="true" /></a>}
-              {behavior.sources.huggingface_space && <a className="provenance-link" href={behavior.sources.huggingface_space} target="_blank" rel="noreferrer"><span><small>Interactive simulator</small>{behavior.sources.huggingface_space}</span><ExternalLink size={14} aria-hidden="true" /></a>}
-              {behavior.sources.discussion_url && <a className="provenance-link" href={behavior.sources.discussion_url} target="_blank" rel="noreferrer"><span><small>Discussion</small>Community thread</span><ExternalLink size={14} aria-hidden="true" /></a>}
+              {behavior.sources.training_code_url && <a className="provenance-link" href={behavior.sources.training_code_url} target="_blank" rel="noopener noreferrer" aria-label="Open training code in a new tab"><span><small>Training code</small>{behavior.sources.task_id || "Open source"}</span><ExternalLink size={14} aria-hidden="true" /></a>}
+              {behavior.sources.huggingface_space && <a className="provenance-link" href={behavior.sources.huggingface_space} target="_blank" rel="noopener noreferrer" aria-label="Open interactive simulator in a new tab"><span><small>Interactive simulator</small>{behavior.sources.huggingface_space}</span><ExternalLink size={14} aria-hidden="true" /></a>}
+              {behavior.sources.discussion_url && <a className="provenance-link" href={behavior.sources.discussion_url} target="_blank" rel="noopener noreferrer" aria-label="Open community discussion in a new tab"><span><small>Discussion</small>Community thread</span><ExternalLink size={14} aria-hidden="true" /></a>}
             </div>
           </section>
         </div>

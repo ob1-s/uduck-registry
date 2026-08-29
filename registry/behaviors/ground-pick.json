@@ -56,7 +56,7 @@
     "terrain": [
       "flat"
     ],
-    "robotd_slot": "groundpick"
+    "robotd_slot": "ground_pick"
   },
   "artifacts": {
     "onnx": {
@@ -81,8 +81,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\ngroundpick = \"/opt/robot/policies/alpha_ground_pick.onnx\"",
-    "cli_command": "duckctl action ground-pick",
-    "python_infer_command": "uv run scripts/infer_policy.py --groundpick alpha_ground_pick.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nground_pick = \"/opt/robot/policies/alpha_ground_pick.onnx\""
   }
 }

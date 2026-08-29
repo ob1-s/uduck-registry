@@ -57,7 +57,7 @@
     "terrain": [
       "flat"
     ],
-    "robotd_slot": "kick"
+    "robotd_slot": "kick_left"
   },
   "artifacts": {
     "onnx": {
@@ -81,8 +81,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nkick_left = \"/opt/robot/policies/ball_kick_left.onnx\"",
-    "cli_command": "duckctl action kick --leg left",
-    "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_alpha_walking.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nkick_left = \"/opt/robot/policies/ball_kick_left.onnx\""
   }
 }

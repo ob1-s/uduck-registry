@@ -5,15 +5,15 @@
 
 ## Submission checklist (see CONTRIBUTING.md)
 - [ ] `pnpm validate` passes locally (schema + contract 61-D obs / 14 joints / 50 Hz)
-- [ ] ONNX vendored: `pnpm tsx scripts/vendor-artifacts.ts` — sha256 + size recorded, bytes in `vendor/policies/<id>.onnx`
+- [ ] Artifact checked with `pnpm vendor` — sha256 + size recorded; the local cache is optional
 - [ ] `pnpm compile` run; `public/registry.json` snapshot committed (CI snapshot-diffs this)
-- [ ] Tier claimed honestly: `sim_verified` is computed by MuJoCo CI on this PR — it is never inherited and never self-declared
+- [ ] Tier claimed honestly: `verified_simulation` is computed by MuJoCo CI on this PR — it is never inherited and never self-declared
 - [ ] `license` field accurate; NC-licensed assets are **linked, not hosted**, unless cleared in NOTICE terms
-- [ ] Not claiming the `@pollen` namespace unless you are Pollen Robotics (CODEOWNERS enforces review)
-- [ ] No secrets, no network calls in behavior metadata; artifact URLs on the allowlist (huggingface.co, raw.githubusercontent.com) only
+- [ ] Community work is not presented as official Pollen Robotics work
+- [ ] No secrets or executable content in behavior metadata; artifact URLs use the allowlist (huggingface.co, raw.githubusercontent.com)
 
 ## For maintainers (tier changes)
-- [ ] Tier recomputed fresh on these artifact bytes (hash in `sim_verification` matches vendored file)
+- [ ] If claiming `verified_simulation`, the tier is recomputed fresh on the submitted artifact bytes
 - [ ] Hardware attestations reference a PR with committed video + logs — never a textbox
 
-🦆 CI will comment with sim results.
+🦆 CI uploads simulation records for maintainer review.

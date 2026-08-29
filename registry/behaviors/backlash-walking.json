@@ -27,7 +27,7 @@
     "summary": "Trained and verified with explicit \u00b11\u00b0 backlash hinge physics and domain randomized friction.",
     "hardware_target": "MicroDuck v1 (Dynamixel XL330 with gear train backlash)",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Observation and action dimensions are strictly identical to standard 61-D contract. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
+    "notes": "Observation and action dimensions are strictly identical to standard 61-D contract. Artifact URL is dead (upstream moved); no vendored bytes available, so the verified_simulation tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -74,8 +74,6 @@
     "task_id": "Mjlab-Velocity-Flat-Backlash-MicroDuck"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash_walking.onnx\"",
-    "cli_command": "duckctl policy load walk backlash_walking.onnx",
-    "python_infer_command": "uv run play Mjlab-Velocity-Flat-Backlash-MicroDuck"
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash_walking.onnx\""
   }
 }

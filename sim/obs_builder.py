@@ -128,30 +128,34 @@ def root_ang_vel_b_from_data(model, data) -> np.ndarray:
     (sensordata[7:10]), else falls back to qvel[3:6] rotated by inverse quat.
     Both are body-frame per mjlab's root_link_ang_vel_b.
     """
-    # Try sensor path first (more direct, matches DR noise-free)
-    try:
-        if model is not None:
-            # model.sensor_type: 3 = GYRO per mujoco spec; imu_ang_vel is index 2
-            # Check nsensor and name
-            for i in range(model.nsensor):
-                name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_SENSOR, i) if mujoco else None
-                if name == "imu_ang_vel":
-                    adr = int(model.sensor_adr[i])
-                    dim = int(model.sensor_dim[i])
-                    # sensordata is (nsensordata,) flat
-                    return np.array(data.sensordata[adr : adr + dim], dtype=np.float32)
-    except Exception:
-        pass
-    # Fallback: qvel angular part world -> body
+    if model is None or mujoco is None:
+        raise RuntimeError("MuJoCo model is required to build an observation")
+
+    # Prefer the gyro sensor (more direct, matches the noise-free sim path).
+    for i in range(model.nsensor):
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_SENSOR, i)
+        if name == "imu_ang_vel":
+            adr = int(model.sensor_adr[i])
+            dim = int(model.sensor_dim[i])
+            if dim != 3:
+                raise ValueError(f"imu_ang_vel must have dimension 3, got {dim}")
+            value = np.asarray(data.sensordata[adr : adr + dim], dtype=np.float32)
+            if value.shape != (3,) or not np.all(np.isfinite(value)):
+                raise ValueError("imu_ang_vel contains invalid values")
+            return value
+
+    # The pinned MJCFs do not all expose a gyro. In that explicit case derive
+    # the same body-frame quantity from the free-joint velocity.
     # qpos: [x,y,z, qw,qx,qy,qz, joints...]; qvel: [vx,vy,vz, wx,wy,wz, joint_vel...]
     # root quat is qpos[3:7] as [w,x,y,z]; root ang vel world is qvel[3:6]
-    try:
-        quat = np.array(data.qpos[3:7], dtype=np.float64)  # w,x,y,z
-        ang_w = np.array(data.qvel[3:6], dtype=np.float64)
-        ang_b = quat_apply_inverse_numpy(quat, ang_w)
-        return ang_b.astype(np.float32)
-    except Exception:
-        return np.zeros(3, dtype=np.float32)
+    quat = np.asarray(data.qpos[3:7], dtype=np.float64)  # w,x,y,z
+    ang_w = np.asarray(data.qvel[3:6], dtype=np.float64)
+    if quat.shape != (4,) or ang_w.shape != (3,):
+        raise ValueError("model must expose a free joint for angular velocity")
+    ang_b = quat_apply_inverse_numpy(quat, ang_w).astype(np.float32)
+    if not np.all(np.isfinite(ang_b)):
+        raise ValueError("derived angular velocity contains invalid values")
+    return ang_b
 
 
 # ---------------------------------------------------------------------------
@@ -165,8 +169,7 @@ def _servo_joint_info(model) -> tuple[list[int], list[int], list[str]]:
     Order is the XML declaration order (which matches ACTION_JOINT_NAMES for base models).
     """
     if model is None or mujoco is None:
-        # fallback to static walk mapping
-        return ACTION_QPOSADR_WALK, list(range(6, 20)), ACTION_JOINT_NAMES
+        raise RuntimeError("MuJoCo model is required to discover servo joints")
 
     qpos_addrs: list[int] = []
     dof_addrs: list[int] = []
@@ -175,32 +178,26 @@ def _servo_joint_info(model) -> tuple[list[int], list[int], list[str]]:
         name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i)
         if name is None:
             continue
-        if i == 0 and "free" in name:
+        if model.jnt_type[i] == mujoco.mjtJoint.mjJNT_FREE:
             continue  # skip free joint
         if name.startswith("passive_"):
             continue
         qpos_addrs.append(int(model.jnt_qposadr[i]))
         dof_addrs.append(int(model.jnt_dofadr[i]))
         names.append(name)
-    # Sanity: should be 14
-    if len(names) != 14:
-        # If unexpected count, fall back to ACTION_JOINT_NAMES mapping by name search
-        # Try name-based lookup for expected names
-        fallback_qpos = []
-        fallback_dof = []
-        for n in ACTION_JOINT_NAMES:
-            try:
-                jid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, n)
-                if jid >= 0:
-                    fallback_qpos.append(int(model.jnt_qposadr[jid]))
-                    fallback_dof.append(int(model.jnt_dofadr[jid]))
-                else:
-                    raise ValueError
-            except Exception:
-                pass
-        if len(fallback_qpos) == 14:
-            return fallback_qpos, fallback_dof, ACTION_JOINT_NAMES
-    return qpos_addrs, dof_addrs, names
+    if len(names) != ACTION_DIM or set(names) != set(ACTION_JOINT_NAMES):
+        raise ValueError(
+            f"expected exactly the {ACTION_DIM} canonical servo joints, got {names}"
+        )
+
+    # Return canonical policy order even when a model interleaves passive
+    # backlash/wheel joints between the actuated joints.
+    by_name = {
+        name: (qpos, dof)
+        for name, qpos, dof in zip(names, qpos_addrs, dof_addrs)
+    }
+    ordered = [by_name[name] for name in ACTION_JOINT_NAMES]
+    return [item[0] for item in ordered], [item[1] for item in ordered], ACTION_JOINT_NAMES
 
 
 # ---------------------------------------------------------------------------
@@ -212,30 +209,22 @@ def _normalize_command(command) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     Accepts command as dict {"twist": (3,), "head": (4,), "body": (6,)} or flat array 13.
     Returns (twist3, head4, body6) as float32 arrays.
     """
+    def exact(value, size: int, label: str) -> np.ndarray:
+        result = np.asarray(value, dtype=np.float32).reshape(-1)
+        if result.size != size:
+            raise ValueError(f"{label} must have {size} values, got {result.size}")
+        if not np.all(np.isfinite(result)):
+            raise ValueError(f"{label} contains non-finite values")
+        return result
+
     if isinstance(command, dict):
-        twist = np.asarray(command.get("twist", np.zeros(3)), dtype=np.float32).reshape(-1)
-        head = np.asarray(command.get("head", command.get("head_command", np.zeros(4))), dtype=np.float32).reshape(-1)
-        # body may be under "body" or "body_command"
-        body_src = command.get("body", command.get("body_command", np.zeros(6)))
-        body = np.asarray(body_src, dtype=np.float32).reshape(-1)
-        # Pad/truncate
-        if twist.size != 3:
-            twist = np.resize(twist, 3)
-        if head.size != 4:
-            head = np.resize(head, 4)
-        if body.size != 6:
-            body = np.resize(body, 6)
-        return twist.astype(np.float32), head.astype(np.float32), body.astype(np.float32)
-    else:
-        arr = np.asarray(command, dtype=np.float32).reshape(-1)
-        if arr.size == 61:
-            # caller passed full obs? not command
-            raise ValueError("command should be 3+4+6=13 dims, got 61")
-        if arr.size >= 13:
-            # assume flat [twist3, head4, body6]
-            return arr[0:3].astype(np.float32), arr[3:7].astype(np.float32), arr[7:13].astype(np.float32)
-        # zero fallback
-        return np.zeros(3, dtype=np.float32), np.zeros(4, dtype=np.float32), np.zeros(6, dtype=np.float32)
+        twist = exact(command.get("twist", np.zeros(3)), 3, "twist")
+        head = exact(command.get("head", command.get("head_command", np.zeros(4))), 4, "head")
+        body = exact(command.get("body", command.get("body_command", np.zeros(6))), 6, "body")
+        return twist, head, body
+
+    arr = exact(command, 13, "command")
+    return arr[0:3], arr[3:7], arr[7:13]
 
 
 def build_observation(
@@ -266,48 +255,22 @@ def build_observation(
 
     # 2. projected_gravity (3)
     # root quat from free joint qpos[3:7] as [w,x,y,z]
-    try:
-        quat = np.array(data.qpos[3:7], dtype=np.float64)  # w,x,y,z
-        # Ensure normalized (MuJoCo keeps normalized)
-        n = np.linalg.norm(quat)
-        if n > 1e-8:
-            quat = quat / n
-        proj_grav = projected_gravity_from_quat(quat)  # (3,)
-    except Exception:
-        proj_grav = np.array([0.0, 0.0, -1.0], dtype=np.float32)
+    quat = np.asarray(data.qpos[3:7], dtype=np.float64)  # w,x,y,z
+    if quat.shape != (4,):
+        raise ValueError("model must expose a free-joint quaternion")
+    # Ensure normalized (MuJoCo keeps normalized)
+    n = np.linalg.norm(quat)
+    if n <= 1e-8:
+        raise ValueError("free-joint quaternion is zero")
+    proj_grav = projected_gravity_from_quat(quat / n)  # (3,)
 
     # 3. joint_pos_rel (14) and 4. joint_vel_rel (14)
     qpos_addrs, dof_addrs, servo_names = _servo_joint_info(model)
-    # Validate servo order vs canonical; if mismatch, remap via name to canonical order
     if servo_names != ACTION_JOINT_NAMES:
-        # Remap DEFAULT_QPOS to discovered order vs canonical? We want obs order = canonical ACTION_JOINT_NAMES order.
-        # So we need to gather joint pos in canonical order.
-        # Build name->addr maps
-        name_to_qpos = {n: addr for n, addr in zip(servo_names, qpos_addrs)}
-        name_to_dof = {n: addr for n, addr in zip(servo_names, dof_addrs)}
-        # Now gather in canonical order
-        qpos_vals = []
-        qvel_vals = []
-        default_in_discovered_order = []
-        for idx, cname in enumerate(ACTION_JOINT_NAMES):
-            addr = name_to_qpos.get(cname)
-            dof = name_to_dof.get(cname)
-            if addr is None or dof is None:
-                # missing joint, fallback zero
-                qpos_vals.append(0.0)
-                qvel_vals.append(0.0)
-                default_in_discovered_order.append(float(DEFAULT_QPOS[idx]))
-            else:
-                qpos_vals.append(float(data.qpos[addr]))
-                qvel_vals.append(float(data.qvel[dof]))
-                default_in_discovered_order.append(float(DEFAULT_QPOS[idx]))
-        qpos_servo = np.array(qpos_vals, dtype=np.float32)
-        qvel_servo = np.array(qvel_vals, dtype=np.float32)
-        default_servo = np.array(default_in_discovered_order, dtype=np.float32)
-    else:
-        qpos_servo = np.array([data.qpos[a] for a in qpos_addrs], dtype=np.float32)
-        qvel_servo = np.array([data.qvel[d] for d in dof_addrs], dtype=np.float32)
-        default_servo = DEFAULT_QPOS
+        raise ValueError(f"unexpected servo order: {servo_names}")
+    qpos_servo = np.asarray([data.qpos[a] for a in qpos_addrs], dtype=np.float32)
+    qvel_servo = np.asarray([data.qvel[d] for d in dof_addrs], dtype=np.float32)
+    default_servo = DEFAULT_QPOS
 
     joint_pos_rel = qpos_servo - default_servo  # (14,)
     joint_vel_rel = qvel_servo  # default_joint_vel is 0; mjlab subtracts 0
@@ -321,9 +284,11 @@ def build_observation(
     if last_action is None:
         last_action_arr = np.zeros(14, dtype=np.float32)
     else:
-        last_action_arr = np.asarray(last_action, dtype=np.float32).reshape(-1)[:14]
-        if last_action_arr.size < 14:
-            last_action_arr = np.resize(last_action_arr, 14)
+        last_action_arr = np.asarray(last_action, dtype=np.float32).reshape(-1)
+        if last_action_arr.size != ACTION_DIM:
+            raise ValueError(f"last_action must have {ACTION_DIM} values, got {last_action_arr.size}")
+        if not np.all(np.isfinite(last_action_arr)):
+            raise ValueError("last_action contains non-finite values")
 
     # 6. commands 3+4+6
     if command is None:
@@ -377,10 +342,12 @@ class ObsBuilder:
         return obs
 
     def update_last_action(self, action: np.ndarray):
-        self.last_action[:] = np.asarray(action, dtype=np.float32).reshape(-1)[:14]
+        value = np.asarray(action, dtype=np.float32).reshape(-1)
+        if value.size != ACTION_DIM or not np.all(np.isfinite(value)):
+            raise ValueError(f"action must be finite and have {ACTION_DIM} values")
+        self.last_action[:] = value
 
 
 # Convenience for tests
 def get_default_qpos_dict() -> dict[str, float]:
     return {n: float(v) for n, v in zip(ACTION_JOINT_NAMES, DEFAULT_QPOS)}
-

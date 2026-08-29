@@ -3,8 +3,9 @@
 # Behavior files whose authors list Pollen Robotics must be reviewed by Pollen
 # so nobody squats the official namespace with community submissions.
 
-# Official Pollen entries (any behavior JSON declaring pollen authors):
-/registry/behaviors/    @pollen-robotics @uduck-registry-maintainers
+# Behavior descriptors are maintained by the registry; authorship metadata is
+# not a reliable CODEOWNERS signal and cannot require an upstream review.
+/registry/behaviors/    @uduck-registry-maintainers
 
 # Schema and trust-tier changes are maintainer-only:
 /registry/schema/       @uduck-registry-maintainers

@@ -5,6 +5,40 @@ import type { RegistryIndex } from "../registry/schema/behavior";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
+const FALLBACK_UPDATED_AT = "1970-01-01T00:00:00.000Z";
+
+/**
+ * Keep snapshot generation byte-for-byte stable. Release automation may set
+ * SOURCE_DATE_EPOCH when it intentionally wants to stamp a new index; local
+ * and CI compiles otherwise retain the checked-in snapshot timestamp.
+ */
+export function getDeterministicUpdatedAt(
+  outputPath = REGISTRY_OUT,
+  sourceDateEpoch = process.env.SOURCE_DATE_EPOCH,
+): string {
+  if (sourceDateEpoch != null) {
+    const seconds = Number(sourceDateEpoch);
+    if (!Number.isSafeInteger(seconds) || seconds < 0) {
+      throw new Error(`SOURCE_DATE_EPOCH must be a non-negative integer, got '${sourceDateEpoch}'`);
+    }
+    const date = new Date(seconds * 1000);
+    if (Number.isNaN(date.getTime())) {
+      throw new Error(`SOURCE_DATE_EPOCH is outside the supported date range: '${sourceDateEpoch}'`);
+    }
+    return date.toISOString();
+  }
+
+  try {
+    const existing = JSON.parse(fs.readFileSync(outputPath, "utf-8"));
+    if (typeof existing.updated_at === "string" && existing.updated_at.length > 0) {
+      return existing.updated_at;
+    }
+  } catch {
+    // A missing or malformed snapshot is handled by the stable epoch below.
+  }
+
+  return FALLBACK_UPDATED_AT;
+}
 
 export function generateRegistryIndex(): RegistryIndex {
   const { valid, behaviors, errors } = validateAllBehaviors();
@@ -12,7 +46,7 @@ export function generateRegistryIndex(): RegistryIndex {
     throw new Error(`Cannot compile registry due to validation errors:\n${errors.join("\n")}`);
   }
 
-  // Sort behaviors: verified_hardware first, then verified_simulation, then claimed_hardware, then alphabetical
+  // Sort behaviors by trust tier, then by display name and stable ID.
   const priorityMap: Record<string, number> = {
     verified_hardware: 1,
     claimed_hardware: 2,
@@ -24,12 +58,14 @@ export function generateRegistryIndex(): RegistryIndex {
     const pA = priorityMap[a.verification.status] ?? 99;
     const pB = priorityMap[b.verification.status] ?? 99;
     if (pA !== pB) return pA - pB;
-    return a.name.localeCompare(b.name);
+    if (a.name !== b.name) return a.name < b.name ? -1 : 1;
+    if (a.id === b.id) return 0;
+    return a.id < b.id ? -1 : 1;
   });
 
   const index: RegistryIndex = {
     version: "0.1.0",
-    updated_at: new Date().toISOString(),
+    updated_at: getDeterministicUpdatedAt(),
     count: behaviors.length,
     behaviors,
   };

@@ -77,8 +77,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nroulade = \"/opt/robot/policies/roulade.onnx\"",
-    "cli_command": "duckctl action roulade",
-    "python_infer_command": "uv run scripts/infer_policy.py --roulade roulade.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nroulade = \"/opt/robot/policies/roulade.onnx\""
   }
 }

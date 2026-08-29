@@ -8,6 +8,8 @@ on:
   # NOTE: pull_request_target is deliberately NOT used anywhere in this repo.
   # PR jobs run in the pull_request sandbox: no secrets, read-only token.
 
+permissions: {}
+
 jobs:
   validate:
     name: Validate Registry & Artifacts
@@ -15,6 +17,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -26,10 +30,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
-      # Byte-identical to `uduck validate`: schema, contract invariants, and the
-      # tier gate (verified tiers require vendored bytes with matching sha256).
+      # Byte-identical to `uduck validate`: schema, contract invariants, and
+      # recorded artifact metadata (the local cache is optional).
       - name: Validate Registry Schema, Invariants & Artifacts
         run: pnpm validate
 
@@ -50,4 +54,3 @@ jobs:
 
       - name: Build Web Application
         run: pnpm build
-

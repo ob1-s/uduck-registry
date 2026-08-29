@@ -18,16 +18,17 @@ interface FilterBarProps {
 const categories = [
   { id: "all", label: "Any category" },
   { id: "locomotion", label: "Locomotion" },
-  { id: "roller-skate", label: "Rollers" },
-  { id: "agility-tricks", label: "Tricks" },
+  { id: "roller-skate", label: "Roller skating" },
+  { id: "agility-tricks", label: "Agility & tricks" },
   { id: "manipulation", label: "Manipulation" },
   { id: "recovery", label: "Recovery" },
+  { id: "experimental", label: "Experimental" },
 ];
 
 const verifications = [
   { id: "all", label: "Any status" },
   { id: "verified_hardware", label: "Hardware verified" },
-  { id: "verified_simulation", label: "Simulation tested" },
+  { id: "verified_simulation", label: "Simulation verified" },
   { id: "claimed_hardware", label: "Hardware claimed" },
   { id: "community_experimental", label: "Experimental" },
 ];
@@ -75,6 +76,7 @@ export function FilterBar({
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search moves, tasks, or authors"
           aria-label="Search behaviors by name, tag, author, or task"
+          aria-controls="behavior-results"
         />
         {search && (
           <button className="search-clear" onClick={() => setSearch("")} type="button" aria-label="Clear search">
@@ -83,22 +85,23 @@ export function FilterBar({
         )}
       </label>
 
-      <div className="filter-compact-row" aria-label="Filter behaviors">
-        <label>
+      <fieldset className="filter-compact-row" aria-label="Filter behaviors">
+        <legend className="sr-only">Filter behaviors</legend>
+        <label htmlFor="category-filter">
           <span className="sr-only">Category</span>
-          <select className="filter-select" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter by category">
+          <select id="category-filter" className="filter-select" value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter by category">
             {categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
-        <label>
+        <label htmlFor="verification-filter">
           <span className="sr-only">Verification status</span>
-          <select className="filter-select" value={selectedVerification} onChange={(event) => setSelectedVerification(event.target.value)} aria-label="Filter by verification status">
+          <select id="verification-filter" className="filter-select" value={selectedVerification} onChange={(event) => setSelectedVerification(event.target.value)} aria-label="Filter by verification status">
             {verifications.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
-        <label>
+        <label htmlFor="accessory-filter">
           <span className="sr-only">Required accessories</span>
-          <select className="filter-select" value={selectedAccessory} onChange={(event) => setSelectedAccessory(event.target.value)} aria-label="Filter by required accessories">
+          <select id="accessory-filter" className="filter-select" value={selectedAccessory} onChange={(event) => setSelectedAccessory(event.target.value)} aria-label="Filter by required accessories">
             {accessories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
@@ -106,7 +109,7 @@ export function FilterBar({
           <strong>{filteredCount}</strong> of {totalCount}
           {hasActiveFilters && <button type="button" className="reset-link" onClick={clearAllFilters}>Reset</button>}
         </div>
-      </div>
+      </fieldset>
     </div>
   );
 }

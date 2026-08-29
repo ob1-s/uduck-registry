@@ -7,9 +7,9 @@ Do not assume one license covers everything.
 1. Registry code, schemas, CLI, site, and tooling (Apache-2.0)
 --------------------------------------------------------------
 Everything in `registry/`, `scripts/`, `src/`, `sim/`, `.github/`, and
-`public/` — i.e. all code authored in this repository, including the code in
-the upstream `pollen-robotics/microduck_rl` training repository — is licensed
-under the Apache License, Version 2.0 (see LICENSE).
+`public/` that was authored for this repository is licensed under the Apache
+License, Version 2.0 (see LICENSE). The upstream training repository is linked
+as a source; its files are not copied into this repository.
 
 2. 3D model files (MJCF / meshes) — CC BY-SA-NC
 ------------------------------------------------
@@ -20,7 +20,7 @@ writing. This NOTICE does not grant any license to those files.
 
 Why this matters for sim verification
 -------------------------------------
-Our `sim_verified` CI tier depends on the official MJCF. Because the MJCF is
+Our `verified_simulation` CI tier depends on the official MJCF. Because the MJCF is
 potentially NC-licensed:
 
   - We DO NOT re-host, redistribute, or commit MJCF/mesh files in this repo.
@@ -42,3 +42,9 @@ Each behavior JSON declares its own `license` field. Unless stated otherwise
 in the entry, policies trained with the Apache-2.0 `microduck_rl` code are
 treated as Apache-2.0. Third-party community policies keep whatever license
 their authors declare; the registry records it, it does not relicense it.
+
+Training-code licensing does not automatically grant redistribution rights for
+trained weights. The registry therefore links canonical ONNX files and keeps
+any `vendor/policies/` files as an optional local cache unless the artifact's
+owner has clearly authorized redistribution. Contributors are responsible for
+the license and attribution of their policy and media.

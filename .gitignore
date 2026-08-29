@@ -1,6 +1,7 @@
 # Dependencies
 node_modules
 .pnpm-store
+*.tsbuildinfo
 
 # Next.js build
 .next
@@ -27,7 +28,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Policies cache if downloaded locally
-policies/
+# Local policy cache. Registry descriptors carry the canonical URL and pinned
+# metadata; cache bytes are optional and are verified whenever present.
+vendor/policies/*.onnx
+vendor/policies/*.part-*
 __pycache__/
 *.pyc

@@ -15,8 +15,8 @@ export default function SpecificationPage() {
         <div className="doc-intro"><p>Keeping this shape fixed makes behaviors swappable. Normalization is baked into the ONNX graph — no external stats.</p></div>
         <section className="surface doc-section">
           <h2><Activity size={17} aria-hidden="true" /> 01 / Observation vector</h2>
-          <p>61-D input in <a href="https://github.com/pollen-robotics/microduck_rl/blob/develop/scripts/infer_policy.py#L589" target="_blank" rel="noreferrer">Pollen canonical order (infer_policy.py:589)</a>: base_ang_vel 3 · projected_gravity 3 · joint_pos 14 · joint_vel 14 · last_action 14 · twist 3 + head 4 + body 6.</p>
-          <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>Zero-pad missing command slices to 61-D; do not truncate. Baked normalizer inside ONNX — no external mean/var.</span></div>
+          <p>61-D input in <a href="https://github.com/pollen-robotics/microduck_rl/blob/develop/scripts/infer_policy.py#L589" target="_blank" rel="noopener noreferrer">Pollen canonical order (infer_policy.py:589)</a>: base_ang_vel 3 · projected_gravity 3 · joint_pos 14 · joint_vel 14 · last_action 14 · twist 3 + head 4 + body 6.</p>
+          <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>Populate all 61 values in this order. Use zero command values only for a neutral task input; do not truncate the vector. The normalizer is baked into the ONNX graph.</span></div>
         </section>
         <section className="surface doc-section">
           <h2><Gauge size={17} aria-hidden="true" /> 02 / Action vector</h2>
@@ -30,7 +30,7 @@ export default function SpecificationPage() {
         </section>
         <section className="surface doc-section">
           <h2><ShieldCheck size={17} aria-hidden="true" /> 03 / Actuator model & timing</h2>
-          <p>50 Hz control loop using Pollen’s BAM M6 model for the XL330 Dynamixel. See <a href="https://github.com/pollen-robotics/microduck_rl" target="_blank" rel="noreferrer">microduck_rl</a> for full motor, contact and randomization details.</p>
+          <p>50 Hz control loop using Pollen’s BAM M6 model for the XL330 Dynamixel. See <a href="https://github.com/pollen-robotics/microduck_rl" target="_blank" rel="noopener noreferrer">microduck_rl</a> for full motor, contact and randomization details.</p>
         </section>
         <section className="surface doc-section">
           <h2><Terminal size={17} aria-hidden="true" /> 04 / Runtime priority</h2>

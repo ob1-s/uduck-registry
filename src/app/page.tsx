@@ -21,7 +21,7 @@ export default function HomePage() {
             <div className="button-row">
               <a href="#catalog" className="button-primary">Choose a behavior <ArrowRight size={15} aria-hidden="true" /></a>
             </div>
-            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} marked hardware-tested</p>
+            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} marked hardware-verified</p>
           </div>
 
           <div className="hero-art" aria-hidden="true">
@@ -42,22 +42,22 @@ export default function HomePage() {
           {[0, 1].map((copy) => (
             <div className="ticker-group" key={copy}>
               <span>{stats.total} moves in the shelf</span><i>◆</i>
-              <span>{stats.hardware} hardware verified</span><i>◆</i>
-              <span>{stats.community} community</span><i>◆</i>
+              <span>{stats.hardware} marked hardware-verified</span><i>◆</i>
+              <span>{stats.community} experimental</span><i>◆</i>
               <span>standard+rollers+ball</span><i>◆</i>
               <span>ONNX</span><i>◆</i>
-              <Link href="/docs/specification">contract</Link><i>◆</i>
+              <span>contract</span><i>◆</i>
             </div>
           ))}
         </div>
       </div>
 
-      <section id="catalog" className="section catalog-section">
+      <section id="catalog" className="section catalog-section" aria-labelledby="catalog-heading">
         <div className="site-container">
           <div className="section-heading catalog-heading">
             <div>
               <span className="eyebrow">Behavior library</span>
-              <h2>Choose a starting point.</h2>
+              <h2 id="catalog-heading">Choose a starting point.</h2>
               <p>Search the shelf, then open a move for its contract and run instructions.</p>
             </div>
             <span className="section-note">{stats.total} moves</span>

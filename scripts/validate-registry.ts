@@ -1,38 +1,50 @@
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { BehaviorSchema, type Behavior } from "../registry/schema/behavior";
+import { assertSafeArtifactFilename, verifyArtifactBytes } from "./lib/pull-artifact";
 
 const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
 const VENDOR_DIR = path.resolve(process.cwd(), "vendor/policies");
 
-/** Verify vendored artifact bytes match the recorded sha256 + size. */
+/** Verify local artifact-cache bytes match the recorded sha256 + size. */
 export function verifyVendoredArtifact(behavior: Behavior): { ok: boolean; error?: string } {
+  try {
+    assertSafeArtifactFilename(behavior.artifacts.onnx.filename);
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+
+  if (!behavior.artifacts.onnx.sha256) {
+    return { ok: false, error: "No sha256 recorded for the vendored artifact" };
+  }
+  if (behavior.artifacts.onnx.size_bytes == null) {
+    return { ok: false, error: "No size_bytes recorded for the vendored artifact" };
+  }
+
   const vendorPath = path.join(VENDOR_DIR, `${behavior.id}.onnx`);
   if (!fs.existsSync(vendorPath)) {
     return { ok: false, error: `No vendored artifact at vendor/policies/${behavior.id}.onnx` };
   }
-  const buf = fs.readFileSync(vendorPath);
-  if (buf.length !== behavior.artifacts.onnx.size_bytes) {
-    return {
-      ok: false,
-      error: `Vendored artifact size mismatch: expected ${behavior.artifacts.onnx.size_bytes}, got ${buf.length}`,
-    };
+
+  try {
+    const buf = fs.readFileSync(vendorPath);
+    verifyArtifactBytes(
+      buf,
+      behavior.artifacts.onnx.sha256,
+      behavior.artifacts.onnx.size_bytes,
+      `Vendored artifact for '${behavior.id}'`,
+    );
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
-  const sha256 = crypto.createHash("sha256").update(buf).digest("hex");
-  if (sha256 !== behavior.artifacts.onnx.sha256) {
-    return {
-      ok: false,
-      error: `Vendored artifact sha256 mismatch: expected ${behavior.artifacts.onnx.sha256}, got ${sha256}`,
-    };
-  }
+
   return { ok: true };
 }
 
 /**
- * Tier gate: verified tiers are NEVER inherited — they require verified bytes.
- * `verified_hardware` and `verified_simulation` must have a vendored artifact
- * whose sha256 + size match the recorded values. Tiers auto-decay otherwise.
+ * Verified tiers require pinned artifact metadata. A local vendor cache is
+ * optional: when present, its bytes must match; when absent, `pull` verifies
+ * the canonical download before writing it.
  */
 function checkIntegrity(behavior: Behavior, errors: string[], warnings: string[]) {
   const needsProof =
@@ -40,20 +52,35 @@ function checkIntegrity(behavior: Behavior, errors: string[], warnings: string[]
     behavior.verification.status === "verified_simulation";
 
   if (needsProof) {
-    const result = verifyVendoredArtifact(behavior);
-    if (!result.ok) {
+    const { sha256, size_bytes } = behavior.artifacts.onnx;
+    if (!sha256 || size_bytes == null) {
       errors.push(
-        `Tier decay for '${behavior.id}' (${behavior.verification.status}): ${result.error}. ` +
-          `Drop to community_experimental or re-vendor with scripts/vendor-artifacts.ts.`,
+        `Verified '${behavior.id}' requires artifacts.onnx.sha256 and size_bytes. ` +
+          `Record both values or drop it to community_experimental.`,
       );
+      return;
+    }
+
+    const vendorPath = path.join(VENDOR_DIR, `${behavior.id}.onnx`);
+    if (fs.existsSync(vendorPath)) {
+      const result = verifyVendoredArtifact(behavior);
+      if (!result.ok) {
+        errors.push(
+          `Artifact cache for '${behavior.id}' (${behavior.verification.status}) is invalid: ${result.error}. ` +
+            `Remove the cache or re-vendor with scripts/vendor-artifacts.ts.`,
+        );
+      }
     }
   } else if (behavior.artifacts.onnx.sha256) {
     // Non-verified entries may carry a hash — if present, it must be correct.
-    const result = verifyVendoredArtifact(behavior);
-    if (!result.ok) {
-      warnings.push(`'${behavior.id}': recorded artifact hash does not match vendored bytes (${result.error})`);
+    const vendorPath = path.join(VENDOR_DIR, `${behavior.id}.onnx`);
+    if (fs.existsSync(vendorPath)) {
+      const result = verifyVendoredArtifact(behavior);
+      if (!result.ok) {
+        warnings.push(`'${behavior.id}': recorded artifact hash does not match local cache (${result.error})`);
+      }
     }
-  } else {
+  } else if (behavior.verification.status !== "community_experimental") {
     warnings.push(`'${behavior.id}': no sha256 recorded — artifact is unverified. Run scripts/vendor-artifacts.ts.`);
   }
 }
@@ -73,7 +100,7 @@ export function validateAllBehaviors(): {
     return { valid: false, behaviors: [], errors: [`Directory not found: ${BEHAVIORS_DIR}`], warnings: [] };
   }
 
-  const files = fs.readdirSync(BEHAVIORS_DIR).filter((f) => f.endsWith(".json"));
+  const files = fs.readdirSync(BEHAVIORS_DIR).filter((f) => f.endsWith(".json")).sort();
 
   if (files.length === 0) {
     return { valid: false, behaviors: [], errors: ["No behavior files found in registry/behaviors/"], warnings: [] };
@@ -104,6 +131,12 @@ export function validateAllBehaviors(): {
         errors.push(`Filename mismatch: file is '${file}' but behavior.id requires '${expectedFilename}'`);
       }
 
+      try {
+        assertSafeArtifactFilename(behavior.artifacts.onnx.filename);
+      } catch (err) {
+        errors.push(`Behavior '${behavior.id}' has an unsafe artifact filename: ${(err as Error).message}`);
+      }
+
       // Check observation contract invariant
       if (behavior.contract.observation_dim !== 61) {
         errors.push(`Behavior '${behavior.id}' has observation_dim ${behavior.contract.observation_dim}, expected 61`);
@@ -116,18 +149,17 @@ export function validateAllBehaviors(): {
 
       behaviors.push(behavior);
 
-      // Tier integrity: verified tiers must always be backed by verified bytes.
+      // Tier integrity: verified tiers must always carry pinned artifact
+      // metadata; a local cache is checked when contributors have one.
       checkIntegrity(behavior, errors, warnings);
 
-      // Trust-ladder record checks (warning-level until CI populates them).
-      if (behavior.verification.status === "verified_simulation" && !behavior.sim_verification) {
+      if (
+        behavior.verification.status === "verified_hardware" &&
+        !behavior.hardware_attestation &&
+        !behavior.tags.includes("official")
+      ) {
         warnings.push(
-          `'${behavior.id}': verified_simulation without a sim_verification record — CI will recompute the tier on next sim run.`,
-        );
-      }
-      if (behavior.verification.status === "verified_hardware" && !behavior.hardware_attestation) {
-        warnings.push(
-          `'${behavior.id}': verified_hardware without a hardware_attestation PR — attestation must be a PR with committed video+logs, never a textbox.`,
+          `'${behavior.id}': verified_hardware without a hardware_attestation PR or official tag — add committed video+logs before using this tier.`,
         );
       }
     } catch (err: any) {

@@ -80,8 +80,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/BEST_alpha_walking.onnx\"",
-    "cli_command": "duckctl policy load walk BEST_alpha_walking.onnx",
-    "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_alpha_walking.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/BEST_alpha_walking.onnx\""
   }
 }

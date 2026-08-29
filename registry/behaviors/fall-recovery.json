@@ -81,8 +81,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/BEST_alpha_stand.onnx\"",
-    "cli_command": "duckctl policy load stand BEST_alpha_stand.onnx",
-    "python_infer_command": "uv run scripts/infer_policy.py --standing BEST_alpha_stand.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/BEST_alpha_stand.onnx\""
   }
 }

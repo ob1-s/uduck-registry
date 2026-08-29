@@ -22,11 +22,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "claimed_hardware",
-    "summary": "Reported running on Raspberry Pi microduck_runtime port controlling Dynamixel XL330 bus directly.",
+    "status": "community_experimental",
+    "summary": "Community reference only; the published artifact exposes a legacy 51-D input and is not compatible with the registry contract.",
     "hardware_target": "MicroDuck Raspberry Pi SBC / Dynamixel XL330",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Community policy. Tested on custom Raspberry Pi controller stack."
+    "notes": "Not deployable through the standard 61-D runtime. Replace the artifact with a 61-D ONNX model and re-test before claiming hardware compatibility."
   },
   "contract": {
     "observation_dim": 61,
@@ -60,9 +60,7 @@
     "onnx": {
       "filename": "standing_body_control.onnx",
       "url": "https://raw.githubusercontent.com/TommyZihao/microduck_runtime/main/policies/standing_body_control.onnx",
-      "size_bytes": 772527,
-      "baked_normalizer": true,
-      "sha256": "15e3d52a19ffe9c5872f1ec50d1319d4104e6ad05723549f18f2a656dad70e53"
+      "baked_normalizer": true
     }
   },
   "media": {
@@ -77,8 +75,6 @@
     "task_id": "Mjlab-StandUp-Flat-MicroDuck"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/standing_body_control.onnx\"",
-    "cli_command": "duckctl policy load stand standing_body_control.onnx",
-    "python_infer_command": "uv run scripts/infer_policy.py --standing standing_body_control.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nenabled = false"
   }
 }

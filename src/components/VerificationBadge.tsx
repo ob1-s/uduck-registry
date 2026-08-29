@@ -11,7 +11,7 @@ interface VerificationBadgeProps {
 const labels: Record<VerificationStatus, string> = {
   verified_hardware: "Hardware verified",
   claimed_hardware: "Hardware claimed",
-  verified_simulation: "Simulation tested",
+  verified_simulation: "Simulation verified",
   community_experimental: "Experimental",
 };
 
@@ -39,6 +39,7 @@ export function VerificationBadge({
   return (
     <span
       className={`status-badge ${tone} ${size === "sm" ? "status-badge-sm" : ""}`}
+      aria-label={summary ? `${labels[status]}: ${summary}` : labels[status]}
       title={showTooltip ? summary || labels[status] : undefined}
     >
       <Icon size={size === "sm" ? 11 : 13} aria-hidden="true" />

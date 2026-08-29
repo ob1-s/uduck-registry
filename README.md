@@ -2,7 +2,7 @@
 
 > **Community behaviors for MicroDuck** · A lightweight, discoverable index for neural policies, training environments, and physical artifacts.
 
-[![CI](https://github.com/uduck-registry/uduck-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/uduck-registry/uduck-registry/actions)
+[![CI](https://github.com/ob1-s/uduck-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/ob1-s/uduck-registry/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Contract: 61D Obs / 50Hz](https://img.shields.io/badge/Contract-61D%20Obs%20%2F%2050Hz-amber.svg)](#contract-specification)
 
@@ -15,10 +15,10 @@
 MicroDuck is a ~800g, 25cm biped robot that runs neural reinforcement learning policies at 50 Hz on an onboard Rockchip RK3566 SBC. As researchers and enthusiasts train new walking gaits, fall recovery reflexes, acrobatic somersaults, and roller skating behaviors, finding and running them on physical hardware should be effortless.
 
 Inspired by shadcn-style component registries, **uDuck makes the MicroDuck ecosystem immediately discoverable without duplicating upstream infrastructure**:
-* **Thin index over canonical truth**: We point directly to upstream Hugging Face Spaces, GitHub releases, and training repos rather than re-hosting multi-megabyte ONNX files.
-* **Strict physical contracts**: Every behavior indexes its exact observation contract (61-D), joint actuation mapping (14 Dynamixel XL330 servos), and BAM actuator model requirements.
+* **Small index over canonical truth**: Descriptors point to upstream Hugging Face Spaces, GitHub releases, and training repos. Verified artifacts record their SHA-256 and byte size; `vendor/policies/` is an optional local cache for offline work and simulation.
+* **Strict physical contracts**: Every behavior indexes its exact observation contract (61-D), 14-joint policy action mapping, and BAM actuator model requirements. The separate beak actuator is outside the policy vector.
 * **Uncompromising verification semantics**: Badges distinguish behaviors tested and filmed on real physical MicroDuck hardware from simulation-only checkpoints.
-* **Drop-in deployment**: Copy-paste snippets directly into `/etc/robot/robotd.toml` to hot-swap gaits on your robot in seconds.
+* **Drop-in deployment**: Copy-paste supported policy snippets into `/etc/robot/robotd.toml`, then restart `robotd`.
 
 ---
 
@@ -30,7 +30,7 @@ Because these policies control physical hardware with real actuators and batteri
 |---|---|---|
 | **Verified Hardware** | ![Verified Hardware](https://img.shields.io/badge/Status-Verified_Hardware-emerald) | Confirmed executed on physical MicroDuck hardware with recorded video proof or public hardware release. |
 | **Claimed Hardware** | ![Claimed Hardware](https://img.shields.io/badge/Status-Claimed_Hardware-amber) | Author reports successful physical robot deployment; independent community verification pending. |
-| **Simulation Tested** | ![Simulation Tested](https://img.shields.io/badge/Status-Simulation_Tested-cyan) | Trained and verified in MuJoCo / `mjlab` simulation across thousands of parallel environments with BAM actuator physics. |
+| **Simulation Verified** | ![Simulation Verified](https://img.shields.io/badge/Status-Simulation_Verified-cyan) | Passed the registry's recorded MuJoCo simulation for the declared task and pinned model. |
 | **Experimental** | ![Experimental](https://img.shields.io/badge/Status-Experimental-purple) | Community work-in-progress, new embodiment variation, or conceptual gait. |
 
 ---
@@ -44,18 +44,18 @@ All policies indexed in uDuck adhere to the unified ecosystem standard:
   - Twist Command (3-D): Operator intent `[vx, vy, yaw_rate]`.
   - Head Pose Command (4-D): Active neck/head target orientations `[neck_pitch, head_pitch, head_yaw, head_roll]`.
   - Body Pose Command (6-D): Torso 6-DOF offset `[tx, ty, tz, roll, pitch, yaw]`.
-- **Action Vector (14 Servos)**:
+- **Action Vector (14 policy joints)**:
   - Left Leg (0–4): `hip_yaw`, `hip_roll`, `hip_pitch`, `knee`, `ankle`.
   - Neck & Head (5–8): `neck_pitch`, `head_pitch`, `head_yaw`, `head_roll`.
   - Right Leg (9–13): `hip_yaw`, `hip_roll`, `hip_pitch`, `knee`, `ankle`.
-- **Control Frequency**: 50 Hz (0.005s MuJoCo timestep × 4 decimation).
+- **Control Frequency**: 50 Hz (0.005s MuJoCo physics timestep × 4 decimation).
 - **Actuator Physics**: Dynamixel XL330 modeled via Rhoban BAM M6 voltage control law, back-EMF, and dynamic voltage sag.
 
 ---
 
 ## Seeded Behaviors
 
-uDuck Registry ships populated with 16 legitimate behaviors:
+uDuck Registry ships populated with 16 indexed behaviors:
 
 1. `alpha-walking` — **Alpha Dynamic Walk** *(Pollen Robotics · Verified Hardware)*
 2. `fall-recovery` — **Dynamic Fall Recovery** *(Pollen Robotics · Verified Hardware)*
@@ -66,13 +66,13 @@ uDuck Registry ships populated with 16 legitimate behaviors:
 7. `ball-kick-right` — **Impulse Ball Kick (Right Foot)** *(Pollen Robotics · Verified Hardware)*
 8. `roller-drive` — **Roller Skate Velocity Drive** *(Pollen Robotics · Verified Hardware)*
 9. `roller-crouch` — **Roller Blade Crouch Glide** *(Pollen Robotics · Verified Hardware)*
-10. `roller-swizzle` — **Classic Swizzle Skating** *(Pollen Robotics · Sim Tested)*
-11. `roller-slope` — **Roller Slope Descent** *(Pollen Robotics · Sim Tested)*
-12. `spin-in-place` — **In-Place Roller Spin** *(Pollen Robotics · Sim Tested)*
-13. `rough-terrain-walk` — **Rough Terrain Adaptive Gait** *(Pollen Robotics · Sim Tested)*
-14. `backlash-walking` — **Backlash-Compensated Walking** *(Pollen Robotics · Sim Tested)*
-15. `waddle-locomotion` — **Waddle Custom Locomotion** *(Nick Koenig · Sim Tested)*
-16. `standing-body-control` — **Standing 6-DOF Body Pose Controller** *(Tommy Zihao · Claimed Hardware)*
+10. `roller-swizzle` — **Classic Swizzle Skating** *(Pollen Robotics · Experimental)*
+11. `roller-slope` — **Roller Slope Descent** *(Pollen Robotics · Experimental)*
+12. `spin-in-place` — **In-Place Roller Spin** *(Pollen Robotics · Experimental)*
+13. `rough-terrain-walk` — **Rough Terrain Adaptive Gait** *(Pollen Robotics · Experimental)*
+14. `backlash-walking` — **Backlash-Compensated Walking** *(Pollen Robotics · Experimental)*
+15. `waddle-locomotion` — **Waddle Custom Locomotion** *(Nick Koenig · Experimental)*
+16. `standing-body-control` — **Standing 6-DOF Body Pose Controller** *(Tommy Zihao · Experimental; legacy 51-D artifact)*
 
 ---
 
@@ -81,11 +81,12 @@ uDuck Registry ships populated with 16 legitimate behaviors:
 The entire registry is accessible via simple HTTP GET requests without an API key:
 
 ```bash
-# Fetch complete catalog JSON
-curl -s https://uduck.dev/registry.json | jq .
+# Fetch the generated catalog from GitHub
+curl -s https://raw.githubusercontent.com/ob1-s/uduck-registry/main/public/registry.json | jq .
 
-# Fetch single behavior manifest
-curl -s https://uduck.dev/api/behaviors/alpha-walking | jq .
+# Or serve `out/` from your deployment host and request:
+#   /registry.json
+#   /api/behaviors/alpha-walking
 ```
 
 ---
@@ -94,7 +95,7 @@ curl -s https://uduck.dev/api/behaviors/alpha-walking | jq .
 
 ```bash
 # Clone the repository
-git clone https://github.com/uduck-registry/uduck-registry.git
+git clone https://github.com/ob1-s/uduck-registry.git
 cd uduck-registry
 
 # Install dependencies
@@ -121,18 +122,18 @@ pnpm cli toml alpha-walking
 
 To run any policy from the registry on your MicroDuck:
 
-1. **Pull the ONNX model to the robot:**
+1. **Pull the pinned ONNX model:**
    ```bash
-   curl -L "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_walking.onnx" -o "/opt/robot/policies/BEST_alpha_walking.onnx"
+   pnpm cli pull alpha-walking /tmp/microduck-policies
    ```
 
-2. **Add to `/etc/robot/robotd.toml`:**
+2. **Copy the verified file to the robot and add its path to `/etc/robot/robotd.toml`:**
    ```toml
    [policy]
-   walk = "/opt/robot/policies/BEST_alpha_walking.onnx"
+   walk = "/home/radxa/my_walking.onnx"
    ```
 
-3. **Restart the onboard daemon:**
+3. **Reload the onboard daemon:**
    ```bash
    sudo systemctl restart robotd
    robotctl health
@@ -170,13 +171,13 @@ Apache License 2.0 for code (see [LICENSE](LICENSE)). 3D model files (MJCF/meshe
 
 Trust is computed, not claimed. How it works:
 
-**Artifact integrity** — Every verified behavior's ONNX is **vendored into this repo** (`vendor/policies/<id>.onnx`) with a recorded `sha256` + byte size. `uduck pull <id>` copies/downloads the artifact, hashes every byte, and refuses to write anything on mismatch. Artifact URLs are restricted to an HTTPS host allowlist (`huggingface.co`, `raw.githubusercontent.com`) — because hash-pinning a mutable URL (like a Gradio Space file) is false security.
+**Artifact integrity** — Every verified behavior's ONNX records a `sha256` + byte size. `uduck pull <id>` uses the optional local cache when available, otherwise downloads and verifies every byte before writing it. Artifact URLs are restricted to HTTPS on the two upstream hosts used by the seed data.
 
 **Submission** — `uduck submit my-behavior.json` uses GitHub device-flow auth (`public_repo` scope only) to fork → branch → commit → open a PR. If any auth step fails, it prints a prefilled manual PR URL: submission is never a dead end.
 
-**Sim verification CI** — `.github/workflows/sim-verify.yml` recomputes the `verified_simulation` tier on every artifact-byte change (never inherited): ONNX op-allowlist + graph-size static check, then a deterministic seeded headless MuJoCo rollout graded on travel/fall/stability. MJCF models are hash-gated (`sim/mjcf-pins.json`) before simulation — a mutable upstream model is never trusted. The job runs on `pull_request` (never `pull_request_target`), with no secrets, SHA-pinned actions, digest-pinned container, and hash-pinned wheels. It fails closed.
+**Sim verification CI** — `.github/workflows/sim-verify.yml` runs only for entries explicitly marked `verified_simulation`: a small ONNX compatibility check followed by the declared task's deterministic MuJoCo rollout. Hardware claims are not treated as simulation claims. The job runs on `pull_request` with no secrets and pinned simulation dependencies.
 
-**Trust ladder** — `community_experimental` < `claimed_hardware` < `verified_simulation` < `verified_hardware`. Tiers decay automatically: if a behavior's bytes change without re-verification, or its upstream artifact disappears, the validator drops it back to experimental. Hardware attestation is a PR with committed video + logs — never a textbox.
+**Trust ladder** — `community_experimental` < `claimed_hardware` < `verified_simulation` < `verified_hardware`. Tiers are explicit: simulation CI recomputes `verified_simulation`, while maintainers must downgrade entries when an artifact or hardware claim no longer holds. Hardware attestation is a PR with committed video + logs — never a textbox.
 
 Commands:
 ```bash
@@ -187,4 +188,4 @@ pnpm cli pull alpha-walking ./policies
 pnpm cli submit my-behavior.json
 ```
 
-Deliberately NOT built yet (see `KICKOFF.md`): upstream auto-sync bot, namespace UI, directory page — these wait until real external submissions exist.
+Deliberately NOT built yet: upstream auto-sync, publisher namespaces, and a package/update service. The current release is a static catalog plus CLI and PR workflow.

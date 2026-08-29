@@ -32,6 +32,9 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
       ...behavior.tags,
       ...behavior.authors.map((author) => author.name),
       behavior.sources.task_id || "",
+      behavior.category,
+      behavior.verification.status,
+      ...behavior.compatibility.accessories_required,
     ].some((value) => value.toLowerCase().includes(query));
   }), [accessory, category, initialBehaviors, search, verification]);
 
@@ -59,24 +62,26 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
         />
       </div>
 
-      {initialBehaviors.length === 0 ? (
-        <div className="empty-state" role="status">
-          <div className="empty-state-mark"><DuckMark size={42} /></div>
-          <h3>No moves yet</h3>
-          <p>Add the first behavior manifest to the registry.</p>
-        </div>
-      ) : filteredBehaviors.length > 0 ? (
-        <div className="behavior-grid">
-          {filteredBehaviors.map((behavior) => <BehaviorCard key={behavior.id} behavior={behavior} />)}
-        </div>
-      ) : (
-        <div className="empty-state" role="status">
-          <div className="empty-state-mark"><DuckMark size={42} /></div>
-          <h3>No moves match that search.</h3>
-          <p>Try another word or clear a filter.</p>
-          <button type="button" className="button-secondary" onClick={resetFilters}>Clear filters</button>
-        </div>
-      )}
+      <div id="behavior-results">
+        {initialBehaviors.length === 0 ? (
+          <div className="empty-state" role="status">
+            <div className="empty-state-mark"><DuckMark size={42} /></div>
+            <h3>No moves yet</h3>
+            <p>Add the first behavior record to the registry.</p>
+          </div>
+        ) : filteredBehaviors.length > 0 ? (
+          <div className="behavior-grid">
+            {filteredBehaviors.map((behavior) => <BehaviorCard key={behavior.id} behavior={behavior} />)}
+          </div>
+        ) : (
+          <div className="empty-state" role="status">
+            <div className="empty-state-mark"><DuckMark size={42} /></div>
+            <h3>No moves match that search.</h3>
+            <p>Try another word or clear a filter.</p>
+            <button type="button" className="button-secondary" onClick={resetFilters}>Clear filters</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

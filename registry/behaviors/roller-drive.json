@@ -57,7 +57,7 @@
     "terrain": [
       "flat"
     ],
-    "robotd_slot": "rollers"
+    "robotd_slot": "roller"
   },
   "artifacts": {
     "onnx": {
@@ -82,8 +82,6 @@
     "huggingface_space": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nmode = \"rollers\"\nroller_walk = \"/opt/robot/policies/BEST_roller.onnx\"",
-    "cli_command": "robotctl configure --mode rollers",
-    "python_infer_command": "uv run scripts/infer_policy.py --walking BEST_roller.onnx --new-cmd-obs"
+    "robotd_toml": "[policy]\nmode = \"roller\"\nwalk = \"/opt/robot/policies/BEST_roller.onnx\""
   }
 }

@@ -4,12 +4,12 @@ import path from "node:path";
 import { ArrowLeft, BookOpen, Code2 } from "lucide-react";
 
 export const metadata = {
-  title: "Manifest schema — uDuck Registry",
-  description: "The JSON schema used by uDuck behavior manifests.",
+  title: "Behavior schema — uDuck Registry",
+  description: "The JSON schema used by uDuck behavior records.",
 };
 
 const fields = [
-  ["id", "string · kebab-case", "The unique slug and matching manifest filename."],
+  ["id", "string · kebab-case", "The unique slug and matching behavior filename."],
   ["identity", "string · array · object", "Display and provenance: name, version, description, category, tags, authors, license, media, and sources."],
   ["verification", "object", "Status, target hardware, evidence, and optional simulation framework."],
   ["contract", "object", "Observation and action breakdowns, timing, actuator model, and scale."],
@@ -28,7 +28,7 @@ export default function SchemaPage() {
         <Link href="/" className="back-link"><ArrowLeft size={14} aria-hidden="true" /> Back to behaviors</Link>
         <header className="doc-header">
           <div className="doc-header-meta"><span className="doc-badge">JSON Schema · 2020–12</span><small>For contributors and tools</small></div>
-          <h1>A manifest with all the useful bits.</h1>
+          <h1>A behavior record with all the useful bits.</h1>
           <p>Every behavior is one JSON file. The schema keeps names, evidence, hardware details, and launch instructions easy to validate.</p>
         </header>
 

@@ -1,8 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BookOpen, Compass, GitFork } from "lucide-react";
 import { DuckMark } from "./DuckMark";
 
 export function Navbar() {
+  const pathname = usePathname() ?? "/";
+  const normalizedPathname = pathname.replace(/\/$/, "") || "/";
+  const isCurrent = (href: string) => href === "/"
+    ? normalizedPathname === "/"
+    : normalizedPathname === href || normalizedPathname.startsWith(`${href}/`);
+
   return (
     <header className="site-header">
       <div className="site-container nav-inner">
@@ -19,15 +28,15 @@ export function Navbar() {
         </Link>
 
         <nav className="nav-links" aria-label="Primary navigation">
-          <Link href="/" className="nav-link" aria-label="Explore behaviors">
+          <Link href="/" className="nav-link" aria-current={isCurrent("/") ? "page" : undefined}>
             <Compass size={15} aria-hidden="true" />
             <span>Explore</span>
           </Link>
-          <Link href="/docs/specification" className="nav-link" aria-label="Read the runtime contract">
+          <Link href="/docs/specification" className="nav-link" aria-current={isCurrent("/docs") ? "page" : undefined}>
             <BookOpen size={15} aria-hidden="true" />
             <span>Docs</span>
           </Link>
-          <Link href="/docs/contribute" className="nav-link" aria-label="Contribute a behavior">
+          <Link href="/docs/contribute" className="nav-link" aria-current={isCurrent("/docs/contribute") ? "page" : undefined}>
             <GitFork size={15} aria-hidden="true" />
             <span>Contribute</span>
           </Link>

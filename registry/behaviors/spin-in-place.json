@@ -27,7 +27,7 @@
     "summary": "Verified in mjlab simulation reaching up to 3.0 rad/s controlled yaw spin without loss of wheel ground contact.",
     "hardware_target": "MicroDuck v1 + Roller Skate Accessories",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Requires low-friction floor surface. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
+    "notes": "Requires low-friction floor surface. Artifact URL is dead (upstream moved); no vendored bytes available, so the verified_simulation tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -57,7 +57,7 @@
     "terrain": [
       "flat"
     ],
-    "robotd_slot": "rollers"
+    "robotd_slot": "roller"
   },
   "artifacts": {
     "onnx": {
@@ -76,8 +76,6 @@
     "task_id": "Mjlab-Spin-Flat-MicroDuck"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nroller_spin = \"/opt/robot/policies/roller_spin.onnx\"",
-    "cli_command": "duckctl action spin",
-    "python_infer_command": "uv run play Mjlab-Spin-Flat-MicroDuck"
+    "robotd_toml": "[policy]\nmode = \"roller\"\nwalk = \"/opt/robot/policies/roller_spin.onnx\""
   }
 }

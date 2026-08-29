@@ -1,8 +1,28 @@
 import { z } from "zod";
-import { isAllowedArtifactUrl } from "./allowlist";
+import {
+  GITHUB_USERNAME_PATTERN,
+  ID_PATTERN,
+  isAllowedArtifactUrl,
+  isAllowedMediaUrl,
+  isHttpsUrl,
+  MJCF_FILENAME_PATTERN,
+  ONNX_FILENAME_PATTERN,
+} from "./allowlist";
 
 /** Every object in the schema is strict — no coercion, no unknown keys. */
 const strict = <T extends z.ZodRawShape>(shape: T) => z.strictObject(shape);
+
+const NonEmptyStringSchema = z.string().min(1);
+const HttpsUrlSchema = z.string().url().refine(isHttpsUrl, {
+  message: "Must be a valid https:// URL without embedded credentials",
+});
+const MediaUrlSchema = z.string().refine(isAllowedMediaUrl, {
+  message: "Must be a valid https:// URL or a safe local asset path",
+});
+const SemverSchema = z
+  .string()
+  .regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/, "Must follow semver");
+const Sha256Schema = z.string().regex(/^[a-f0-9]{64}$/, "Must be a lowercase hex sha256");
 
 
 /**
@@ -44,9 +64,10 @@ export const RobotDSlotSchema = z.enum([
   "stand",
   "sitstand",
   "roulade",
-  "kick",
-  "groundpick",
-  "rollers",
+  "kick_left",
+  "kick_right",
+  "ground_pick",
+  "roller",
   "custom",
 ]);
 export type RobotDSlot = z.infer<typeof RobotDSlotSchema>;
@@ -54,129 +75,151 @@ export type RobotDSlot = z.infer<typeof RobotDSlotSchema>;
 export const TerrainSchema = z.enum(["flat", "rough", "slope", "any"]);
 export type Terrain = z.infer<typeof TerrainSchema>;
 
-export const BehaviorSchema = strict({
-  id: z.string().regex(/^[a-z0-9-]+$/, "Must be kebab-case slug"),
+export const SimVerificationSchema = strict({
+  mujoco_version: NonEmptyStringSchema,
+  mjcf_sha256: Sha256Schema,
+  seed: z.number().int().nonnegative(),
+  episode_length_s: z.number().positive(),
+  grade: z.enum(["pass", "fail"]),
+  travel_score: z.number().finite(),
+  stability_score: z.number().finite(),
+  fell: z.boolean(),
+  workflow_run_url: HttpsUrlSchema.optional(),
+  verified_at: z.string().datetime({ offset: true }),
+});
+
+export const HardwareAttestationSchema = strict({
+  pr_url: HttpsUrlSchema,
+  video_url: HttpsUrlSchema,
+  logs_path: NonEmptyStringSchema,
+  attested_at: z.string().datetime({ offset: true }),
+});
+
+const BehaviorInputSchema = strict({
+  id: z.string().regex(ID_PATTERN, "Must be a lowercase kebab-case slug"),
   name: z.string().min(2),
-  version: z.string().regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/, "Must follow semver"),
+  version: SemverSchema,
   description: z.string().min(10),
   details: z.string().optional(),
   category: BehaviorCategorySchema,
-  tags: z.array(z.string()).min(1),
+  tags: z.array(NonEmptyStringSchema).min(1),
   authors: z.array(
     strict({
-      name: z.string(),
-      affiliation: z.string().optional(),
-      github: z.string().optional(),
-      url: z.string().optional(),
+      name: NonEmptyStringSchema,
+      affiliation: NonEmptyStringSchema.optional(),
+      github: z.string().regex(GITHUB_USERNAME_PATTERN, "Must be a GitHub username").optional(),
+      url: HttpsUrlSchema.optional(),
     })
   ).min(1),
-  license: z.string().default("Apache-2.0"),
+  license: NonEmptyStringSchema,
 
   verification: strict({
     status: VerificationStatusSchema,
-    summary: z.string(),
-    hardware_target: z.string(), // e.g. "MicroDuck RK3566 Dev Board, Dynamixel XL330-M077"
-    sim_framework: z.string().optional(), // e.g. "mjlab (MuJoCo Warp) at 50 Hz"
-    notes: z.string().optional(),
+    summary: NonEmptyStringSchema,
+    hardware_target: NonEmptyStringSchema, // e.g. "MicroDuck RK3566 Dev Board, Dynamixel XL330-M077"
+    sim_framework: NonEmptyStringSchema.optional(), // e.g. "mjlab (MuJoCo Warp) at 50 Hz"
+    notes: NonEmptyStringSchema.optional(),
   }),
 
   /**
    * Sim-verification record. Required when status === "verified_simulation";
    * recomputed by CI on every artifact-byte change (tiers are never inherited).
    */
-  sim_verification: strict({
-    mujoco_version: z.string(), // exact pinned version, e.g. "3.2.4"
-    mjcf_sha256: z.string().regex(/^[a-f0-9]{64}$/, "Must be a hex sha256"), // hash of the pinned MJCF
-    seed: z.number().int().nonnegative(), // fixed rollout seed for determinism
-    episode_length_s: z.number().positive(),
-    grade: z.enum(["pass", "fail"]),
-    travel_score: z.number(),
-    stability_score: z.number(),
-    fell: z.boolean(),
-    workflow_run_url: z.string().url().optional(),
-    verified_at: z.string(), // ISO timestamp of the CI run that produced this record
-  }).optional(),
+  sim_verification: SimVerificationSchema.optional(),
 
   /** Hardware attestation = link to the PR carrying committed video + logs. Never a textbox. */
-  hardware_attestation: strict({
-    pr_url: z.string().url(),
-    video_url: z.string().url(),
-    logs_path: z.string(),
-    attested_at: z.string(),
-  }).optional(),
+  hardware_attestation: HardwareAttestationSchema.optional(),
 
   contract: strict({
-    observation_dim: z.number().int().positive().default(61),
+    observation_dim: z.literal(61),
     observation_breakdown: strict({
-      proprioception: z.number().int().default(48),
-      twist: z.number().int().default(3),
-      head_pose: z.number().int().default(4),
-      body_pose: z.number().int().default(6),
+      proprioception: z.literal(48),
+      twist: z.literal(3),
+      head_pose: z.literal(4),
+      body_pose: z.literal(6),
     }),
-    action_dim: z.number().int().positive().default(14),
+    action_dim: z.literal(14),
     action_breakdown: strict({
-      left_leg: z.number().int().default(5),
-      neck_head: z.number().int().default(4),
-      right_leg: z.number().int().default(5),
+      left_leg: z.literal(5),
+      neck_head: z.literal(4),
+      right_leg: z.literal(5),
     }),
-    control_frequency_hz: z.number().positive().default(50),
-    decimation: z.number().int().positive().default(4),
-    actuator_model: z.string().default("Dynamixel XL330 (BAM M6 actuator physics)"),
-    action_scale: z.number().default(1.0),
+    control_frequency_hz: z.literal(50),
+    decimation: z.number().int().positive(),
+    actuator_model: NonEmptyStringSchema,
+    action_scale: z.number().finite(),
   }),
 
   compatibility: strict({
-    robot_model: RobotModelSchema.default("microduck-standard"),
-    mjcf_model: z.string(), // e.g. "robot_walk.xml" or "robot_allcollisions.xml"
-    accessories_required: z.array(z.string()).default([]),
-    terrain: z.array(TerrainSchema).default(["flat"]),
-    robotd_slot: RobotDSlotSchema.default("walk"),
+    robot_model: RobotModelSchema,
+    mjcf_model: z.string().regex(MJCF_FILENAME_PATTERN, "Must be an MJCF filename"),
+    accessories_required: z.array(NonEmptyStringSchema),
+    terrain: z.array(TerrainSchema).min(1),
+    robotd_slot: RobotDSlotSchema,
   }),
 
   artifacts: strict({
     onnx: strict({
-      filename: z.string(),
-      // Canonical URL must be HTTPS on the host allowlist; the vendored bytes
-      // in vendor/policies/<id>.onnx are the source of truth.
+      filename: z.string().regex(ONNX_FILENAME_PATTERN, "Must be a safe .onnx filename"),
+      // Canonical URL must be HTTPS on the host allowlist. Hash and size pin
+      // the bytes pulled from that URL; a local vendor cache is optional.
       url: z.string().refine(isAllowedArtifactUrl, {
         message: `Must be an https:// URL on the allowlist (huggingface.co, raw.githubusercontent.com)`,
       }),
       // Required in practice for verified_* tiers (enforced by the tier gate in
       // validate-registry.ts); optional for experimental entries with dead URLs.
       size_bytes: z.number().int().positive().optional(),
-      sha256: z.string().regex(/^[a-f0-9]{64}$/, "Must be a hex sha256").optional(),
-      baked_normalizer: z.boolean().default(true),
+      sha256: Sha256Schema.optional(),
+      baked_normalizer: z.boolean(),
     }),
     checkpoint: strict({
-      url: z.string().url().optional(),
-      framework: z.string().optional(),
+      url: HttpsUrlSchema.optional(),
+      framework: NonEmptyStringSchema.optional(),
     }).optional(),
     config: strict({
-      url: z.string().url().optional(),
+      url: HttpsUrlSchema.optional(),
     }).optional(),
   }),
 
   media: strict({
-    thumbnail_url: z.string().optional(),
-    loop_url: z.string().optional(),
-    video_url: z.string().optional(),
-    hero_type: z.enum(["video", "image", "badge"]).default("video"),
-    caption: z.string().optional(),
+    thumbnail_url: MediaUrlSchema.optional(),
+    loop_url: MediaUrlSchema.optional(),
+    video_url: MediaUrlSchema.optional(),
+    hero_type: z.enum(["video", "image", "badge"]),
+    caption: NonEmptyStringSchema.optional(),
   }),
 
   sources: strict({
-    upstream_repo: z.string().url(),
-    training_code_url: z.string().url().optional(),
-    task_id: z.string().optional(),
-    huggingface_space: z.string().url().optional(),
-    discussion_url: z.string().url().optional(),
+    upstream_repo: HttpsUrlSchema,
+    training_code_url: HttpsUrlSchema.optional(),
+    task_id: NonEmptyStringSchema.optional(),
+    huggingface_space: HttpsUrlSchema.optional(),
+    discussion_url: HttpsUrlSchema.optional(),
   }),
 
   deployment: strict({
-    robotd_toml: z.string(),
-    cli_command: z.string().optional(),
-    python_infer_command: z.string().optional(),
+    robotd_toml: NonEmptyStringSchema,
+    cli_command: NonEmptyStringSchema.optional(),
+    python_infer_command: NonEmptyStringSchema.optional(),
   }),
+});
+
+export const BehaviorSchema = BehaviorInputSchema.superRefine((behavior, ctx) => {
+  if (behavior.verification.status === "verified_simulation") {
+    if (!behavior.sim_verification) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sim_verification"],
+        message: "verified_simulation requires a sim_verification record",
+      });
+    } else if (behavior.sim_verification.grade !== "pass") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sim_verification", "grade"],
+        message: "verified_simulation requires a passing sim_verification record",
+      });
+    }
+  }
 });
 
 export type Behavior = z.infer<typeof BehaviorSchema>;

@@ -6,7 +6,7 @@
 **Runtime**: `mujoco==3.12.0` (`sha256 7ec16ce408871a0a9157cc556958ab66cd34db9fc1dccd3ef07717170163a4e0`)  
 **Contract**: `registry/schema/behavior.ts:108-126` — `observation_dim=61`, `proprioception=48`, `twist=3`, `head_pose=4`, `body_pose=6`; `action_dim=14` (`left_leg=5`, `neck_head=4`, `right_leg=5`); `control_frequency_hz=50`, `decimation=4`, `action_scale=1.0`, `actuator_model="Dynamixel XL330 (BAM M6 actuator physics)"`
 
-This document is the canonical, byte-level specification for the 61-D actor observation consumed by every ONNX policy vendored under `vendor/policies/*.onnx`. Any `sim_verified` rollout (`sim/verify_rollout.py`, `.github/workflows/sim-verify.yml`) must produce exactly this layout, in this order, with these dims — otherwise `pnpm validate` and CI snapshot-diff of `public/registry.json` fail.
+This document is the canonical, byte-level specification for the 61-D actor observation consumed by every ONNX policy selected for `verified_simulation`. Any `verified_simulation` rollout (`sim/verify_rollout.py`, `.github/workflows/sim-verify.yml`) must produce exactly this layout, in this order, with these dims.
 
 ## Citation Map
 
@@ -148,6 +148,8 @@ When running without `mjlab` (headless `mujoco.MjModel` + `MjData`), approximate
 ## Verification
 
 - `pnpm validate` checks `contract.observation_dim===61` and `contract.action_dim===14` for every behavior (`scripts/validate-registry.ts:108-115`). Fails closed if mismatched.
-- `sim/obs_builder.py` is unit-tested to emit `shape==(61,)` `float32` and to be byte-identical to training when fed the same `model/data` snapshot (not yet: TODO add `tests/obs.test.ts` or `sim/test_obs.py` in next PR).
-- `sim/verify_rollout.py` now wires `obs_builder.build_observation` instead of `obs[:]=0.0`; deterministic under fixed seed.
+- `tests/obs.test.ts` checks that the builder and this contract are present and
+  expose the fixed 14-joint HOME pose; the rollout checks the runtime shape and
+  dtype before every policy call.
+- `sim/verify_rollout.py` now wires `ObsBuilder` (which calls `build_observation`) instead of a zero-filled input; deterministic under fixed seed.
 - `sim/mjcf-manifest.json` and `sim/mjcf-pins.json` pin the exact MJCF bytes (`sha256` hex, `size_bytes`) that the builder runs against; any byte change recomputes the `verified_simulation` tier.

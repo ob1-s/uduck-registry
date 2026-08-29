@@ -12,7 +12,7 @@ Source: `registry/behaviors/*.json` field `compatibility.mjcf_model` (`registry/
 | MJCF model | Count | Behaviors (id) | Typical terrain / slot |
 |------------|-------|----------------|------------------------|
 | `robot_walk.xml` | 3 | `alpha-walking` (verified_hardware), `rough-terrain-walk` (community_experimental), `waddle-locomotion` (community_experimental) | flat, walk |
-| `robot_allcollisions.xml` | 7 | `ball-kick-left`, `ball-kick-right`, `fall-recovery`, `ground-pick`, `roulade`, `sit-stand` (all verified_hardware), `standing-body-control` (claimed_hardware) | flat, all-collisions (standup/ground-pick) |
+| `robot_allcollisions.xml` | 7 | `ball-kick-left`, `ball-kick-right`, `fall-recovery`, `ground-pick`, `roulade`, `sit-stand` (all verified_hardware), `standing-body-control` (experimental reference) | flat, all-collisions (standup/ground-pick) |
 | `robot_allcollisions_rollers.xml` | 5 | `roller-drive`, `roller-crouch` (verified_hardware), `roller-slope`, `roller-swizzle`, `spin-in-place` (community_experimental) | rollers, slope/swizzle |
 | `robot_walk_backlash.xml` | 1 | `backlash-walking` (community_experimental) | backlash hinge variant |
 
@@ -63,7 +63,7 @@ Meshdir test: `meshdir="assets"` resolves relative to XML directory — `sim/mjc
 
 ## 5. Security: Hash-First, Fail-Closed
 
-- `sim/verify_rollout.py:44-77` computes `sha256_file(args.mjcf)` **before** `import mujoco` (`:79` deferred). `pins.get(mjcf_name)` lookup supports both legacy string sha and rich dict (`files[entry].sha256`) for backward compat; mismatch or missing pin → `exit 2` (never simulates against mutable bytes).
+- `sim/verify_rollout.py` computes `sha256_file(args.mjcf)` before `import mujoco`; it accepts the rich `files[entry].sha256` pin format used by this repository. A mismatch or missing pin exits 2, so simulation never runs against mutable bytes.
 - `.github/workflows/sim-verify.yml:44-80` runs only on `pull_request` (never `pull_request_target`), `permissions: {}`, no secrets, container `python:3.12-slim@sha256:09f7…`, actions pinned by SHA (`checkout@3d3c42…`, `upload-artifact@043fb4…`), `pip install --require-hashes -r sim/requirements-hashes.txt` (mujoco/onnxruntime/onnx/numpy digests), `sim/check_onnx.py:15-76` op-allowlist + caps (5000 nodes, 256 MiB) before any rollout, then the same hash-gated fetch (manifest-preferred, pins fallback) with per-file sha/size checks and network drop before simulation.
 
 ## 6. Schemas & File Paths
@@ -85,7 +85,8 @@ Meshdir test: `meshdir="assets"` resolves relative to XML directory — `sim/mjc
   }
 }
 ```
-Legacy simple form `pins[mjcf]=sha_hex` is still accepted by `verify_rollout.py:_extract_sha`.
+The rich pin form is required because each XML references a mesh closure, not
+just one standalone file.
 
 **`sim/mjcf-manifest.json`** (ordered, CI-preferred):
 ```json
@@ -115,13 +116,16 @@ Re-pin procedure (reviewed PR only): bump `ref`/`resolved_commit_sha` after fetc
 3. `grep mjcf_model registry/behaviors/*.json` → 3/7/5/1.
 4. `df -h /tmp` 99% full → clean → `python3 -m venv /tmp/mjcvenv` + `pip install --require-hashes` (compiled 15 hashes via `uv pip compile --generate-hashes`; original `requirements-hashes.txt` had only 4 single hashes, missing transitive `absl-py, etils, fsspec…` — now works, `mujoco.__version__==3.12.0`).
 5. `MjModel.from_xml_path` for all 4 in `sim/mjcf/assets` closure + direct + missing-assets negative test (see table).
-6. Patched `sim/verify_rollout.py` to handle rich pins and to call `sim/obs_builder.py:build_observation`.
+6. Patched `sim/verify_rollout.py` to use rich pins and to call `sim/obs_builder.py:build_observation`.
 7. Patched `sim-verify.yml` to prefer manifest and to fetch via `src/mjlab_microduck/robot/microduck/` (was `models/` — wrong) and to verify each asset hash/size.
 
 **Discrepancies vs initial spike note**:
 - `SPIKE-PROGRESS.md:9` said `/tmp/mjcvenv` "status unknown" — was actually broken (no `mujoco`, `numpy` bus error) due to `/tmp` full and single-hash `requirements-hashes.txt`; fixed.
 - `SPIKE-PROGRESS.md:5-13` said "nothing written yet" — `sim/mjcf-pins.json` + `sim/mjcf-manifest.json` were in fact already written at `2026-08-29T00:20Z` (git `modified` + `untracked`) when this report was drafted; this report now documents them.
 - `SPIKE-PROGRESS.md: Actuator order` listed 15 entries with duplicate `left_knee` — corrected to 14 in `sim/OBS-CONTRACT.md`.
-- `sim/mjcf-pins.json` rich schema broke `verify_rollout.py:68` (string expected) and `sim-verify.yml:71` (`models/` prefix) — both patched to handle dict+string and to use manifest.
+- `sim/mjcf-pins.json` rich schema required the rollout and workflow to use the
+  recorded entry path and full asset closure.
 
-All checks now pass locally; `sim-verify.yml` is tested via `python3 - <<'EOF'` dry-run against manifest (no network, local `sim/mjcf/` closure reused).
+The static checks pass locally. Rollouts are intentionally only run for an
+explicit `verified_simulation` entry when its policy and full MJCF closure are
+available; the current seed catalog has no such entry.

@@ -1,0 +1,106 @@
+name: Sim Verification (MuJoCo)
+
+# sim_verified tier — recomputed on EVERY artifact-byte change, never inherited.
+#
+# Sandbox guarantees (non-negotiable):
+#   - `pull_request` event ONLY (never pull_request_target): the job runs against
+#     the merge commit in the uDuck repo's context, fork code cannot exfiltrate.
+#   - NO secrets are available to this job. It needs none.
+#   - Container pinned by digest; wheels pinned by sha256 (--require-hashes).
+#   - MJCF is hash-gated before simulation (sim/mjcf-pins.json).
+#   - The ONNX graph is static-checked (op allowlist + size caps) before running.
+#
+# Fails closed: an unpinned MJCF (exit 2) blocks the tier rather than simulating
+# against mutable bytes.
+
+on:
+  pull_request:
+    paths:
+      - 'registry/behaviors/**'
+      - 'vendor/policies/**'
+      - 'sim/**'
+      - '.github/workflows/sim-verify.yml'
+
+permissions: {}
+
+jobs:
+  static-onnx-check:
+    name: ONNX static safety check
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217
+    steps:
+      - name: Checkout (merge commit, no credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install onnx (hash-pinned)
+        run: pip install --no-cache-dir --require-hashes -r sim/requirements-hashes.txt
+
+      - name: Op allowlist + graph-size caps
+        run: python sim/check_onnx.py vendor/policies/*.onnx
+
+  sim-rollout:
+    name: MuJoCo rollout (deterministic)
+    needs: static-onnx-check
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217
+    steps:
+      - name: Checkout (merge commit, no credentials)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install sim deps (hash-pinned)
+        run: pip install --no-cache-dir --require-hashes -r sim/requirements-hashes.txt
+
+      # Fetch official MJCFs and hash-gate them. Network access ends here;
+      # simulation itself runs on local, hash-verified bytes only.
+      - name: Fetch & pin official MJCFs
+        run: |
+          mkdir -p sim/mjcf
+          python3 - <<'EOF'
+          import json, hashlib, urllib.request, os, sys
+          pins = json.load(open("sim/mjcf-pins.json"))["pins"]
+          if not pins:
+              print("No MJCF pins configured — sim tier fails closed (exit 2 per verify_rollout).")
+              sys.exit(0)
+          for name, sha in pins.items():
+              url = f"https://raw.githubusercontent.com/pollen-robotics/microduck_rl/develop/models/{name}"
+              req = urllib.request.Request(url, headers={"User-Agent": "uduck-registry-sim"})
+              data = urllib.request.urlopen(req, timeout=30).read()
+              actual = hashlib.sha256(data).hexdigest()
+              if actual != sha:
+                  sys.exit(f"MJCF hash mismatch for {name}: pinned {sha}, got {actual}")
+              open(f"sim/mjcf/{name}", "wb").write(data)
+              print(f"pinned OK: {name} {actual[:12]}…")
+          EOF
+
+      - name: Roll out each verified_simulation policy
+        run: |
+          mkdir -p sim/records
+          status=0
+          for f in registry/behaviors/*.json; do
+            id=$(python3 -c "import json,sys; print(json.load(open('$f'))['id'])")
+            status_check=$(python3 -c "import json; print(json.load(open('$f'))['verification']['status'])")
+            if [ "$status_check" != "verified_simulation" ] && [ "$status_check" != "verified_hardware" ]; then continue; fi
+            if [ ! -f "vendor/policies/$id.onnx" ]; then echo "skip $id (no vendored bytes)"; continue; fi
+            mjcf=$(python3 -c "import json; print(json.load(open('$f'))['compatibility']['mjcf_model'])")
+            if [ ! -f "sim/mjcf/$mjcf" ]; then echo "skip $id (MJCF $mjcf not pinned)"; continue; fi
+            echo "::group::rollout $id"
+            python3 sim/verify_rollout.py --behavior "$f" \
+              --policy "vendor/policies/$id.onnx" \
+              --mjcf "sim/mjcf/$mjcf" \
+              --seed 0 --episode-length 10.0 \
+              --out "sim/records/$id.json" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Upload verification records
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sim-verification-records
+          path: sim/records/

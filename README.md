@@ -162,4 +162,29 @@ Read the complete [Contribution Guide](CONTRIBUTING.md) for field specifications
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE) for details.
+Apache License 2.0 for code (see [LICENSE](LICENSE)). 3D model files (MJCF/meshes) are CC BY-SA-NC by Pollen Robotics — we link, never host, them. See [NOTICE](NOTICE) for the full untangling.
+
+---
+
+## v0.1 — The Hardened Slice
+
+Trust is computed, not claimed. How it works:
+
+**Artifact integrity** — Every verified behavior's ONNX is **vendored into this repo** (`vendor/policies/<id>.onnx`) with a recorded `sha256` + byte size. `uduck pull <id>` copies/downloads the artifact, hashes every byte, and refuses to write anything on mismatch. Artifact URLs are restricted to an HTTPS host allowlist (`huggingface.co`, `raw.githubusercontent.com`) — because hash-pinning a mutable URL (like a Gradio Space file) is false security.
+
+**Submission** — `uduck submit my-behavior.json` uses GitHub device-flow auth (`public_repo` scope only) to fork → branch → commit → open a PR. If any auth step fails, it prints a prefilled manual PR URL: submission is never a dead end.
+
+**Sim verification CI** — `.github/workflows/sim-verify.yml` recomputes the `verified_simulation` tier on every artifact-byte change (never inherited): ONNX op-allowlist + graph-size static check, then a deterministic seeded headless MuJoCo rollout graded on travel/fall/stability. MJCF models are hash-gated (`sim/mjcf-pins.json`) before simulation — a mutable upstream model is never trusted. The job runs on `pull_request` (never `pull_request_target`), with no secrets, SHA-pinned actions, digest-pinned container, and hash-pinned wheels. It fails closed.
+
+**Trust ladder** — `community_experimental` < `claimed_hardware` < `verified_simulation` < `verified_hardware`. Tiers decay automatically: if a behavior's bytes change without re-verification, or its upstream artifact disappears, the validator drops it back to experimental. Hardware attestation is a PR with committed video + logs — never a textbox.
+
+Commands:
+```bash
+pnpm validate   # schema + contract + tier-integrity checks (byte-identical to CI)
+pnpm vendor     # download artifacts, record sha256, vendor bytes
+pnpm compile    # regenerate public/registry.json (CI snapshot-diffs it)
+pnpm cli pull alpha-walking ./policies
+pnpm cli submit my-behavior.json
+```
+
+Deliberately NOT built yet (see `KICKOFF.md`): upstream auto-sync bot, namespace UI, directory page — these wait until real external submissions exist.

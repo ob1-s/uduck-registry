@@ -46,7 +46,7 @@
     "control_frequency_hz": 50,
     "decimation": 4,
     "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
-    "action_scale": 1.0
+    "action_scale": 1
   },
   "compatibility": {
     "robot_model": "microduck-standard",
@@ -61,8 +61,9 @@
     "onnx": {
       "filename": "BEST_alpha_sitstand.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_sitstand.onnx",
-      "size_bytes": 772527,
-      "baked_normalizer": true
+      "size_bytes": 793695,
+      "baked_normalizer": true,
+      "sha256": "c6c40e35e726eabd803d633e090d112994f469921152448367953fbaf9799bc8"
     }
   },
   "media": {

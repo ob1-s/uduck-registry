@@ -46,21 +46,26 @@
     "control_frequency_hz": 50,
     "decimation": 4,
     "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
-    "action_scale": 1.0
+    "action_scale": 1
   },
   "compatibility": {
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_allcollisions.xml",
-    "accessories_required": ["70mm_practice_ball"],
-    "terrain": ["flat"],
+    "accessories_required": [
+      "70mm_practice_ball"
+    ],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "kick"
   },
   "artifacts": {
     "onnx": {
       "filename": "ball_kick_right.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_right.onnx",
-      "size_bytes": 772527,
-      "baked_normalizer": true
+      "size_bytes": 793685,
+      "baked_normalizer": true,
+      "sha256": "147a32c388c6b19111b3ac3b550a9a6dc8b8bf267118af4d8c3712522eedb5af"
     }
   },
   "media": {

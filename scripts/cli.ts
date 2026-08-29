@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
+import { pullArtifact } from "./lib/pull-artifact";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -14,15 +15,16 @@ Usage:
   uduck list                   List all behaviors in the registry
   uduck info <id>              Show metadata, contract, and deployment for a behavior
   uduck toml <id>              Print /etc/robot/robotd.toml snippet for a behavior
-  uduck pull <id> [dest]       Download canonical ONNX policy to local directory
-  uduck validate               Run registry schema and contract checks
+  uduck pull <id> [dest]       Download the ONNX policy, verifying sha256 + size
+  uduck submit <file.json>     Submit a behavior JSON to the registry via GitHub PR
+  uduck validate               Run registry schema, contract, and artifact checks
 
 Options:
   --help, -h                   Show this help message
 `);
 }
 
-function run() {
+async function run() {
   if (!command || command === "--help" || command === "-h") {
     printHelp();
     return;
@@ -111,9 +113,35 @@ function run() {
         console.error(`Error: Behavior '${id}' not found.`);
         process.exit(1);
       }
+      if (!b.artifacts.onnx.sha256) {
+        console.error(
+          `Error: '${id}' has no recorded sha256 — its artifact is unverified and will not be pulled.\n` +
+            `This is expected for decayed community_experimental entries; re-vendor to fix.`,
+        );
+        process.exit(1);
+      }
       console.log(`Pulling ${b.artifacts.onnx.filename} for ${b.name}...`);
-      console.log(`Source URL: ${b.artifacts.onnx.url}`);
-      console.log(`Run: curl -L "${b.artifacts.onnx.url}" -o "${path.join(destDir, b.artifacts.onnx.filename)}"`);
+      try {
+        const result = await pullArtifact(b, destDir);
+        console.log(`  source:  ${result.source}`);
+        console.log(`  sha256:  ${result.sha256}`);
+        console.log(`  size:    ${result.size_bytes} bytes`);
+        console.log(`  \x1b[32m✓ hash verified\x1b[0m -> ${result.destPath}`);
+      } catch (err: any) {
+        console.error(`\x1b[31m${err.message}\x1b[0m`);
+        process.exit(1);
+      }
+      break;
+    }
+
+    case "submit": {
+      // Defer to scripts/submit.ts (shares the same validator + schema).
+      const { spawnSync } = await import("node:child_process");
+      const script = path.resolve(import.meta.dirname, "submit.ts");
+      const res = spawnSync(process.execPath, ["--import", "tsx", script, ...args.slice(1)], {
+        stdio: "inherit",
+      });
+      process.exit(res.status ?? 1);
       break;
     }
 

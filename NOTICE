@@ -1,0 +1,44 @@
+NOTICE — uDuck Registry licensing
+================================
+
+This repository contains two categories of material with different licenses.
+Do not assume one license covers everything.
+
+1. Registry code, schemas, CLI, site, and tooling (Apache-2.0)
+--------------------------------------------------------------
+Everything in `registry/`, `scripts/`, `src/`, `sim/`, `.github/`, and
+`public/` — i.e. all code authored in this repository, including the code in
+the upstream `pollen-robotics/microduck_rl` training repository — is licensed
+under the Apache License, Version 2.0 (see LICENSE).
+
+2. 3D model files (MJCF / meshes) — CC BY-SA-NC
+------------------------------------------------
+The MicroDuck simulation models (MJCF XML and their referenced mesh assets)
+are copyrighted by Pollen Robotics and licensed CC BY-SA-NC
+(Attribution-ShareAlike-NonCommercial) unless Pollen states otherwise in
+writing. This NOTICE does not grant any license to those files.
+
+Why this matters for sim verification
+-------------------------------------
+Our `sim_verified` CI tier depends on the official MJCF. Because the MJCF is
+potentially NC-licensed:
+
+  - We DO NOT re-host, redistribute, or commit MJCF/mesh files in this repo.
+  - CI fetches the official MJCF from the Pollen upstream at verification
+    time, verifies its sha256 against a pin in `sim/mjcf-pins.json`, uses it
+    in-memory / ephemeral for the rollout, and discards it. This is linking,
+    not hosting.
+  - Derived verification records (scores, hashes) are our own data and are
+    Apache-2.0.
+
+Action item: the maintainers have asked Pollen Robotics for written
+clarification of the MJCF/mesh license. Until that lands, the conservative
+treatment above applies. If you redistribute artifacts from this registry,
+you are responsible for respecting the NC terms on model files.
+
+Policy artifacts (ONNX)
+-----------------------
+Each behavior JSON declares its own `license` field. Unless stated otherwise
+in the entry, policies trained with the Apache-2.0 `microduck_rl` code are
+treated as Apache-2.0. Third-party community policies keep whatever license
+their authors declare; the registry records it, it does not relicense it.

@@ -3,7 +3,7 @@
   "name": "Roller Slope Descent",
   "version": "1.0.0",
   "description": "Downhill slope gliding policy on roller skates with dynamic pitch stabilization and proactive speed moderation.",
-  "details": "Trained specifically for inclined surfaces (5° to 15° slopes). Adjusts the duck's center of mass backward and applies staggered foot drags to prevent runaway speed down ramps while stabilizing roll and pitch angles against gravitational pull.",
+  "details": "Trained specifically for inclined surfaces (5\u00b0 to 15\u00b0 slopes). Adjusts the duck's center of mass backward and applies staggered foot drags to prevent runaway speed down ramps while stabilizing roll and pitch angles against gravitational pull.",
   "category": "roller-skate",
   "tags": [
     "official",
@@ -23,11 +23,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
+    "status": "community_experimental",
     "summary": "Verified in mjlab simulation descending varying slope angles up to 15 degrees without destabilization.",
     "hardware_target": "MicroDuck v1 + Roller Skate Blades",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Experimental ramp policy; ensure run-out area is clear of obstacles during initial hardware trials."
+    "notes": "Experimental ramp policy; ensure run-out area is clear of obstacles during initial hardware trials. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -51,8 +51,12 @@
   "compatibility": {
     "robot_model": "microduck-rollers",
     "mjcf_model": "robot_allcollisions_rollers.xml",
-    "accessories_required": ["roller_skate_blades"],
-    "terrain": ["slope"],
+    "accessories_required": [
+      "roller_skate_blades"
+    ],
+    "terrain": [
+      "slope"
+    ],
     "robotd_slot": "rollers"
   },
   "artifacts": {

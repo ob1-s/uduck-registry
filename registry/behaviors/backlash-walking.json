@@ -2,7 +2,7 @@
   "id": "backlash-walking",
   "name": "Backlash-Compensated Walking",
   "version": "1.0.0",
-  "description": "Velocity-tracking walking policy trained specifically to withstand ±1° gear play (2° total) in series with every XL330 servo gearbox.",
+  "description": "Velocity-tracking walking policy trained specifically to withstand \u00b11\u00b0 gear play (2\u00b0 total) in series with every XL330 servo gearbox.",
   "details": "Models mechanical gear lash explicitly via passive_<joint>_backlash hinges in the MJCF model (robot_*_backlash.xml). Because the physical Dynamixel encoder sits on the output side of the gear play, both the BAM firmware PD emulation and joint observations read directly through the backlash, resulting in extreme sim2real fidelity even on worn gearboxes.",
   "category": "locomotion",
   "tags": [
@@ -23,11 +23,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
-    "summary": "Trained and verified with explicit ±1° backlash hinge physics and domain randomized friction.",
+    "status": "community_experimental",
+    "summary": "Trained and verified with explicit \u00b11\u00b0 backlash hinge physics and domain randomized friction.",
     "hardware_target": "MicroDuck v1 (Dynamixel XL330 with gear train backlash)",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Observation and action dimensions are strictly identical to standard 61-D contract."
+    "notes": "Observation and action dimensions are strictly identical to standard 61-D contract. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -45,14 +45,16 @@
     },
     "control_frequency_hz": 50,
     "decimation": 4,
-    "actuator_model": "BacklashEncoderBamActuator (±1° backlash + BAM M6)",
+    "actuator_model": "BacklashEncoderBamActuator (\u00b11\u00b0 backlash + BAM M6)",
     "action_scale": 1.0
   },
   "compatibility": {
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_walk_backlash.xml",
     "accessories_required": [],
-    "terrain": ["flat"],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "walk"
   },
   "artifacts": {

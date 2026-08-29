@@ -47,21 +47,26 @@
     "control_frequency_hz": 50,
     "decimation": 4,
     "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
-    "action_scale": 1.0
+    "action_scale": 1
   },
   "compatibility": {
     "robot_model": "microduck-rollers",
     "mjcf_model": "robot_allcollisions_rollers.xml",
-    "accessories_required": ["roller_skate_blades"],
-    "terrain": ["flat"],
+    "accessories_required": [
+      "roller_skate_blades"
+    ],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "rollers"
   },
   "artifacts": {
     "onnx": {
       "filename": "BEST_roller_crouch.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller_crouch.onnx",
-      "size_bytes": 772527,
-      "baked_normalizer": true
+      "size_bytes": 793685,
+      "baked_normalizer": true,
+      "sha256": "a1a084be240469c76ac9d3fa44d4792f16d4b1da60398b3ecd3cfc5e2244d990"
     }
   },
   "media": {

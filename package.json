@@ -10,7 +10,8 @@
     "test": "vitest run",
     "validate": "tsx scripts/validate-registry.ts",
     "compile": "tsx scripts/generate-registry-index.ts",
-    "cli": "tsx scripts/cli.ts"
+    "cli": "tsx scripts/cli.ts",
+    "vendor": "tsx scripts/vendor-artifacts.ts"
   },
   "keywords": [],
   "author": "",

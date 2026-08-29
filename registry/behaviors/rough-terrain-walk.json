@@ -23,11 +23,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
+    "status": "community_experimental",
     "summary": "Verified in mjlab simulation traversing procedural heightfield terrain and surviving continuous lateral disturbance forces.",
     "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Higher energy consumption due to elevated swing trajectory."
+    "notes": "Higher energy consumption due to elevated swing trajectory. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -52,7 +52,10 @@
     "robot_model": "microduck-standard",
     "mjcf_model": "robot_walk.xml",
     "accessories_required": [],
-    "terrain": ["rough", "flat"],
+    "terrain": [
+      "rough",
+      "flat"
+    ],
     "robotd_slot": "walk"
   },
   "artifacts": {

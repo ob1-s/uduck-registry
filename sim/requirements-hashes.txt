@@ -1,0 +1,12 @@
+# Sim-verification dependencies — hash-pinned (pip install --require-hashes).
+# MuJoCo version is pinned by wheel digest; CI records mujoco.__version__ and
+# the MJCF sha256 into each behavior's sim_verification record. Tiers are never
+# inherited: every artifact-byte change triggers a fresh rollout.
+mujoco==3.12.0 \
+    --hash=sha256:7ec16ce408871a0a9157cc556958ab66cd34db9fc1dccd3ef07717170163a4e0
+onnxruntime==1.29.0 \
+    --hash=sha256:2b80d8c7ec2cc7438e4da3760b88c24568cba72c9ace96d668800a6c79419acb
+onnx==1.20.0 \
+    --hash=sha256:02e0d72ab09a983fce46686b155a5049898558d9f3bc6e8515120d6c40666318
+numpy==2.3.5 \
+    --hash=sha256:0d8163f43acde9a73c2a33605353a4f1bc4798745a8b1d73183b28e5b435ae28

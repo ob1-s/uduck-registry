@@ -22,11 +22,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
+    "status": "community_experimental",
     "summary": "Simulated and validated in mjlab across 4096 parallel environments on multi-GPU cluster with video recording.",
     "hardware_target": "MicroDuck v1 / Waddle Custom Biped Platform",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Community policy. Exhibits higher lateral roll oscillation than the official Alpha walk."
+    "notes": "Community policy. Exhibits higher lateral roll oscillation than the official Alpha walk. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,

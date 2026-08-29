@@ -23,11 +23,11 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_simulation",
+    "status": "community_experimental",
     "summary": "Verified in MuJoCo Warp / mjlab simulation over 4096 parallel environments with BAM actuator friction physics.",
     "hardware_target": "MicroDuck v1 + Roller Skate Accessories",
     "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Targeted for smooth surfaces like wood or polished concrete where passive wheel friction is minimal."
+    "notes": "Targeted for smooth surfaces like wood or polished concrete where passive wheel friction is minimal. Artifact URL is dead (upstream moved); no vendored bytes available, so the sim_verified tier was decayed. Re-vendor the ONNX (sha256 + size) to restore the tier."
   },
   "contract": {
     "observation_dim": 61,
@@ -51,8 +51,12 @@
   "compatibility": {
     "robot_model": "microduck-rollers",
     "mjcf_model": "robot_allcollisions_rollers.xml",
-    "accessories_required": ["roller_skate_blades"],
-    "terrain": ["flat"],
+    "accessories_required": [
+      "roller_skate_blades"
+    ],
+    "terrain": [
+      "flat"
+    ],
     "robotd_slot": "rollers"
   },
   "artifacts": {

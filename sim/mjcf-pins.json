@@ -1,0 +1,5 @@
+{
+  "$comment": "sha256 pins for official MicroDuck MJCF models, keyed by compatibility.mjcf_model. Hash first, simulate second — a mutable upstream MJCF is never trusted. Re-pin only via a reviewed PR.",
+  "_status": "EMPTY — pins must be added from the official microduck_rl repo before sim CI can grade. CI fails closed (exit 2) rather than simulating against an unpinned MJCF.",
+  "pins": {}
+}

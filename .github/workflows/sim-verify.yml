@@ -27,6 +27,7 @@ jobs:
   static-onnx-check:
     name: ONNX static safety check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     container:
       image: python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217
     steps:
@@ -45,6 +46,7 @@ jobs:
     name: MuJoCo rollout (deterministic)
     needs: static-onnx-check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     container:
       image: python:3.12-slim@sha256:09f7da3bc104798d0afb40bc08d23ab2da20a76130cec1f2ef170848f5d85217
     steps:

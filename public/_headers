@@ -1,0 +1,9 @@
+/api/behaviors/*
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, s-maxage=300, stale-while-revalidate=600
+
+/registry.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, s-maxage=300, stale-while-revalidate=600

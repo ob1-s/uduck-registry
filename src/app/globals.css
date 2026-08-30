@@ -627,6 +627,8 @@ code {
   object-fit: cover;
 }
 
+.behavior-media video.behavior-thumb { object-fit: contain; background: #000; }
+
 .behavior-body { display: block; padding: 0; align-self: center; }
 
 .behavior-heading { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 0.65rem; }

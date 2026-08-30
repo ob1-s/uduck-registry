@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { getAllBehaviors, getRegistryStats } from "@/lib/registry";
 import { BehaviorCatalog } from "@/components/BehaviorCatalog";
 import { InteractiveDuck } from "@/components/InteractiveDuck";
-import { QuackAnchor, QuackLink } from "@/components/QuackAction";
+import { QuackAnchor } from "@/components/QuackAction";
 
 export default function HomePage() {
   const behaviors = getAllBehaviors();
@@ -69,7 +69,7 @@ export default function HomePage() {
       <section className="share-strip">
         <div className="site-container share-strip-inner">
           <div><span className="eyebrow">Have a new move?</span><h2>Add it to the shelf.</h2></div>
-          <QuackLink href="/docs/contribute" className="button-secondary">Read the contributor guide <ArrowRight size={15} aria-hidden="true" /></QuackLink>
+          <QuackAnchor href="https://github.com/ob1-s/uduck-registry" target="_blank" rel="noopener noreferrer" className="button-secondary">Read the contributor guide <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
         </div>
       </section>
     </>

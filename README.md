@@ -27,7 +27,7 @@ Microduck is a small biped robot from [Pollen Robotics](https://pollen-robotics.
 - **Actuator:** Dynamixel XL330 motors using the declared Microduck actuator model.
 - The beak actuator is outside the fixed 14-action policy interface.
 
-See the [full contract](https://uduck-registry.pages.dev/docs/specification) and [behavior schema](https://uduck-registry.pages.dev/docs/schema).
+The descriptor schema is [`registry/schema/behavior.schema.json`](registry/schema/behavior.schema.json).
 
 ## Catalog
 
@@ -53,7 +53,7 @@ The registry currently includes 14 indexed behaviors:
 The generated catalog is available at:
 
 ```bash
-curl -s https://uduck-registry.pages.dev/registry.json | jq .
+curl -s https://uduckmoves.com/registry.json | jq .
 ```
 
 The same snapshot is in [`public/registry.json`](public/registry.json). The static site also exposes one JSON endpoint per behavior at `/api/behaviors/<id>`.

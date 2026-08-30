@@ -2,15 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Compass, GitFork } from "lucide-react";
+import { Compass, GitFork } from "lucide-react";
 import { DuckMark } from "./DuckMark";
 
 export function Navbar() {
-  const pathname = usePathname() ?? "/";
-  const normalizedPathname = pathname.replace(/\/$/, "") || "/";
-  const isCurrent = (href: string) => href === "/"
-    ? normalizedPathname === "/"
-    : normalizedPathname === href || normalizedPathname.startsWith(`${href}/`);
+  const isHome = (usePathname() ?? "/") === "/";
 
   return (
     <header className="site-header">
@@ -28,18 +24,14 @@ export function Navbar() {
         </Link>
 
         <nav className="nav-links" aria-label="Primary navigation">
-          <Link href="/" className="nav-link" aria-current={isCurrent("/") ? "page" : undefined}>
+          <Link href="/" className="nav-link" aria-current={isHome ? "page" : undefined}>
             <Compass size={15} aria-hidden="true" />
             <span>Explore</span>
           </Link>
-          <Link href="/docs/specification" className="nav-link" aria-current={isCurrent("/docs") ? "page" : undefined}>
-            <BookOpen size={15} aria-hidden="true" />
-            <span>Docs</span>
-          </Link>
-          <Link href="/docs/contribute" className="nav-link" aria-current={isCurrent("/docs/contribute") ? "page" : undefined}>
+          <a href="https://github.com/ob1-s/uduck-registry" className="nav-link" target="_blank" rel="noopener noreferrer">
             <GitFork size={15} aria-hidden="true" />
             <span>Contribute</span>
-          </Link>
+          </a>
         </nav>
       </div>
     </header>

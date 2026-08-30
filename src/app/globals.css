@@ -274,7 +274,93 @@ code {
   box-shadow: 0.45rem 0.45rem 0 rgba(255, 122, 47, 0.16);
 }
 
-.hero-figure svg { width: min(186px, 58%); height: auto; }
+.hero-duck-button {
+  display: grid;
+  position: relative;
+  width: 172px;
+  max-width: 54%;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.hero-duck {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  transition: transform 160ms ease;
+}
+
+.hero-duck-button:hover .hero-duck { transform: translateY(-2px) scale(0.98); }
+.hero-duck-button:active .hero-duck { transform: translateY(1px) scale(0.95); }
+.hero-duck-button:focus-visible { border-radius: 1rem; }
+
+.duck-beak .duck-mouth-gap { opacity: 0.25; transition: opacity 140ms ease; }
+.duck-beak .duck-beak-lower { transform-box: fill-box; transform-origin: center top; transition: transform 160ms ease; }
+.duck-mark-mouth-open .duck-mouth-gap { opacity: 1; }
+.duck-mark-mouth-open .duck-beak-lower { transform: translateY(2.8px) rotate(1deg); }
+
+.hero-sound-waves {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hero-sound-waves > span {
+  position: absolute;
+  inset: 18%;
+  border: 1px solid rgba(47, 240, 230, 0.34);
+  border-radius: 50%;
+  opacity: 0;
+  animation: duck-sound-wave 760ms ease-out both;
+}
+
+.hero-sound-waves > span:nth-child(2) { animation-delay: 100ms; }
+.hero-sound-waves > span:nth-child(3) { animation-delay: 200ms; }
+
+@keyframes duck-sound-wave {
+  0% { transform: scale(0.62); opacity: 0; }
+  18% { opacity: 0.42; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.duck-mark-agitated .duck-stomp-left,
+.duck-mark-agitated .duck-stomp-right {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: duck-stomp 280ms ease-in-out infinite;
+}
+
+.duck-mark-agitated .duck-stomp-right { animation-delay: -140ms; }
+
+.duck-mark-agitated.duck-mark-settling .duck-stomp-left,
+.duck-mark-agitated.duck-mark-settling .duck-stomp-right {
+  animation: duck-stomp-settle 400ms ease-out 1;
+}
+
+.duck-mark-agitated.duck-mark-settling .duck-stomp-right { animation-delay: -70ms; }
+
+@keyframes duck-stomp {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  38% { transform: translateY(-1.5px) rotate(-4deg); }
+  55% { transform: translateY(1px) rotate(3deg); }
+}
+
+@keyframes duck-stomp-settle {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  24% { transform: translateY(-1.2px) rotate(-3deg); }
+  42% { transform: translateY(0.7px) rotate(2deg); }
+  63% { transform: translateY(-0.45px) rotate(-1deg); }
+  78% { transform: translateY(0.2px) rotate(0.5deg); }
+}
 
 .hero-figure-label {
   position: absolute;
@@ -347,6 +433,16 @@ code {
 
 @media (prefers-reduced-motion: reduce) {
   .ticker-track { animation: none; }
+  .hero-duck,
+  .duck-beak .duck-mouth-gap,
+  .duck-beak .duck-beak-lower { transition: none; }
+  .hero-sound-waves > span { animation: none; opacity: 0.2; }
+  .duck-mark-agitated .duck-stomp-left,
+  .duck-mark-agitated .duck-stomp-right,
+  .duck-mark-agitated.duck-mark-settling .duck-stomp-left,
+  .duck-mark-agitated.duck-mark-settling .duck-stomp-right { animation: none; }
+  .hero-duck-button:hover .hero-duck,
+  .hero-duck-button:active .hero-duck { transform: none; }
   html { scroll-behavior: auto; }
 }
 

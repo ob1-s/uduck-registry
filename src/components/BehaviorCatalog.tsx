@@ -5,6 +5,7 @@ import { FilterBar } from "./FilterBar";
 import { BehaviorCard } from "./BehaviorCard";
 import type { Behavior } from "@registry/schema/behavior";
 import { DuckMark } from "./DuckMark";
+import { QuackButton } from "./QuackAction";
 
 interface BehaviorCatalogProps {
   initialBehaviors: Behavior[];
@@ -78,7 +79,7 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
             <div className="empty-state-mark"><DuckMark size={42} /></div>
             <h3>No moves match that search.</h3>
             <p>Try another word or clear a filter.</p>
-            <button type="button" className="button-secondary" onClick={resetFilters}>Clear filters</button>
+            <QuackButton type="button" className="button-secondary" onClick={resetFilters}>Clear filters</QuackButton>
           </div>
         )}
       </div>

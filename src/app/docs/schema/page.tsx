@@ -10,13 +10,16 @@ export const metadata = {
 
 const fields = [
   ["id", "string · kebab-case", "The unique slug and matching behavior filename."],
-  ["identity", "string · array · object", "Display and provenance: name, version, description, category, tags, authors, license, media, and sources."],
-  ["discovery", "object", "Whether the record is listed in the public catalog or kept as a source-only task record."],
-  ["verification", "object", "Status, target hardware, evidence, and optional simulation framework."],
+  ["name · version · description", "string", "Display name, release version, and a short explanation of the behavior."],
+  ["category · tags", "string · array", "The behavior's category and searchable labels."],
+  ["authors · license", "array · string", "Who made the behavior and the license for its policy artifact."],
+  ["verification", "object", "Status, target hardware, evidence, and notes."],
   ["contract", "object", "Observation and action breakdowns, timing, actuator model, and scale."],
-  ["compatibility", "object", "Robot model, MJCF model, accessories, terrain, and robotd slot."],
-  ["artifacts", "object", "Canonical ONNX URL, filename, hash, size, and normalizer flag."],
-  ["deployment", "object", "robotd configuration plus optional CLI and simulation commands."],
+  ["compatibility", "object", "Robot model, accessories, terrain, and robotd slot."],
+  ["artifacts", "object", "Canonical ONNX URL, filename, and normalizer flag."],
+  ["media", "object", "Optional thumbnail, video, loop, and caption."],
+  ["sources", "object", "Upstream repository and optional training or discussion links."],
+  ["deployment", "object", "The robotd configuration snippet."],
 ];
 
 export default function SchemaPage() {
@@ -30,7 +33,7 @@ export default function SchemaPage() {
         <header className="doc-header">
           <div className="doc-header-meta"><span className="doc-badge">JSON Schema · 2020–12</span><small>For contributors and tools</small></div>
           <h1>A behavior record with all the useful bits.</h1>
-          <p>Every behavior is one JSON file. The schema keeps names, evidence, hardware details, and launch instructions easy to validate.</p>
+          <p>Every behavior is one JSON file. The schema keeps names, provenance, compatibility, and deployment configuration consistent.</p>
         </header>
 
         <section className="surface doc-section">
@@ -43,7 +46,7 @@ export default function SchemaPage() {
 
         <section className="surface doc-section">
           <h2><Code2 size={17} aria-hidden="true" /> behavior.schema.json</h2>
-          <p>The live schema used by the registry validator.</p>
+          <p>The public JSON Schema for behavior records.</p>
           <pre className="code-block"><code>{schemaContent}</code></pre>
         </section>
       </div>

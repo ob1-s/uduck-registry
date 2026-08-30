@@ -3,7 +3,7 @@
   "name": "MicroDuck Courier",
   "version": "1.0.0",
   "description": "Pick, carry, and place a duck-scale paperback in a simulated MicroDuck apartment.",
-  "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one deployable ONNX export. The publisher reports 16/16 and 32/32 successful simulated delivery rollouts. The task-specific command slots carry book and reader targets; no physical robot deployment is claimed.",
+  "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
   "category": "manipulation",
   "tags": [
     "community",
@@ -21,13 +21,11 @@
     }
   ],
   "license": "Not separately specified",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
-    "summary": "Publisher-reported successful simulated courier rollouts; no physical hardware evidence reported.",
+    "summary": "Successful simulated courier runs are documented in the source; no physical hardware evidence is listed.",
     "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-    "sim_framework": "mjlab (MuJoCo) at 50 Hz",
-    "notes": "The source repository has a vendored Apache-2.0 microduck_rl component but no separate top-level artifact license. Its custom apartment scene is outside the registry's current generic simulation verifier; registry simulation verification has not been run."
+    "notes": "The source repository includes the Apache-2.0 microduck_rl component but no separate top-level artifact license. No physical robot deployment is claimed."
   },
   "contract": {
     "observation_dim": 61,
@@ -50,7 +48,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "scene_apartment.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -61,8 +58,6 @@
     "onnx": {
       "filename": "courier-policy.onnx",
       "url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/ba02a6b507b13c19bded8af0cbb2dd4a1eeb5cb1/artifacts/courier-policy.onnx",
-      "size_bytes": 793776,
-      "sha256": "c95396269a48bbab3ebd46032f6c40bc1323ccb7a6a933487ad75810d8785c47",
       "baked_normalizer": true
     }
   },

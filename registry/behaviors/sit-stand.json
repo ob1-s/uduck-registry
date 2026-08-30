@@ -22,12 +22,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
     "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
     "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
   },
   "contract": {
@@ -51,7 +49,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -62,9 +59,7 @@
     "onnx": {
       "filename": "BEST_alpha_sitstand.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_sitstand.onnx",
-      "size_bytes": 793695,
-      "baked_normalizer": true,
-      "sha256": "c6c40e35e726eabd803d633e090d112994f469921152448367953fbaf9799bc8"
+      "baked_normalizer": true
     }
   },
   "media": {

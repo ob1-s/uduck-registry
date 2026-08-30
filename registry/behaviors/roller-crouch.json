@@ -23,12 +23,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",
     "hardware_target": "MicroDuck v1 + Roller Skate Blades",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
     "notes": "Cycle duration: 3.5 seconds (period 5.0s, end phase 0.7)."
   },
   "contract": {
@@ -52,22 +50,19 @@
   },
   "compatibility": {
     "robot_model": "microduck-rollers",
-    "mjcf_model": "robot_allcollisions_rollers.xml",
     "accessories_required": [
       "roller_skate_blades"
     ],
     "terrain": [
       "flat"
     ],
-    "robotd_slot": "roller"
+    "robotd_slot": "ground_pick"
   },
   "artifacts": {
     "onnx": {
       "filename": "BEST_roller_crouch.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller_crouch.onnx",
-      "size_bytes": 793685,
-      "baked_normalizer": true,
-      "sha256": "a1a084be240469c76ac9d3fa44d4792f16d4b1da60398b3ecd3cfc5e2244d990"
+      "baked_normalizer": true
     }
   },
   "media": {

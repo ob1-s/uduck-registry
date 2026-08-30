@@ -28,7 +28,6 @@ const categories = [
 const verifications = [
   { id: "all", label: "Any status" },
   { id: "verified_hardware", label: "Hardware verified" },
-  { id: "verified_simulation", label: "Simulation verified" },
   { id: "claimed_hardware", label: "Hardware claimed" },
   { id: "community_experimental", label: "Experimental" },
 ];

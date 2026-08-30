@@ -22,12 +22,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck equipped with official Pollen 3D-printed roller skate foot accessories.",
     "hardware_target": "MicroDuck v1 + Roller Skate Accessories (passive bearings/wheels)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
     "notes": "Requires passive roller foot frames and 22x16x4 bearings. Robot model is robot_allcollisions_rollers.xml."
   },
   "contract": {
@@ -51,7 +49,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-rollers",
-    "mjcf_model": "robot_allcollisions_rollers.xml",
     "accessories_required": [
       "roller_skate_blades"
     ],
@@ -64,9 +61,7 @@
     "onnx": {
       "filename": "BEST_roller.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller.onnx",
-      "size_bytes": 793685,
-      "baked_normalizer": true,
-      "sha256": "cf05651d2708a2f9364212e86b866c97a70ace8131c492500105e8f28bf99afd"
+      "baked_normalizer": true
     }
   },
   "media": {

@@ -617,7 +617,6 @@ code {
 
 .status-hardware { color: var(--orange); border-color: color-mix(in srgb, var(--orange) 45%, transparent); background: rgba(255, 122, 47, 0.1); }
 .status-claimed { color: var(--yellow); border-color: color-mix(in srgb, var(--yellow) 45%, transparent); background: rgba(255, 210, 63, 0.08); }
-.status-simulation { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 45%, transparent); background: rgba(47, 240, 230, 0.08); }
 .status-experimental { color: var(--magenta); border-color: color-mix(in srgb, var(--magenta) 45%, transparent); background: rgba(255, 47, 168, 0.08); }
 
 /* ---------- detail page ---------- */

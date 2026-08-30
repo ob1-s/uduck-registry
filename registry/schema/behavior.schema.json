@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://uduck.dev/schema/behavior.schema.json",
   "title": "MicroDuckBehavior",
-  "description": "Schema definition for MicroDuck behavioral policies and environment artifacts in uDuck Registry",
+  "description": "Schema definition for MicroDuck behavior policies in uDuck Registry",
   "$defs": {
     "nonEmptyString": {
       "type": "string",
@@ -41,17 +41,9 @@
         }
       ]
     },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
-    },
     "onnxFilename": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.onnx$"
-    },
-    "mjcfFilename": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*\\.xml$"
     }
   },
   "type": "object",
@@ -65,7 +57,6 @@
     "tags",
     "authors",
     "license",
-    "discovery",
     "verification",
     "contract",
     "compatibility",
@@ -95,7 +86,7 @@
     },
     "details": {
       "type": "string",
-      "description": "Extended markdown explanation, training recipe, or notes"
+      "description": "Additional context, training notes, or usage notes"
     },
     "category": {
       "type": "string",
@@ -141,20 +132,6 @@
     "license": {
       "$ref": "#/$defs/nonEmptyString"
     },
-    "discovery": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["status"],
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": ["listed", "source_only"]
-        },
-        "reason": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
     "verification": {
       "type": "object",
       "additionalProperties": false,
@@ -165,7 +142,6 @@
           "enum": [
             "verified_hardware",
             "claimed_hardware",
-            "verified_simulation",
             "community_experimental"
           ]
         },
@@ -175,82 +151,8 @@
         "hardware_target": {
           "$ref": "#/$defs/nonEmptyString"
         },
-        "sim_framework": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
         "notes": {
           "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "sim_verification": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "mujoco_version",
-        "mjcf_sha256",
-        "seed",
-        "episode_length_s",
-        "grade",
-        "travel_score",
-        "stability_score",
-        "fell",
-        "verified_at"
-      ],
-      "properties": {
-        "mujoco_version": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "mjcf_sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "seed": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "episode_length_s": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "grade": {
-          "type": "string",
-          "enum": ["pass", "fail"]
-        },
-        "travel_score": {
-          "type": "number"
-        },
-        "stability_score": {
-          "type": "number"
-        },
-        "fell": {
-          "type": "boolean"
-        },
-        "workflow_run_url": {
-          "$ref": "#/$defs/httpsUrl"
-        },
-        "verified_at": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
-    "hardware_attestation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["pr_url", "video_url", "logs_path", "attested_at"],
-      "properties": {
-        "pr_url": {
-          "$ref": "#/$defs/httpsUrl"
-        },
-        "video_url": {
-          "$ref": "#/$defs/httpsUrl"
-        },
-        "logs_path": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "attested_at": {
-          "type": "string",
-          "format": "date-time"
         }
       }
     },
@@ -337,14 +239,11 @@
     "compatibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["robot_model", "mjcf_model", "accessories_required", "terrain", "robotd_slot"],
+      "required": ["robot_model", "accessories_required", "terrain", "robotd_slot"],
       "properties": {
         "robot_model": {
           "type": "string",
           "enum": ["microduck-standard", "microduck-rollers", "custom-duck"]
-        },
-        "mjcf_model": {
-          "$ref": "#/$defs/mjcfFilename"
         },
         "accessories_required": {
           "type": "array",
@@ -391,13 +290,6 @@
             },
             "url": {
               "$ref": "#/$defs/artifactUrl"
-            },
-            "size_bytes": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "sha256": {
-              "$ref": "#/$defs/sha256"
             },
             "baked_normalizer": {
               "type": "boolean"
@@ -479,43 +371,8 @@
       "properties": {
         "robotd_toml": {
           "$ref": "#/$defs/nonEmptyString"
-        },
-        "cli_command": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "python_infer_command": {
-          "$ref": "#/$defs/nonEmptyString"
         }
       }
     }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "verification": {
-            "properties": {
-              "status": {
-                "const": "verified_simulation"
-              }
-            },
-            "required": ["status"]
-          }
-        },
-        "required": ["verification"]
-      },
-      "then": {
-        "required": ["sim_verification"],
-        "properties": {
-          "sim_verification": {
-            "properties": {
-              "grade": {
-                "const": "pass"
-              }
-            }
-          }
-        }
-      }
-    }
-  ]
+  }
 }

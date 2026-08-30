@@ -5,7 +5,6 @@ import {
   ARTIFACT_URL_PATTERN,
   GITHUB_USERNAME_PATTERN,
   ID_PATTERN,
-  MJCF_FILENAME_PATTERN,
   ONNX_FILENAME_PATTERN,
   HTTPS_URL_PATTERN,
   isAllowedArtifactUrl,
@@ -20,7 +19,7 @@ const jsonSchema = JSON.parse(
 
 function fixture() {
   return JSON.parse(
-    fs.readFileSync(path.resolve("registry/behaviors/backlash-walking.json"), "utf8"),
+    fs.readFileSync(path.resolve("registry/behaviors/alpha-walking.json"), "utf8"),
   ) as Record<string, any>;
 }
 
@@ -45,7 +44,6 @@ describe("behavior schema", () => {
     expect(jsonSchema.$defs.id.pattern).toBe(ID_PATTERN.source);
     expect(jsonSchema.$defs.githubUsername.pattern).toBe(GITHUB_USERNAME_PATTERN.source);
     expect(jsonSchema.$defs.onnxFilename.pattern).toBe(ONNX_FILENAME_PATTERN.source);
-    expect(jsonSchema.$defs.mjcfFilename.pattern).toBe(MJCF_FILENAME_PATTERN.source);
     expect(jsonSchema.$defs.httpsUrl.pattern).toBe(HTTPS_URL_PATTERN.source.replaceAll("\\/", "/"));
     expect(jsonSchema.$defs.artifactUrl.pattern).toBe(ARTIFACT_URL_PATTERN.source.replaceAll("\\/", "/"));
 
@@ -64,23 +62,11 @@ describe("behavior schema", () => {
     expect(contract.properties.action_dim.const).toBe(14);
     expect(contract.properties.control_frequency_hz.const).toBe(50);
     expect(jsonSchema.properties.media.properties.loop_url).toBeDefined();
-    expect(jsonSchema.properties.discovery.required).toEqual(["status"]);
-    expect(jsonSchema.properties.discovery.properties.status.enum).toEqual(["listed", "source_only"]);
-    expect(jsonSchema.properties.sim_verification.required).toContain("verified_at");
-    expect(jsonSchema.properties.hardware_attestation.required).toEqual([
-      "pr_url",
-      "video_url",
-      "logs_path",
-      "attested_at",
-    ]);
 
     for (const schema of [
       jsonSchema,
       jsonSchema.properties.authors.items,
       jsonSchema.properties.verification,
-      jsonSchema.properties.discovery,
-      jsonSchema.properties.sim_verification,
-      jsonSchema.properties.hardware_attestation,
       contract,
       contract.properties.observation_breakdown,
       contract.properties.action_breakdown,
@@ -95,7 +81,7 @@ describe("behavior schema", () => {
     }
   });
 
-  it("requires the exact Microduck contract and explicit simulation evidence", () => {
+  it("requires the exact Microduck contract and supported status", () => {
     for (const [pathParts, value] of [
       [["contract", "observation_dim"], 60],
       [["contract", "action_dim"], 15],
@@ -109,27 +95,9 @@ describe("behavior schema", () => {
       expect(BehaviorSchema.safeParse(bad).success).toBe(false);
     }
 
-    const missingEvidence = fixture();
-    missingEvidence.verification.status = "verified_simulation";
-    expect(BehaviorSchema.safeParse(missingEvidence).success).toBe(false);
-
-    const withEvidence = fixture();
-    withEvidence.verification.status = "verified_simulation";
-    withEvidence.sim_verification = {
-      mujoco_version: "3.12.0",
-      mjcf_sha256: "a".repeat(64),
-      seed: 0,
-      episode_length_s: 10,
-      grade: "pass",
-      travel_score: 1,
-      stability_score: 1,
-      fell: false,
-      verified_at: "2026-08-29T12:00:00Z",
-    };
-    expect(BehaviorSchema.safeParse(withEvidence).success).toBe(true);
-
-    const failedEvidence = { ...withEvidence, sim_verification: { ...withEvidence.sim_verification, grade: "fail" } };
-    expect(BehaviorSchema.safeParse(failedEvidence).success).toBe(false);
+    const unsupportedStatus = fixture();
+    unsupportedStatus.verification.status = "unknown";
+    expect(BehaviorSchema.safeParse(unsupportedStatus).success).toBe(false);
 
     const missingExplicitContract = fixture();
     delete missingExplicitContract.contract.observation_dim;
@@ -168,32 +136,9 @@ describe("behavior schema", () => {
     badNestedKey.verification.unexpected = true;
     expect(BehaviorSchema.safeParse(badNestedKey).success).toBe(false);
 
-    const badDiscovery = fixture();
-    badDiscovery.discovery.status = "unlisted";
-    expect(BehaviorSchema.safeParse(badDiscovery).success).toBe(false);
-
-    const badDiscoveryKey = fixture();
-    badDiscoveryKey.discovery.unexpected = true;
-    expect(BehaviorSchema.safeParse(badDiscoveryKey).success).toBe(false);
+    const badCompatibilityKey = fixture();
+    badCompatibilityKey.compatibility.unexpected = "value";
+    expect(BehaviorSchema.safeParse(badCompatibilityKey).success).toBe(false);
   });
 
-  it("validates structured hardware attestations when supplied", () => {
-    const valid = fixture();
-    valid.hardware_attestation = {
-      pr_url: "https://github.com/ob1-s/uduck-registry/pull/1",
-      video_url: "https://github.com/user-attachments/assets/example",
-      logs_path: "evidence/alpha-walking.log",
-      attested_at: "2026-08-29T12:00:00Z",
-    };
-    expect(BehaviorSchema.safeParse(valid).success).toBe(true);
-
-    const invalid = fixture();
-    invalid.hardware_attestation = {
-      pr_url: "http://github.com/ob1-s/uduck-registry/pull/1",
-      video_url: "https://github.com/user-attachments/assets/example",
-      logs_path: "evidence/alpha-walking.log",
-      attested_at: "not-a-timestamp",
-    };
-    expect(BehaviorSchema.safeParse(invalid).success).toBe(false);
-  });
 });

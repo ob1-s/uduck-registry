@@ -1,15 +1,6 @@
 # CODEOWNERS — uDuck Registry
-# The @pollen namespace is RESERVED for Pollen Robotics-maintained entries.
-# Behavior files whose authors list Pollen Robotics must be reviewed by Pollen
-# so nobody squats the official namespace with community submissions.
-
-# Behavior descriptors are maintained by the registry; authorship metadata is
-# not a reliable CODEOWNERS signal and cannot require an upstream review.
 /registry/behaviors/    @uduck-registry-maintainers
 
-# Schema and trust-tier changes are maintainer-only:
+# Registry structure and tooling are maintainer-owned:
 /registry/schema/       @uduck-registry-maintainers
-/sim/                   @uduck-registry-maintainers
 /scripts/               @uduck-registry-maintainers
-/vendor/policies/       @uduck-registry-maintainers
-/sim/mjcf-pins.json     @uduck-registry-maintainers

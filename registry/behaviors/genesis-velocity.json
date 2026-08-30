@@ -3,7 +3,7 @@
   "name": "Genesis Flat Walk",
   "version": "1.0.0",
   "description": "Velocity-tracking walking policy trained in a Genesis port of the MicroDuck environment for flat terrain.",
-  "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+  "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
   "category": "locomotion",
   "tags": [
     "community",
@@ -20,13 +20,11 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
-    "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test reported.",
+    "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test is documented.",
     "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-    "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
-    "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+    "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
   },
   "contract": {
     "observation_dim": 61,
@@ -49,7 +47,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_walk.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -60,8 +57,6 @@
     "onnx": {
       "filename": "velocity.onnx",
       "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/velocity.onnx",
-      "size_bytes": 793295,
-      "sha256": "c315b9159a1b6f30976c90074ed6df2a33e7e1d14ef1505aed6c2c673f59061d",
       "baked_normalizer": true
     }
   },
@@ -75,7 +70,6 @@
     "task_id": "microduck-velocity"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\"",
-    "cli_command": "python export_onnx.py -e microduck-velocity -o policies/velocity.onnx"
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\""
   }
 }

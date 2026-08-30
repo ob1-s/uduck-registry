@@ -2,14 +2,13 @@
 import { main as submit } from "./submit";
 import { validateAllBehaviors } from "./validate-registry";
 import { pullArtifact } from "./lib/pull-artifact";
-import { isDiscoverableBehavior, type Behavior, type VerificationStatus } from "../registry/schema/behavior";
+import { type Behavior, type VerificationStatus } from "../registry/schema/behavior";
 
 const args = process.argv.slice(2);
 
 const STATUS_BADGES: Record<VerificationStatus, { label: string; color: string }> = {
   verified_hardware: { label: "[HARDWARE]", color: "\x1b[32m" },
   claimed_hardware: { label: "[CLAIMED]", color: "\x1b[33m" },
-  verified_simulation: { label: "[SIMULATION]", color: "\x1b[35m" },
   community_experimental: { label: "[EXPERIMENTAL]", color: "\x1b[36m" },
 };
 
@@ -23,15 +22,14 @@ function printHelp() {
 \x1b[1m\x1b[33muDuck CLI\x1b[0m — Community behaviors for MicroDuck 🦆
 
 Usage:
-  uduck list                   List all behaviors in the registry
-  uduck info <id>              Show metadata, contract, and deployment for a behavior
-  uduck toml <id>              Print /etc/robot/robotd.toml snippet for a behavior
-  uduck pull <id> [dest]       Download the ONNX policy, verifying sha256 + size
-  uduck submit <file.json>     Submit a behavior JSON to the registry via GitHub PR
-  uduck validate               Run registry schema, contract, and artifact checks
+  pnpm cli list                List all behaviors in the registry
+  pnpm cli info <id>           Show metadata, contract, and deployment for a behavior
+  pnpm cli toml <id>           Print /etc/robot/robotd.toml snippet for a behavior
+  pnpm cli pull <id> [dest]    Download the ONNX policy
+  pnpm cli submit <file.json>  Submit a behavior JSON to the registry via GitHub PR
+  pnpm cli validate            Run registry schema and descriptor checks
 
 Options:
-  --allow-unverified           Explicitly allow pulling an artifact with no recorded sha256
   --help, -h                   Show this help message
 `);
 }
@@ -47,22 +45,17 @@ function findBehavior(behaviors: Behavior[], id: string | undefined): Behavior |
 export interface PullArgs {
   id: string | undefined;
   destDir: string;
-  allowUnverified: boolean;
   error?: string;
 }
 
 export function parsePullArgs(values: string[]): PullArgs {
   const positional: string[] = [];
-  let allowUnverified = false;
 
   for (const value of values) {
-    if (value === "--allow-unverified") {
-      allowUnverified = true;
-    } else if (value.startsWith("--")) {
+    if (value.startsWith("--")) {
       return {
         id: undefined,
         destDir: "./policies",
-        allowUnverified,
         error: `Unknown pull option '${value}'.`,
       };
     } else {
@@ -74,25 +67,14 @@ export function parsePullArgs(values: string[]): PullArgs {
     return {
       id: undefined,
       destDir: "./policies",
-      allowUnverified,
-      error: "Usage: uduck pull <id> [dest] [--allow-unverified]",
+      error: "Usage: pnpm cli pull <id> [dest]",
     };
   }
 
   return {
     id: positional[0],
     destDir: positional[1] || "./policies",
-    allowUnverified,
   };
-}
-
-function printArtifactTrust(behavior: Behavior) {
-  const artifact = behavior.artifacts.onnx;
-  if (artifact.sha256) {
-    console.log(`  Integrity:    sha256 pinned${artifact.size_bytes ? ` + ${artifact.size_bytes} bytes` : ""}`);
-  } else {
-    console.log("  Integrity:    UNVERIFIED — no sha256 recorded; pull requires --allow-unverified");
-  }
 }
 
 export async function run(argv: string[] = args): Promise<number> {
@@ -117,12 +99,12 @@ export async function run(argv: string[] = args): Promise<number> {
     return 1;
   }
 
-  const { valid, behaviors: allBehaviors, errors, warnings } = validation;
+  const { valid, behaviors: allBehaviors, errors } = validation;
   if (!valid) {
     console.error("Registry validation error:\n" + errors.join("\n"));
     return 1;
   }
-  const behaviors = allBehaviors.filter(isDiscoverableBehavior);
+  const behaviors = allBehaviors;
 
   switch (command) {
     case "list": {
@@ -133,14 +115,14 @@ export async function run(argv: string[] = args): Promise<number> {
         console.log(`  ${badge}${" ".repeat(Math.max(1, 20 - badgeLabel.length))}\x1b[1m${b.id.padEnd(24)}\x1b[0m ${b.name}`);
         console.log(`  ${"".padEnd(10)} └─ ${b.description.slice(0, 80)}...`);
       }
-      console.log("\nRun `uduck info <id>` for full contract and deployment specs.\n");
+      console.log("\nRun `pnpm cli info <id>` for full contract and deployment specs.\n");
       break;
     }
 
     case "info": {
       const id = argv[1];
       if (!id) {
-        console.error("Error: Please provide a behavior ID. e.g. `uduck info alpha-walking`");
+        console.error("Error: Please provide a behavior ID. e.g. `pnpm cli info alpha-walking`");
         return 1;
       }
       const b = findBehavior(behaviors, id);
@@ -164,7 +146,6 @@ export async function run(argv: string[] = args): Promise<number> {
       console.log(`\n\x1b[1mArtifact:\x1b[0m`);
       console.log(`  ONNX:         ${b.artifacts.onnx.filename}`);
       console.log(`  URL:          ${b.artifacts.onnx.url}`);
-      printArtifactTrust(b);
       console.log(`\n\x1b[1mDeployment Snippet (/etc/robot/robotd.toml):\x1b[0m`);
       console.log(b.deployment.robotd_toml);
       console.log();
@@ -193,7 +174,7 @@ export async function run(argv: string[] = args): Promise<number> {
         return 1;
       }
       if (!pullArgs.id) {
-        console.error("Error: Please provide a behavior ID. e.g. `uduck pull alpha-walking`");
+        console.error("Error: Please provide a behavior ID. e.g. `pnpm cli pull alpha-walking`");
         return 1;
       }
       const b = findBehavior(behaviors, pullArgs.id);
@@ -201,28 +182,10 @@ export async function run(argv: string[] = args): Promise<number> {
         console.error(`Error: Behavior '${pullArgs.id}' not found.`);
         return 1;
       }
-      if (!b.artifacts.onnx.sha256 && !pullArgs.allowUnverified) {
-        console.error(
-          `Error: '${pullArgs.id}' has no recorded sha256. Refusing to pull an unverified artifact.\n` +
-            "If you understand the risk, rerun with --allow-unverified; the result will be marked UNVERIFIED.",
-        );
-        return 1;
-      }
-      if (!b.artifacts.onnx.sha256) {
-        console.warn(`Warning: pulling '${pullArgs.id}' without a recorded sha256. Do not deploy it as trusted.`);
-      }
-
       console.log(`Pulling ${b.artifacts.onnx.filename} for ${b.name}...`);
       try {
         const result = await pullArtifact(b, pullArgs.destDir);
-        console.log(`  source:  ${result.source}`);
-        console.log(`  sha256:  ${result.sha256}`);
-        console.log(`  size:    ${result.size_bytes} bytes`);
-        if (result.hashMatch === true) {
-          console.log(`  \x1b[32m✓ hash verified\x1b[0m -> ${result.destPath}`);
-        } else {
-          console.warn(`  \x1b[33m⚠ artifact written without hash verification (UNVERIFIED)\x1b[0m -> ${result.destPath}`);
-        }
+        console.log(`  downloaded -> ${result.destPath}`);
       } catch (error) {
         console.error(`\x1b[31m${errorMessage(error)}\x1b[0m`);
         return 1;
@@ -232,9 +195,6 @@ export async function run(argv: string[] = args): Promise<number> {
 
     case "validate": {
       console.log(`Registry valid! ${behaviors.length} behaviors passed validation.`);
-      if (warnings.length > 0) {
-        console.warn(`${warnings.length} warning(s) reported; see \`pnpm validate\` for details.`);
-      }
       break;
     }
 

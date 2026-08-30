@@ -22,12 +22,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
     "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
     "notes": "Targeted for 70mm diameter, 15g mass spheres."
   },
   "contract": {
@@ -51,7 +49,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [
       "70mm_practice_ball"
     ],
@@ -64,9 +61,7 @@
     "onnx": {
       "filename": "ball_kick_right.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_right.onnx",
-      "size_bytes": 793685,
-      "baked_normalizer": true,
-      "sha256": "147a32c388c6b19111b3ac3b550a9a6dc8b8bf267118af4d8c3712522eedb5af"
+      "baked_normalizer": true
     }
   },
   "media": {

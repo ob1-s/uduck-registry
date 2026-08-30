@@ -22,12 +22,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware on padded mats and carpet. Shipped in official MicroDuck release video montage.",
     "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
     "notes": "Recommend performing on padded surface, yoga mat, or carpet to avoid cosmetic shell scratches."
   },
   "contract": {
@@ -51,7 +49,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -62,9 +59,7 @@
     "onnx": {
       "filename": "roulade.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/roulade.onnx",
-      "size_bytes": 793685,
-      "baked_normalizer": true,
-      "sha256": "3d60da08fc13f29c1b57f41977aa898132c0d60042100149d8e775affcbca32b"
+      "baked_normalizer": true
     }
   },
   "media": {

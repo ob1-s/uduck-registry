@@ -19,14 +19,12 @@
       "url": "https://github.com/Liyucheng1997"
     }
   ],
-  "license": "Not specified by publisher",
-  "discovery": { "status": "listed" },
+  "license": "Not provided",
   "verification": {
     "status": "community_experimental",
     "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
     "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-    "sim_framework": "MuJoCo WebAssembly with onnxruntime-web at 50 Hz",
-    "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file, and registry simulation verification has not been run."
+    "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file."
   },
   "contract": {
     "observation_dim": 61,
@@ -49,7 +47,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -60,8 +57,6 @@
     "onnx": {
       "filename": "jump.onnx",
       "url": "https://raw.githubusercontent.com/Liyucheng1997/318_lab-microduck-simulator/512d4bec6fc3ba321d29c93312be72856ad21268/app/public/policies/jump.onnx",
-      "size_bytes": 793756,
-      "sha256": "0b10d7f50f2225467771c1fd11e027490e775b762c2e50c9e25f82c0f488e5c4",
       "baked_normalizer": true
     }
   },

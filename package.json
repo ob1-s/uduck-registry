@@ -1,7 +1,7 @@
 {
   "name": "uduck-registry",
   "version": "1.0.0",
-  "description": "",
+  "description": "Community behavior registry for MicroDuck.",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
@@ -10,8 +10,7 @@
     "test": "vitest run",
     "validate": "tsx scripts/validate-registry.ts",
     "compile": "tsx scripts/generate-registry-index.ts",
-    "cli": "tsx scripts/cli.ts",
-    "vendor": "tsx scripts/vendor-artifacts.ts"
+    "cli": "tsx scripts/cli.ts"
   },
   "keywords": [],
   "author": "",

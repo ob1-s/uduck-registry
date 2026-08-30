@@ -27,10 +27,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
-# Local policy cache. Registry descriptors carry the canonical URL and pinned
-# metadata; cache bytes are optional and are verified whenever present.
-vendor/policies/*.onnx
-vendor/policies/*.part-*
-__pycache__/
-*.pyc

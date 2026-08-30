@@ -33,20 +33,17 @@ describe("CLI status and artifact UX", () => {
   it("uses a truthful badge for every verification status", () => {
     expect(stripAnsi(formatStatusBadge("verified_hardware"))).toBe("[HARDWARE]");
     expect(stripAnsi(formatStatusBadge("claimed_hardware"))).toBe("[CLAIMED]");
-    expect(stripAnsi(formatStatusBadge("verified_simulation"))).toBe("[SIMULATION]");
     expect(stripAnsi(formatStatusBadge("community_experimental"))).toBe("[EXPERIMENTAL]");
   });
 
-  it("keeps the safe pull default while making the explicit opt-in parseable", () => {
+  it("parses an optional destination for pull", () => {
     expect(parsePullArgs(["genesis-velocity"])).toMatchObject({
       id: "genesis-velocity",
       destDir: "./policies",
-      allowUnverified: false,
     });
-    expect(parsePullArgs(["genesis-velocity", "./tmp", "--allow-unverified"])).toMatchObject({
+    expect(parsePullArgs(["genesis-velocity", "./tmp"])).toMatchObject({
       id: "genesis-velocity",
       destDir: "./tmp",
-      allowUnverified: true,
     });
   });
 });

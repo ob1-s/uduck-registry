@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
-import { isDiscoverableBehavior, type RegistryIndex } from "../registry/schema/behavior";
+import { type RegistryIndex } from "../registry/schema/behavior";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
@@ -46,14 +46,13 @@ export function generateRegistryIndex(): RegistryIndex {
     throw new Error(`Cannot compile registry due to validation errors:\n${errors.join("\n")}`);
   }
 
-  const behaviors = allBehaviors.filter(isDiscoverableBehavior);
+  const behaviors = allBehaviors;
 
-  // Sort behaviors by trust tier, then by display name and stable ID.
+  // Keep the public catalog stable by trust tier, then display name and ID.
   const priorityMap: Record<string, number> = {
     verified_hardware: 1,
     claimed_hardware: 2,
-    verified_simulation: 3,
-    community_experimental: 4,
+    community_experimental: 3,
   };
 
   behaviors.sort((a, b) => {
@@ -66,7 +65,7 @@ export function generateRegistryIndex(): RegistryIndex {
   });
 
   const index: RegistryIndex = {
-    version: "0.1.0",
+    version: "1.0.0",
     updated_at: getDeterministicUpdatedAt(),
     count: behaviors.length,
     behaviors,

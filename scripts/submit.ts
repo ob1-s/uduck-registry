@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * `uduck submit <behavior.json>` — submit a behavior to the registry via GitHub PR.
+ * `pnpm cli submit <behavior.json>` — submit a behavior to the registry via GitHub PR.
  *
  * The command validates the candidate and the current registry before it talks
  * to GitHub. Authentication/API failures print a manual path, but still return
@@ -237,7 +237,6 @@ export function manualFallback(
 export interface SubmissionValidation {
   valid: boolean;
   errors: string[];
-  warnings: string[];
 }
 
 export function validateSubmissionCandidate(behavior: Behavior): SubmissionValidation {
@@ -246,7 +245,7 @@ export function validateSubmissionCandidate(behavior: Behavior): SubmissionValid
   if (registry.behaviors.some((item) => item.id === behavior.id)) {
     errors.push(`Behavior ID '${behavior.id}' already exists in registry/behaviors/.`);
   }
-  return { valid: errors.length === 0, errors, warnings: registry.warnings };
+  return { valid: errors.length === 0, errors };
 }
 
 export async function createSubmissionBranch(
@@ -345,7 +344,7 @@ async function waitForFork(fork: string, token: string, fetchImpl: FetchImplemen
 }
 
 function printSubmitHelp() {
-  console.log(`Usage: uduck submit <path/to/behavior.json>
+  console.log(`Usage: pnpm cli submit <path/to/behavior.json>
 
 The candidate and the complete current registry are validated before GitHub authentication.
 Authentication/API failures print manual instructions and return status 1.`);
@@ -358,7 +357,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     return 0;
   }
   if (!sourcePath) {
-    console.error("Error: Usage: uduck submit <path/to/behavior.json>");
+    console.error("Error: Usage: pnpm cli submit <path/to/behavior.json>");
     return 1;
   }
 
@@ -381,10 +380,6 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     console.error(validation.errors.join("\n"));
     return 1;
   }
-  if (validation.warnings.length > 0) {
-    console.warn(`Registry validation passed with ${validation.warnings.length} warning(s).`);
-  }
-
   const { raw, behavior } = loaded;
   console.log(`\x1b[32m✓ ${behavior.id} passes candidate and full-registry validation.\x1b[0m`);
 
@@ -448,7 +443,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     });
     if (!pr?.html_url) throw new Error("GitHub PR response was missing html_url.");
     console.log(`\n\x1b[32m🦆 PR opened: ${pr.html_url}\x1b[0m`);
-    console.log("CI will run the MuJoCo sim verification and artifact checks on this PR.");
+    console.log("CI will validate the descriptor and rebuild the catalog on this PR.");
     return 0;
   } catch (error) {
     return manualFallback(raw, behavior.id, repo, errorMessage(error), branch);
@@ -458,12 +453,10 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 const PR_BODY = [
   "## Behavior submission checklist",
   "",
-  "- [x] Candidate and full registry: pass `uduck validate` (61-D obs, 14 joints, 50 Hz contract)",
-  "- [ ] Discovery: use `listed` only for downloadable policies; use `source_only` for task records without an available artifact",
-  "- [ ] Artifact: ONNX vendored with sha256 + byte size (`pnpm tsx scripts/vendor-artifacts.ts`)",
-  "- [ ] Tier: claimed honestly — `verified_simulation` is (re)computed by MuJoCo CI, never inherited",
-  "- [ ] License: stated; NC assets are linked, not hosted, unless cleared",
-  "- [ ] Namespace: not claiming `@pollen` (maintainer-only, see CODEOWNERS)",
+  "- [x] Candidate and full registry: pass `pnpm validate` (61-D obs, 14 joints, 50 Hz contract)",
+  "- [ ] Artifact: canonical ONNX URL and metadata are correct",
+  "- [ ] Verification label and hardware requirements are accurate",
+  "- [ ] License: stated; upstream assets are linked, not hosted",
 ].join("\n");
 
 if (process.argv[1]?.endsWith("submit.ts")) {

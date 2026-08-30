@@ -1,104 +1,50 @@
 # Contributing to uDuck Registry
 
-Thank you for contributing to **uDuck Registry**! 🦆
+uDuck Registry is a directory of MicroDuck behavior policies. A contribution is one JSON descriptor that points to the policy artifact and its source.
 
-Our mission is to make the MicroDuck robotics ecosystem immediately legible and composable. Adding a behavior should be as simple as adding a single JSON file to the repository.
+## Add a behavior
 
----
+1. Fork and clone the repository.
 
-## The Contribution Workflow
-
-1. **Fork & Clone:**
    ```bash
    git clone https://github.com/<your-username>/uduck-registry.git
    cd uduck-registry
    pnpm install
    ```
 
-2. **Create Your Behavior Descriptor:**
-   Create a new file in `registry/behaviors/<id>.json`. The filename must match the `id` field exactly.
+2. Add `registry/behaviors/<id>.json`. The filename must match the lowercase kebab-case `id`.
 
-3. **Validate Invariants:**
-   Run the automated validation tool:
+3. Use `community_experimental` unless the upstream project or a pull request provides physical-run evidence. Use `claimed_hardware` when the author reports a physical run that the registry has not reproduced. Use `verified_hardware` only for an upstream-supported behavior or a submission with physical evidence.
+
+4. Point `artifacts.onnx.url` at the canonical ONNX file. The registry links to that file and does not copy policy weights into the repository.
+
+5. Run the checks and rebuild the catalog:
+
    ```bash
    pnpm validate
-   ```
-   This verifies the runtime schema, the 61-observation / 14-action / 50 Hz
-   contract, and the recorded artifact metadata for verified entries. It does not
-   make network requests or decide whether a hardware claim is true.
-
-   Set `discovery.status` to `source_only` when the upstream task is real but no
-   downloadable ONNX artifact is currently available. Source-only records stay
-   validated in the repository but are omitted from the public index, UI, API,
-   and CLI until an artifact is available. Use `listed` for a policy that users
-   can actually download.
-
-   If you add or replace a verified ONNX file, run `pnpm vendor` to record its
-   size and SHA-256. The resulting file in `vendor/policies/` is an optional
-   local cache; CI and clean checkouts use the recorded metadata and verify
-   downloads when needed.
-
-4. **Run Unit Tests:**
-   ```bash
    pnpm test
-   ```
-
-   Before opening a PR, regenerate the public snapshot and build the static
-   site:
-
-   ```bash
    pnpm compile
    pnpm build
    ```
 
-5. **Submit a Pull Request:**
-   Open a PR. In your PR description, explain:
-   - The training environment or code source.
-   - Any video proof of physical hardware testing (if claiming `verified_hardware`).
-   - Hardware requirements or accessories.
+6. Open a pull request with the upstream source, license, hardware requirements, and any evidence supporting the verification label.
 
----
-
-## Verification Tiers
-
-To protect physical hardware, we enforce honest verification labels:
-
-* `verified_hardware`: The submission includes hardware evidence in its PR or is
-  explicitly backed by an upstream release.
-* `claimed_hardware`: The author reports a hardware run, but the registry has
-  not independently reproduced it.
-* `verified_simulation`: The entry has a passing recorded MuJoCo run using its
-  declared policy and model.
-* `community_experimental`: Early-stage, unavailable, or otherwise unverified
-  policy exploration.
-
----
-
-## Starter JSON Template
+## Descriptor shape
 
 ```json
 {
-  "id": "my-cool-policy",
-  "name": "My Cool Policy",
+  "id": "my-cool-trick",
+  "name": "My Cool Duck Trick",
   "version": "1.0.0",
-  "description": "Concise description of the behavior.",
-  "category": "locomotion",
-  "tags": ["community", "locomotion", "50hz"],
-  "authors": [
-    {
-      "name": "Your Name",
-      "github": "your-handle"
-    }
-  ],
+  "description": "A short explanation of the behavior.",
+  "category": "agility-tricks",
+  "tags": ["community", "trick"],
+  "authors": [{ "name": "Your Name", "github": "yourgithub" }],
   "license": "Apache-2.0",
-  "discovery": {
-    "status": "listed"
-  },
   "verification": {
     "status": "community_experimental",
-    "summary": "Early community policy; simulation and hardware evidence pending.",
-    "hardware_target": "MicroDuck v1 (Dynamixel XL330)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz"
+    "summary": "Community policy with no physical deployment evidence yet.",
+    "hardware_target": "MicroDuck v1"
   },
   "contract": {
     "observation_dim": 61,
@@ -117,31 +63,25 @@ To protect physical hardware, we enforce honest verification labels:
     "control_frequency_hz": 50,
     "decimation": 4,
     "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
-    "action_scale": 1.0
+    "action_scale": 1
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_walk.xml",
     "accessories_required": [],
     "terrain": ["flat"],
     "robotd_slot": "walk"
   },
   "artifacts": {
     "onnx": {
-      "filename": "my_cool_policy.onnx",
-      "url": "https://huggingface.co/.../my_cool_policy.onnx",
+      "filename": "my_cool_trick.onnx",
+      "url": "https://huggingface.co/your-org/my-cool-trick/resolve/main/my_cool_trick.onnx",
       "baked_normalizer": true
     }
   },
-  "media": {
-    "hero_type": "badge",
-    "caption": "My duck in action"
-  },
-  "sources": {
-    "upstream_repo": "https://github.com/your-handle/my-repo"
-  },
-  "deployment": {
-    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/my_cool_policy.onnx\""
-  }
+  "media": { "hero_type": "badge" },
+  "sources": { "upstream_repo": "https://github.com/yourgithub/my-duck-repo" },
+  "deployment": { "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/my_cool_trick.onnx\"" }
 }
 ```
+
+The complete field definitions are in [`registry/schema/behavior.schema.json`](registry/schema/behavior.schema.json).

@@ -31,10 +31,8 @@ export default async function BehaviorDetailPage({ params }: Props) {
   const author = behavior.authors[0];
   const authorUrl = author?.url ?? (author?.github ? `https://github.com/${author.github}` : undefined);
   const artifact = behavior.artifacts.onnx;
+  const hasHardwareEvidence = behavior.verification.status !== "community_experimental";
   const downloadCommand = `curl --fail --location --output "${artifact.filename}" "${artifact.url}"`;
-  const artifactCommand = artifact.sha256
-    ? `${downloadCommand}\nprintf '%s  %s\\n' '${artifact.sha256}' '${artifact.filename}' | sha256sum --check -`
-    : downloadCommand;
 
   return (
     <div className="detail-page">
@@ -84,7 +82,6 @@ export default async function BehaviorDetailPage({ params }: Props) {
                 <div><dt>Status</dt><dd><VerificationBadge status={behavior.verification.status} size="sm" /></dd></div>
                 <div><dt>Evidence</dt><dd>{behavior.verification.summary}</dd></div>
                 <div><dt>Target hardware</dt><dd className="mono-value">{behavior.verification.hardware_target}</dd></div>
-                {behavior.verification.sim_framework && <div><dt>Simulation</dt><dd>{behavior.verification.sim_framework}</dd></div>}
                 {behavior.verification.notes && <div><dt>Note</dt><dd>{behavior.verification.notes}</dd></div>}
               </dl>
             </section>
@@ -93,7 +90,6 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <h2><Box size={17} aria-hidden="true" /> Compatibility</h2>
               <dl className="detail-list">
                 <div><dt>Robot model</dt><dd className="mono-value">{behavior.compatibility.robot_model}</dd></div>
-                <div><dt>MJCF model</dt><dd className="mono-value">{behavior.compatibility.mjcf_model}</dd></div>
                 <div><dt>Terrain</dt><dd><span className="tag-row">{behavior.compatibility.terrain.map((terrain) => <span className="tag" key={terrain}>{terrain}</span>)}</span></dd></div>
                 <div><dt>Required accessories</dt><dd>{behavior.compatibility.accessories_required.length > 0 ? <span className="tag-row">{behavior.compatibility.accessories_required.map((item) => <span className="tag tag-sun" key={item}>{formatAccessory(item)}</span>)}</span> : "None — standard duck setup"}</dd></div>
               </dl>
@@ -103,15 +99,15 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <section className="surface deployment-card">
             <div className="deployment-head">
               <div>
-                <h2><Terminal size={17} aria-hidden="true" /> Run it on your duck</h2>
-                <p>Use the canonical model and this policy slot to try the behavior locally.</p>
+                <h2><Terminal size={17} aria-hidden="true" /> Artifact and configuration</h2>
+                <p>Download the canonical model and review the policy slot before using it.</p>
               </div>
               <span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span>
             </div>
-            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>Try the simulation first. Hardware testing assumes a matching Microduck, clear space, and a safe surface. uDuck does not guarantee that a community policy is safe to run.</span></div>
+            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{hasHardwareEvidence ? "Hardware testing assumes a matching MicroDuck, clear space, and a safe surface." : "No physical deployment evidence is listed for this entry. Review the source and compatibility before running it."} uDuck does not guarantee that a policy is safe to run.</span></div>
             <details className="deployment-disclosure">
               <summary className="deployment-summary">
-                <span>Deployment steps</span>
+                <span>Configuration steps</span>
                 <span className="deployment-summary-action"><span>Show instructions</span><ChevronDown size={14} aria-hidden="true" /></span>
               </summary>
               <div className="deployment-steps">
@@ -120,33 +116,16 @@ export default async function BehaviorDetailPage({ params }: Props) {
                   <span><b className="deployment-step-number">1</b> Download the policy artifact</span>
                   <a className="download-link" href={behavior.artifacts.onnx.url} target="_blank" rel="noopener noreferrer" aria-label={`Open ${behavior.artifacts.onnx.filename} in a new tab`}><Download size={13} aria-hidden="true" /> {behavior.artifacts.onnx.filename}</a>
                 </div>
-                <pre className="code-block deployment-code"><code>{artifactCommand}</code></pre>
-                {artifact.sha256 ? (
-                  <p className="mono-value" style={{ marginTop: "0.5rem", fontSize: "0.62rem", wordBreak: "break-all" }}>sha256: {artifact.sha256}</p>
-                ) : (
-                  <p style={{ marginTop: "0.5rem", color: "var(--quiet)", fontFamily: "var(--font-mono)", fontSize: "0.62rem" }}>No SHA-256 recorded — do not treat this artifact as verified.</p>
-                )}
+                <pre className="code-block deployment-code"><code>{downloadCommand}</code></pre>
               </div>
               <div className="deployment-step">
-                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Apply the descriptor’s robotd config</span><span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span></div>
+                <div className="deployment-step-label"><span><b className="deployment-step-number">2</b> Review the descriptor’s robotd config</span><span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span></div>
                 <pre className="code-block deployment-code"><code>{behavior.deployment.robotd_toml}</code></pre>
               </div>
               <div className="deployment-step">
                 <div className="deployment-step-label"><span><b className="deployment-step-number">3</b> Restart the control loop</span></div>
                 <pre className="code-block deployment-code"><code>{"sudo systemctl restart robotd"}</code></pre>
               </div>
-              {behavior.deployment.cli_command && (
-                <div className="deployment-step">
-                  <div className="deployment-step-label"><span><b className="deployment-step-number">⌁</b> Recorded runtime command</span></div>
-                  <pre className="code-block deployment-code"><code>{behavior.deployment.cli_command}</code></pre>
-                </div>
-              )}
-              {behavior.deployment.python_infer_command && (
-                <div className="deployment-step">
-                  <div className="deployment-step-label"><span><b className="deployment-step-number">⌁</b> Recorded simulation command</span></div>
-                  <pre className="code-block deployment-code"><code>{behavior.deployment.python_infer_command}</code></pre>
-                </div>
-              )}
               </div>
             </details>
           </section>

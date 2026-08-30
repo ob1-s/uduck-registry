@@ -3,7 +3,7 @@
   "name": "Genesis Backlash Walk",
   "version": "1.0.0",
   "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every MicroDuck servo in Genesis.",
-  "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+  "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
   "category": "locomotion",
   "tags": [
     "community",
@@ -20,13 +20,11 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
-    "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test reported.",
+    "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test is documented.",
     "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-    "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
-    "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+    "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
   },
   "contract": {
     "observation_dim": 61,
@@ -49,7 +47,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_walk_backlash.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -60,8 +57,6 @@
     "onnx": {
       "filename": "backlash.onnx",
       "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/backlash.onnx",
-      "size_bytes": 793295,
-      "sha256": "3f8db8bc2c11b2e41665633c1780af21bae3fda7db229eb5035e6c2d5698c075",
       "baked_normalizer": true
     }
   },
@@ -75,7 +70,6 @@
     "task_id": "microduck-backlash"
   },
   "deployment": {
-    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\"",
-    "cli_command": "python export_onnx.py -e microduck-backlash -o policies/backlash.onnx"
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\""
   }
 }

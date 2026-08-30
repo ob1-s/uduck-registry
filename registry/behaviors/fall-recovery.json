@@ -22,13 +22,11 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
     "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-    "notes": "Requires full body contact physics. Uses robot_allcollisions.xml in simulation."
+    "notes": "Requires full-body contact handling."
   },
   "contract": {
     "observation_dim": 61,
@@ -51,7 +49,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": [
       "flat",
@@ -63,9 +60,7 @@
     "onnx": {
       "filename": "BEST_alpha_stand.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_stand.onnx",
-      "size_bytes": 793705,
-      "baked_normalizer": true,
-      "sha256": "1569268713e40deea795dd2922dba50d3621e15a872855408b6b1b125b1c094b"
+      "baked_normalizer": true
     }
   },
   "media": {

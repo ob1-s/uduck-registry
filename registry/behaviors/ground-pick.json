@@ -23,12 +23,10 @@
     }
   ],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware picking up objects from carpet and hard flooring with the beak gripper.",
-    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077 + Beak Gripper)",
-    "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
     "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
   },
   "contract": {
@@ -52,7 +50,6 @@
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": [
       "flat"
@@ -63,9 +60,7 @@
     "onnx": {
       "filename": "alpha_ground_pick.onnx",
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/alpha_ground_pick.onnx",
-      "size_bytes": 793685,
-      "baked_normalizer": true,
-      "sha256": "ffbf5109982ff999b0ba53afe86b9ae731bbec679d67fb7f8ab4c52152c88872"
+      "baked_normalizer": true
     }
   },
   "media": {

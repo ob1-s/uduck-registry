@@ -1,7 +1,4 @@
-/**
- * Shared artifact-integrity constants. Used by the CLI, the validator, and CI
- * so `uduck validate` is byte-identical to CI's checks.
- */
+/** Shared registry validation constants used by the CLI and validator. */
 
 /** Only these hosts may serve canonical ONNX artifacts (HTTPS only). */
 export const HOST_ALLOWLIST = ["huggingface.co", "raw.githubusercontent.com"] as const;
@@ -18,9 +15,6 @@ export const GITHUB_USERNAME_PATTERN = /^(?:[A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]{
 
 /** Canonical model files are plain, single-component ONNX filenames. */
 export const ONNX_FILENAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.onnx$/;
-
-/** MJCF references are filenames, not paths. */
-export const MJCF_FILENAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.xml$/;
 
 /** Relative paths are limited to local public assets, never protocol-relative URLs. */
 export const RELATIVE_ASSET_PATH_PATTERN = /^\/(?!\/)(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+$/;

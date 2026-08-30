@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "updated_at": "2026-08-29T05:32:26.202Z",
   "count": 14,
   "behaviors": [
@@ -27,14 +27,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware on padded mats and carpet. Shipped in official MicroDuck release video montage.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Recommend performing on padded surface, yoga mat, or carpet to avoid cosmetic shell scratches."
       },
       "contract": {
@@ -58,7 +54,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -69,8 +64,6 @@
         "onnx": {
           "filename": "roulade.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/roulade.onnx",
-          "size_bytes": 793685,
-          "sha256": "3d60da08fc13f29c1b57f41977aa898132c0d60042100149d8e775affcbca32b",
           "baked_normalizer": true
         }
       },
@@ -112,14 +105,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Operates at 50 Hz control loop. Velocity envelope: -0.2 to +0.25 m/s forward/back, ±1.0 rad/s angular yaw rate."
       },
       "contract": {
@@ -143,7 +132,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_walk.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -154,8 +142,6 @@
         "onnx": {
           "filename": "BEST_alpha_walking.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_walking.onnx",
-          "size_bytes": 793705,
-          "sha256": "e36332d383997d51401897734cd3e79cf5038406feddb18b4d57ecfb141daa6c",
           "baked_normalizer": true
         }
       },
@@ -201,14 +187,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware picking up objects from carpet and hard flooring with the beak gripper.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077 + Beak Gripper)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
+        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
         "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
       },
       "contract": {
@@ -232,7 +214,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -243,8 +224,6 @@
         "onnx": {
           "filename": "alpha_ground_pick.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/alpha_ground_pick.onnx",
-          "size_bytes": 793685,
-          "sha256": "ffbf5109982ff999b0ba53afe86b9ae731bbec679d67fb7f8ab4c52152c88872",
           "baked_normalizer": true
         }
       },
@@ -289,15 +268,11 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
-        "notes": "Requires full body contact physics. Uses robot_allcollisions.xml in simulation."
+        "notes": "Requires full-body contact handling."
       },
       "contract": {
         "observation_dim": 61,
@@ -320,7 +295,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat",
@@ -332,8 +306,6 @@
         "onnx": {
           "filename": "BEST_alpha_stand.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_stand.onnx",
-          "size_bytes": 793705,
-          "sha256": "1569268713e40deea795dd2922dba50d3621e15a872855408b6b1b125b1c094b",
           "baked_normalizer": true
         }
       },
@@ -378,14 +350,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Targeted for 70mm diameter, 15g mass spheres."
       },
       "contract": {
@@ -409,7 +377,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [
           "70mm_practice_ball"
         ],
@@ -422,8 +389,6 @@
         "onnx": {
           "filename": "ball_kick_left.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_left.onnx",
-          "size_bytes": 793685,
-          "sha256": "d6928284dccd3dd61e08bf2f760effa74309fbefd97b2b31afb2a60f526d196a",
           "baked_normalizer": true
         }
       },
@@ -467,14 +432,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Targeted for 70mm diameter, 15g mass spheres."
       },
       "contract": {
@@ -498,7 +459,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [
           "70mm_practice_ball"
         ],
@@ -511,8 +471,6 @@
         "onnx": {
           "filename": "ball_kick_right.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_right.onnx",
-          "size_bytes": 793685,
-          "sha256": "147a32c388c6b19111b3ac3b550a9a6dc8b8bf267118af4d8c3712522eedb5af",
           "baked_normalizer": true
         }
       },
@@ -555,14 +513,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",
         "hardware_target": "MicroDuck v1 + Roller Skate Blades",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Cycle duration: 3.5 seconds (period 5.0s, end phase 0.7)."
       },
       "contract": {
@@ -586,21 +540,18 @@
       },
       "compatibility": {
         "robot_model": "microduck-rollers",
-        "mjcf_model": "robot_allcollisions_rollers.xml",
         "accessories_required": [
           "roller_skate_blades"
         ],
         "terrain": [
           "flat"
         ],
-        "robotd_slot": "roller"
+        "robotd_slot": "ground_pick"
       },
       "artifacts": {
         "onnx": {
           "filename": "BEST_roller_crouch.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller_crouch.onnx",
-          "size_bytes": 793685,
-          "sha256": "a1a084be240469c76ac9d3fa44d4792f16d4b1da60398b3ecd3cfc5e2244d990",
           "baked_normalizer": true
         }
       },
@@ -642,14 +593,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck equipped with official Pollen 3D-printed roller skate foot accessories.",
         "hardware_target": "MicroDuck v1 + Roller Skate Accessories (passive bearings/wheels)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Requires passive roller foot frames and 22x16x4 bearings. Robot model is robot_allcollisions_rollers.xml."
       },
       "contract": {
@@ -673,7 +620,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-rollers",
-        "mjcf_model": "robot_allcollisions_rollers.xml",
         "accessories_required": [
           "roller_skate_blades"
         ],
@@ -686,8 +632,6 @@
         "onnx": {
           "filename": "BEST_roller.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_roller.onnx",
-          "size_bytes": 793685,
-          "sha256": "cf05651d2708a2f9364212e86b866c97a70ace8131c492500105e8f28bf99afd",
           "baked_normalizer": true
         }
       },
@@ -732,14 +676,10 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "verified_hardware",
         "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
         "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
-        "sim_framework": "mjlab (MuJoCo Warp) at 50 Hz",
         "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
       },
       "contract": {
@@ -763,7 +703,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -774,8 +713,6 @@
         "onnx": {
           "filename": "BEST_alpha_sitstand.onnx",
           "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/BEST_alpha_sitstand.onnx",
-          "size_bytes": 793695,
-          "sha256": "c6c40e35e726eabd803d633e090d112994f469921152448367953fbaf9799bc8",
           "baked_normalizer": true
         }
       },
@@ -800,7 +737,7 @@
       "name": "Genesis Backlash Walk",
       "version": "1.0.0",
       "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every MicroDuck servo in Genesis.",
-      "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
         "community",
@@ -817,15 +754,11 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test reported.",
+        "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test is documented.",
         "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
-        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+        "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
         "observation_dim": 61,
@@ -848,7 +781,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_walk_backlash.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -859,8 +791,6 @@
         "onnx": {
           "filename": "backlash.onnx",
           "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/backlash.onnx",
-          "size_bytes": 793295,
-          "sha256": "3f8db8bc2c11b2e41665633c1780af21bae3fda7db229eb5035e6c2d5698c075",
           "baked_normalizer": true
         }
       },
@@ -874,8 +804,7 @@
         "task_id": "microduck-backlash"
       },
       "deployment": {
-        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\"",
-        "cli_command": "python export_onnx.py -e microduck-backlash -o policies/backlash.onnx"
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\""
       }
     },
     {
@@ -883,7 +812,7 @@
       "name": "Genesis Flat Walk",
       "version": "1.0.0",
       "description": "Velocity-tracking walking policy trained in a Genesis port of the MicroDuck environment for flat terrain.",
-      "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
         "community",
@@ -900,15 +829,11 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test reported.",
+        "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test is documented.",
         "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
-        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+        "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
         "observation_dim": 61,
@@ -931,7 +856,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_walk.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -942,8 +866,6 @@
         "onnx": {
           "filename": "velocity.onnx",
           "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/velocity.onnx",
-          "size_bytes": 793295,
-          "sha256": "c315b9159a1b6f30976c90074ed6df2a33e7e1d14ef1505aed6c2c673f59061d",
           "baked_normalizer": true
         }
       },
@@ -957,8 +879,7 @@
         "task_id": "microduck-velocity"
       },
       "deployment": {
-        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\"",
-        "cli_command": "python export_onnx.py -e microduck-velocity -o policies/velocity.onnx"
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\""
       }
     },
     {
@@ -966,7 +887,7 @@
       "name": "Genesis Rough-Terrain Walk",
       "version": "1.0.0",
       "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the MicroDuck environment.",
-      "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. The publisher reports no physical robot test; registry simulation verification has not been run.",
+      "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
         "community",
@@ -983,15 +904,11 @@
         }
       ],
       "license": "Apache-2.0",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test reported.",
+        "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test is documented.",
         "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-        "sim_framework": "Genesis 1.2.2 with PyTorch/ROCm at 50 Hz",
-        "notes": "The publisher reports no physical robot test. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract; registry simulation verification has not been run."
+        "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
         "observation_dim": 61,
@@ -1014,7 +931,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_walk.xml",
         "accessories_required": [],
         "terrain": [
           "rough"
@@ -1025,8 +941,6 @@
         "onnx": {
           "filename": "rough.onnx",
           "url": "https://raw.githubusercontent.com/Macmachi/microduck-rl-genesis/9fa4b270023b8b9b50809fa6dc15a28996f5c724/policies/rough.onnx",
-          "size_bytes": 793295,
-          "sha256": "04261902d3651dc02303e3e9e5ab756062c4d93c45400f431a0ae68b5969185c",
           "baked_normalizer": true
         }
       },
@@ -1040,8 +954,7 @@
         "task_id": "microduck-rough"
       },
       "deployment": {
-        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\"",
-        "cli_command": "python export_onnx.py -e microduck-rough -o policies/rough.onnx"
+        "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\""
       }
     },
     {
@@ -1049,7 +962,7 @@
       "name": "MicroDuck Courier",
       "version": "1.0.0",
       "description": "Pick, carry, and place a duck-scale paperback in a simulated MicroDuck apartment.",
-      "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one deployable ONNX export. The publisher reports 16/16 and 32/32 successful simulated delivery rollouts. The task-specific command slots carry book and reader targets; no physical robot deployment is claimed.",
+      "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
       "category": "manipulation",
       "tags": [
         "community",
@@ -1067,15 +980,11 @@
         }
       ],
       "license": "Not separately specified",
-      "discovery": {
-        "status": "listed"
-      },
       "verification": {
         "status": "community_experimental",
-        "summary": "Publisher-reported successful simulated courier rollouts; no physical hardware evidence reported.",
+        "summary": "Successful simulated courier runs are documented in the source; no physical hardware evidence is listed.",
         "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-        "sim_framework": "mjlab (MuJoCo) at 50 Hz",
-        "notes": "The source repository has a vendored Apache-2.0 microduck_rl component but no separate top-level artifact license. Its custom apartment scene is outside the registry's current generic simulation verifier; registry simulation verification has not been run."
+        "notes": "The source repository includes the Apache-2.0 microduck_rl component but no separate top-level artifact license. No physical robot deployment is claimed."
       },
       "contract": {
         "observation_dim": 61,
@@ -1098,7 +1007,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "scene_apartment.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -1109,8 +1017,6 @@
         "onnx": {
           "filename": "courier-policy.onnx",
           "url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/ba02a6b507b13c19bded8af0cbb2dd4a1eeb5cb1/artifacts/courier-policy.onnx",
-          "size_bytes": 793776,
-          "sha256": "c95396269a48bbab3ebd46032f6c40bc1323ccb7a6a933487ad75810d8785c47",
           "baked_normalizer": true
         }
       },
@@ -1148,16 +1054,12 @@
           "url": "https://github.com/Liyucheng1997"
         }
       ],
-      "license": "Not specified by publisher",
-      "discovery": {
-        "status": "listed"
-      },
+      "license": "Not provided",
       "verification": {
         "status": "community_experimental",
         "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
         "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
-        "sim_framework": "MuJoCo WebAssembly with onnxruntime-web at 50 Hz",
-        "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file, and registry simulation verification has not been run."
+        "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file."
       },
       "contract": {
         "observation_dim": 61,
@@ -1180,7 +1082,6 @@
       },
       "compatibility": {
         "robot_model": "microduck-standard",
-        "mjcf_model": "robot_allcollisions.xml",
         "accessories_required": [],
         "terrain": [
           "flat"
@@ -1191,8 +1092,6 @@
         "onnx": {
           "filename": "jump.onnx",
           "url": "https://raw.githubusercontent.com/Liyucheng1997/318_lab-microduck-simulator/512d4bec6fc3ba321d29c93312be72856ad21268/app/public/policies/jump.onnx",
-          "size_bytes": 793756,
-          "sha256": "0b10d7f50f2225467771c1fd11e027490e775b762c2e50c9e25f82c0f488e5c4",
           "baked_normalizer": true
         }
       },

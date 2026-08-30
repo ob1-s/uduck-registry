@@ -1,4 +1,4 @@
-import { AlertCircle, Cpu, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertCircle, ShieldCheck, Sparkles } from "lucide-react";
 import type { VerificationStatus } from "@registry/schema/behavior";
 
 interface VerificationBadgeProps {
@@ -11,7 +11,6 @@ interface VerificationBadgeProps {
 const labels: Record<VerificationStatus, string> = {
   verified_hardware: "Hardware verified",
   claimed_hardware: "Hardware claimed",
-  verified_simulation: "Simulation verified",
   community_experimental: "Experimental",
 };
 
@@ -25,16 +24,12 @@ export function VerificationBadge({
     ? ShieldCheck
     : status === "claimed_hardware"
       ? AlertCircle
-      : status === "verified_simulation"
-        ? Cpu
-        : Sparkles;
+      : Sparkles;
   const tone = status === "verified_hardware"
     ? "status-hardware"
     : status === "claimed_hardware"
       ? "status-claimed"
-      : status === "verified_simulation"
-        ? "status-simulation"
-        : "status-experimental";
+      : "status-experimental";
 
   return (
     <span

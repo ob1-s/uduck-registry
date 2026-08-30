@@ -3,7 +3,7 @@ import { AlertCircle, ArrowLeft, GitFork } from "lucide-react";
 
 export const metadata = {
   title: "Add a behavior — uDuck Registry",
-  description: "How to add a Microduck behavior JSON record to the registry.",
+  description: "How to add a MicroDuck behavior JSON record to the registry.",
 };
 
 const exampleJson = `{
@@ -15,11 +15,10 @@ const exampleJson = `{
   "tags": ["community", "trick"],
   "authors": [{ "name": "Your Name", "github": "yourgithub" }],
   "license": "Apache-2.0",
-  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
-    "summary": "Early community policy; simulation and hardware evidence pending.",
-    "hardware_target": "Microduck v1"
+    "summary": "Community policy with no physical deployment evidence yet.",
+    "hardware_target": "MicroDuck v1"
   },
   "contract": {
     "observation_dim": 61,
@@ -42,7 +41,6 @@ const exampleJson = `{
   },
   "compatibility": {
     "robot_model": "microduck-standard",
-    "mjcf_model": "robot_allcollisions.xml",
     "accessories_required": [],
     "terrain": ["flat"],
     "robotd_slot": "walk"
@@ -66,8 +64,8 @@ export default function ContributePage() {
 
         <div className="steps">
           <section className="step"><span className="step-number">01</span><h2>Make a behavior record</h2><p>Create <code>registry/behaviors/&lt;your-id&gt;.json</code>. Use a lowercase kebab-case <code>id</code> that matches the filename.</p></section>
-          <section className="step"><span className="step-number">02</span><h2>Keep the contract honest</h2><p>Policies in this catalog use 61 observations, 14 joint outputs, and a 50 Hz control loop. Point to the canonical ONNX artifact rather than copying it here.</p><div className="callout"><AlertCircle size={15} aria-hidden="true" /><span>Only use <code>verified_hardware</code> when the behavior has run on a physical MicroDuck with evidence in the pull request, or is clearly shipped by the upstream project. Use <code>verified_simulation</code> for a tested simulator run.</span></div></section>
-          <section className="step"><span className="step-number">03</span><h2>Validate before opening a PR</h2><p>Run the registry checks from the repository root.</p><pre className="code-block"><code>pnpm validate{`\n`}pnpm test</code></pre></section>
+          <section className="step"><span className="step-number">02</span><h2>Keep the contract honest</h2><p>Policies in this catalog use 61 observations, 14 joint outputs, and a 50 Hz control loop. Point to the canonical ONNX artifact rather than copying it here.</p><div className="callout"><AlertCircle size={15} aria-hidden="true" /><span>Only use <code>verified_hardware</code> when the behavior has run on a physical MicroDuck with evidence in the pull request, or is clearly shipped by the upstream project. Use <code>claimed_hardware</code> when the author reports a hardware run that the registry has not reproduced.</span></div></section>
+          <section className="step"><span className="step-number">03</span><h2>Validate before opening a PR</h2><p>Run the registry checks from the repository root.</p><pre className="code-block"><code>pnpm validate{`\n`}pnpm test{`\n`}pnpm compile{`\n`}pnpm build</code></pre></section>
           <section className="step"><span className="step-number">04</span><h2>Open the pull request</h2><p>Include a short description, evidence, and the upstream links. Regenerate the catalog index before opening the PR; CI checks that it matches.</p></section>
         </div>
 

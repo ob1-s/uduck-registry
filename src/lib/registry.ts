@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { BehaviorSchema, isDiscoverableBehavior, type Behavior } from "@registry/schema/behavior";
+import { BehaviorSchema, type Behavior } from "@registry/schema/behavior";
 
 const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
 
@@ -30,11 +30,10 @@ export function getAllBehaviors(): Behavior[] {
   const priorityMap: Record<string, number> = {
     verified_hardware: 1,
     claimed_hardware: 2,
-    verified_simulation: 3,
-    community_experimental: 4,
+    community_experimental: 3,
   };
 
-  return behaviors.filter(isDiscoverableBehavior).sort((a, b) => {
+  return behaviors.sort((a, b) => {
     const pA = priorityMap[a.verification.status] ?? 99;
     const pB = priorityMap[b.verification.status] ?? 99;
     if (pA !== pB) return pA - pB;
@@ -50,7 +49,6 @@ export function getBehaviorById(id: string): Behavior | null {
 export function getRegistryStats() {
   const all = getAllBehaviors();
   const hardware = all.filter((b) => b.verification.status === "verified_hardware").length;
-  const sim = all.filter((b) => b.verification.status === "verified_simulation").length;
   const claimed = all.filter((b) => b.verification.status === "claimed_hardware").length;
   const community = all.filter((b) => b.verification.status === "community_experimental").length;
 
@@ -60,7 +58,6 @@ export function getRegistryStats() {
   return {
     total: all.length,
     hardware,
-    sim,
     claimed,
     community,
     categories,

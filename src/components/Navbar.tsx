@@ -13,7 +13,7 @@ export function Navbar() {
       <div className="site-container nav-inner">
         <Link href="/" className="brand" aria-label="uDuck Registry home">
           <span className="brand-mark">
-            <DuckMark size={36} />
+            <DuckMark size={36} className="logo-duck" />
           </span>
           <span>
             <span className="brand-wordmark">

@@ -97,6 +97,8 @@ code {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
+.logo-duck { transform: scaleX(0.88); }
+
 .brand:hover .brand-mark { transform: rotate(-5deg) translateY(-1px); box-shadow: 0.34rem 0.34rem 0 rgba(255, 210, 63, 0.3); }
 
 .brand-wordmark { display: flex; align-items: baseline; gap: 0.42rem; color: var(--ink); font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }

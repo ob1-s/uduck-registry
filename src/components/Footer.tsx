@@ -6,7 +6,7 @@ export function Footer() {
     <footer className="site-footer">
       <div className="site-container footer-compact">
         <div className="footer-compact-brand">
-          <DuckMark size={27} />
+          <DuckMark size={27} className="logo-duck" />
           <span>uDuck <em>registry</em></span>
         </div>
 

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, it, expect } from "vitest";
 import { validateAllBehaviors } from "../scripts/validate-registry";
-import { BehaviorSchema } from "../registry/schema/behavior";
+import { BehaviorSchema, isDiscoverableBehavior } from "../registry/schema/behavior";
 import { isAllowedArtifactUrl } from "../registry/schema/allowlist";
 
 
@@ -54,6 +54,35 @@ describe("uDuck Registry Integrity", () => {
     expect(ids).toContain("fall-recovery");
     expect(ids).toContain("ground-pick");
     expect(ids).toContain("roller-drive");
+  });
+});
+
+describe("Discovery gate", () => {
+  it("keeps source-only records in validation but out of public catalog reads", () => {
+    const { behaviors } = validateAllBehaviors();
+    const sourceOnlyIds = behaviors
+      .filter((behavior) => !isDiscoverableBehavior(behavior))
+      .map((behavior) => behavior.id)
+      .sort();
+
+    expect(sourceOnlyIds).toEqual([
+      "backlash-walking",
+      "roller-slope",
+      "roller-swizzle",
+      "rough-terrain-walk",
+      "spin-in-place",
+      "standing-body-control",
+    ]);
+    const publicIndex = JSON.parse(fs.readFileSync("public/registry.json", "utf8")) as {
+      count: number;
+      behaviors: Array<{ id: string; discovery: { status: string } }>;
+    };
+    expect(publicIndex.count).toBe(publicIndex.behaviors.length);
+    for (const id of sourceOnlyIds) {
+      expect(publicIndex.behaviors.map((behavior) => behavior.id)).not.toContain(id);
+    }
+    expect(publicIndex.behaviors).toHaveLength(14);
+    expect(publicIndex.behaviors.every((behavior) => behavior.discovery.status === "listed")).toBe(true);
   });
 });
 

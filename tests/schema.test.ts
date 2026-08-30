@@ -64,6 +64,8 @@ describe("behavior schema", () => {
     expect(contract.properties.action_dim.const).toBe(14);
     expect(contract.properties.control_frequency_hz.const).toBe(50);
     expect(jsonSchema.properties.media.properties.loop_url).toBeDefined();
+    expect(jsonSchema.properties.discovery.required).toEqual(["status"]);
+    expect(jsonSchema.properties.discovery.properties.status.enum).toEqual(["listed", "source_only"]);
     expect(jsonSchema.properties.sim_verification.required).toContain("verified_at");
     expect(jsonSchema.properties.hardware_attestation.required).toEqual([
       "pr_url",
@@ -76,6 +78,7 @@ describe("behavior schema", () => {
       jsonSchema,
       jsonSchema.properties.authors.items,
       jsonSchema.properties.verification,
+      jsonSchema.properties.discovery,
       jsonSchema.properties.sim_verification,
       jsonSchema.properties.hardware_attestation,
       contract,
@@ -164,6 +167,14 @@ describe("behavior schema", () => {
     const badNestedKey = fixture();
     badNestedKey.verification.unexpected = true;
     expect(BehaviorSchema.safeParse(badNestedKey).success).toBe(false);
+
+    const badDiscovery = fixture();
+    badDiscovery.discovery.status = "unlisted";
+    expect(BehaviorSchema.safeParse(badDiscovery).success).toBe(false);
+
+    const badDiscoveryKey = fixture();
+    badDiscoveryKey.discovery.unexpected = true;
+    expect(BehaviorSchema.safeParse(badDiscoveryKey).success).toBe(false);
   });
 
   it("validates structured hardware attestations when supplied", () => {

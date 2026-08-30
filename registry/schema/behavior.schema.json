@@ -65,6 +65,7 @@
     "tags",
     "authors",
     "license",
+    "discovery",
     "verification",
     "contract",
     "compatibility",
@@ -139,6 +140,20 @@
     },
     "license": {
       "$ref": "#/$defs/nonEmptyString"
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["listed", "source_only"]
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
     },
     "verification": {
       "type": "object",

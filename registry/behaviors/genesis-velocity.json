@@ -20,6 +20,7 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
     "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test reported.",

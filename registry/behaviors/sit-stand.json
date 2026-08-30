@@ -22,6 +22,7 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",

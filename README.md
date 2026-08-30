@@ -55,7 +55,7 @@ All policies indexed in uDuck adhere to the unified ecosystem standard:
 
 ## Seeded Behaviors
 
-uDuck Registry ships populated with 20 indexed behaviors:
+uDuck Registry ships populated with 14 indexed behaviors:
 
 1. `alpha-walking` — **Alpha Dynamic Walk** *(Pollen Robotics · Verified Hardware)*
 2. `fall-recovery` — **Dynamic Fall Recovery** *(Pollen Robotics · Verified Hardware)*
@@ -66,17 +66,13 @@ uDuck Registry ships populated with 20 indexed behaviors:
 7. `ball-kick-right` — **Impulse Ball Kick (Right Foot)** *(Pollen Robotics · Verified Hardware)*
 8. `roller-drive` — **Roller Skate Velocity Drive** *(Pollen Robotics · Verified Hardware)*
 9. `roller-crouch` — **Roller Blade Crouch Glide** *(Pollen Robotics · Verified Hardware)*
-10. `roller-swizzle` — **Classic Swizzle Skating** *(Pollen Robotics · Experimental)*
-11. `roller-slope` — **Roller Slope Descent** *(Pollen Robotics · Experimental)*
-12. `spin-in-place` — **In-Place Roller Spin** *(Pollen Robotics · Experimental)*
-13. `rough-terrain-walk` — **Rough Terrain Adaptive Gait** *(Pollen Robotics · Experimental)*
-14. `backlash-walking` — **Backlash-Compensated Walking** *(Pollen Robotics · Experimental)*
-15. `standing-body-control` — **Standing 6-DOF Body Pose Controller** *(Tommy Zihao · Experimental; legacy 51-D artifact)*
-16. `genesis-velocity` — **Genesis Flat Walk** *(Macmachi · Experimental)*
-17. `genesis-rough` — **Genesis Rough-Terrain Walk** *(Macmachi · Experimental)*
-18. `genesis-backlash` — **Genesis Backlash Walk** *(Macmachi · Experimental)*
-19. `jump` — **Vertical Jump** *(Liyucheng1997 · Experimental)*
-20. `courier` — **MicroDuck Courier** *(selinayfilizp · Experimental)*
+10. `genesis-velocity` — **Genesis Flat Walk** *(Macmachi · Experimental)*
+11. `genesis-rough` — **Genesis Rough-Terrain Walk** *(Macmachi · Experimental)*
+12. `genesis-backlash` — **Genesis Backlash Walk** *(Macmachi · Experimental)*
+13. `jump` — **Vertical Jump** *(Liyucheng1997 · Experimental)*
+14. `courier` — **MicroDuck Courier** *(selinayfilizp · Experimental)*
+
+Records marked `source_only` remain available for upstream follow-up, but do not appear in the public index until their policy artifact is available.
 
 ---
 

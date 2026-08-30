@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
-import type { RegistryIndex } from "../registry/schema/behavior";
+import { isDiscoverableBehavior, type RegistryIndex } from "../registry/schema/behavior";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
@@ -41,10 +41,12 @@ export function getDeterministicUpdatedAt(
 }
 
 export function generateRegistryIndex(): RegistryIndex {
-  const { valid, behaviors, errors } = validateAllBehaviors();
+  const { valid, behaviors: allBehaviors, errors } = validateAllBehaviors();
   if (!valid) {
     throw new Error(`Cannot compile registry due to validation errors:\n${errors.join("\n")}`);
   }
+
+  const behaviors = allBehaviors.filter(isDiscoverableBehavior);
 
   // Sort behaviors by trust tier, then by display name and stable ID.
   const priorityMap: Record<string, number> = {

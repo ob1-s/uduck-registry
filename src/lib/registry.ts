@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { BehaviorSchema, type Behavior, type RegistryIndex } from "@registry/schema/behavior";
+import { BehaviorSchema, isDiscoverableBehavior, type Behavior } from "@registry/schema/behavior";
 
 const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
 
@@ -34,7 +34,7 @@ export function getAllBehaviors(): Behavior[] {
     community_experimental: 4,
   };
 
-  return behaviors.sort((a, b) => {
+  return behaviors.filter(isDiscoverableBehavior).sort((a, b) => {
     const pA = priorityMap[a.verification.status] ?? 99;
     const pB = priorityMap[b.verification.status] ?? 99;
     if (pA !== pB) return pA - pB;

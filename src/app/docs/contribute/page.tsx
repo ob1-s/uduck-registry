@@ -15,6 +15,7 @@ const exampleJson = `{
   "tags": ["community", "trick"],
   "authors": [{ "name": "Your Name", "github": "yourgithub" }],
   "license": "Apache-2.0",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
     "summary": "Early community policy; simulation and hardware evidence pending.",

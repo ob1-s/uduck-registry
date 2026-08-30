@@ -42,6 +42,9 @@ export const VerificationStatusSchema = z.enum([
 
 export type VerificationStatus = z.infer<typeof VerificationStatusSchema>;
 
+export const DiscoveryStatusSchema = z.enum(["listed", "source_only"]);
+export type DiscoveryStatus = z.infer<typeof DiscoveryStatusSchema>;
+
 export const BehaviorCategorySchema = z.enum([
   "locomotion",
   "agility-tricks",
@@ -112,6 +115,11 @@ const BehaviorInputSchema = strict({
     })
   ).min(1),
   license: NonEmptyStringSchema,
+
+  discovery: strict({
+    status: DiscoveryStatusSchema,
+    reason: NonEmptyStringSchema.optional(),
+  }),
 
   verification: strict({
     status: VerificationStatusSchema,
@@ -223,6 +231,10 @@ export const BehaviorSchema = BehaviorInputSchema.superRefine((behavior, ctx) =>
 });
 
 export type Behavior = z.infer<typeof BehaviorSchema>;
+
+export function isDiscoverableBehavior(behavior: Behavior): boolean {
+  return behavior.discovery.status === "listed";
+}
 
 export interface RegistryIndex {
   version: string;

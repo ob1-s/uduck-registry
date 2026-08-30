@@ -22,6 +22,10 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": {
+    "status": "source_only",
+    "reason": "The upstream task is documented, but its ONNX policy artifact is not currently published."
+  },
   "verification": {
     "status": "community_experimental",
     "summary": "Verified in mjlab simulation reaching up to 3.0 rad/s controlled yaw spin without loss of wheel ground contact.",

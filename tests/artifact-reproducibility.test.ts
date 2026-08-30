@@ -131,6 +131,21 @@ describe("artifact path and redirect safety", () => {
 });
 
 describe("artifact vendoring", () => {
+  it("does not fetch source-only records", async () => {
+    const root = makeTempDir();
+    const behavior = makeBehavior("source-only-test");
+    behavior.discovery.status = "source_only";
+    const behaviorPath = path.join(root, "registry", "behaviors", "source-only-test.json");
+    fs.mkdirSync(path.dirname(behaviorPath), { recursive: true });
+    fs.writeFileSync(behaviorPath, JSON.stringify(behavior, null, 2) + "\n");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await vendorArtifacts({ cwd: root });
+    expect(result).toEqual({ total: 1, vendored: 0, failed: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("backfills metadata only after a successful allowlisted download", async () => {
     const root = makeTempDir();
     const behavior = makeBehavior("vendor-test");

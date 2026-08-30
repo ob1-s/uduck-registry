@@ -21,6 +21,10 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": {
+    "status": "source_only",
+    "reason": "This upstream record targets the legacy 51-D interface and is not deployable through the current registry contract."
+  },
   "verification": {
     "status": "community_experimental",
     "summary": "Community reference only; the published artifact exposes a legacy 51-D input and is not compatible with the registry contract.",

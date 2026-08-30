@@ -20,6 +20,7 @@
     }
   ],
   "license": "Not specified by publisher",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
     "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",

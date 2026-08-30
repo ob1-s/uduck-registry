@@ -4,7 +4,7 @@
  *
  * Usage: pnpm tsx scripts/vendor-artifacts.ts [--force]
  *
- * For every pinned or non-experimental behavior in registry/behaviors/*.json:
+ * For every discoverable behavior in registry/behaviors/*.json:
  *   1. downloads artifacts.onnx.url (must be on the host allowlist)
  *   2. writes the bytes to the local cache at vendor/policies/<id>.onnx
  *   3. records sha256 + size_bytes into the behavior JSON
@@ -15,7 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { isAllowedArtifactUrl } from "../registry/schema/allowlist";
-import { BehaviorSchema } from "../registry/schema/behavior";
+import { BehaviorSchema, isDiscoverableBehavior } from "../registry/schema/behavior";
 import {
   assertAllowedArtifactResponse,
   assertSafeArtifactFilename,
@@ -71,6 +71,10 @@ export async function vendorArtifacts({ cwd = process.cwd(), force = false }: Ve
     }
 
     const behavior = parsed.data;
+    if (!isDiscoverableBehavior(behavior)) {
+      console.log(`Skipping ${behavior.id}: source-only record has no listed artifact`);
+      continue;
+    }
     const onnx = behavior.artifacts.onnx;
     if (behavior.verification.status === "community_experimental" && !onnx.sha256) {
       console.log(`Skipping ${behavior.id}: community artifact is not pinned`);

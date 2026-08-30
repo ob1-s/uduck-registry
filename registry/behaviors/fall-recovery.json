@@ -22,6 +22,7 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",

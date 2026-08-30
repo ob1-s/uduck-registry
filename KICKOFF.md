@@ -24,6 +24,10 @@ deployment.
 - IDs are lowercase kebab-case and the JSON filename must match the ID.
 - The current Microduck policy contract is 61 observations, 14 actions, and a
   50 Hz control loop.
+- `discovery.status` is `listed` for downloadable policy artifacts and
+  `source_only` for upstream task records without a currently available ONNX.
+  Source-only records are validated but omitted from the public index, UI, API,
+  and CLI.
 - Verified policy artifacts carry a recorded byte size and SHA-256 hash.
   `vendor/policies/` is an optional local cache; it is not required for a clean
   checkout or catalog validation.

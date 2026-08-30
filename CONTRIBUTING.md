@@ -27,6 +27,12 @@ Our mission is to make the MicroDuck robotics ecosystem immediately legible and 
    contract, and the recorded artifact metadata for verified entries. It does not
    make network requests or decide whether a hardware claim is true.
 
+   Set `discovery.status` to `source_only` when the upstream task is real but no
+   downloadable ONNX artifact is currently available. Source-only records stay
+   validated in the repository but are omitted from the public index, UI, API,
+   and CLI until an artifact is available. Use `listed` for a policy that users
+   can actually download.
+
    If you add or replace a verified ONNX file, run `pnpm vendor` to record its
    size and SHA-256. The resulting file in `vendor/policies/` is an optional
    local cache; CI and clean checkouts use the recorded metadata and verify
@@ -85,6 +91,9 @@ To protect physical hardware, we enforce honest verification labels:
     }
   ],
   "license": "Apache-2.0",
+  "discovery": {
+    "status": "listed"
+  },
   "verification": {
     "status": "community_experimental",
     "summary": "Early community policy; simulation and hardware evidence pending.",

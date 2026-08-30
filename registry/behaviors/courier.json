@@ -21,6 +21,7 @@
     }
   ],
   "license": "Not separately specified",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "community_experimental",
     "summary": "Publisher-reported successful simulated courier rollouts; no physical hardware evidence reported.",

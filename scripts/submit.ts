@@ -459,6 +459,7 @@ const PR_BODY = [
   "## Behavior submission checklist",
   "",
   "- [x] Candidate and full registry: pass `uduck validate` (61-D obs, 14 joints, 50 Hz contract)",
+  "- [ ] Discovery: use `listed` only for downloadable policies; use `source_only` for task records without an available artifact",
   "- [ ] Artifact: ONNX vendored with sha256 + byte size (`pnpm tsx scripts/vendor-artifacts.ts`)",
   "- [ ] Tier: claimed honestly — `verified_simulation` is (re)computed by MuJoCo CI, never inherited",
   "- [ ] License: stated; NC assets are linked, not hosted, unless cleared",

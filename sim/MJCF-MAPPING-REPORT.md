@@ -5,9 +5,10 @@
 **Tooling**: `mjlab==1.3.0` (`pyproject.toml`), `mujoco==3.12.0` (`sim/requirements-hashes.txt:5` hash `7ec16ce408871a0a9157cc556958ab66cd34db9fc1dccd3ef07717170163a4e0`)  
 **Workdir**: `/tmp/mjcf-work` (43 unique `assets/*.stl`, `assets.sha256`) + `/tmp/mjcvenv` (`mujoco 3.12.0` verified via `python -c "import mujoco; print(mujoco.__version__)"`)
 
-## 1. Behaviors → MJCF Mapping (20 behaviors)
+## 1. Behavior records → MJCF Mapping (20 records)
 
 Source: `registry/behaviors/*.json` field `compatibility.mjcf_model` (`registry/schema/behavior.ts:130`). Count verified via `grep mjcf_model registry/behaviors/*.json | sort | uniq -c`.
+The count includes six `source_only` records; only records with `discovery.status="listed"` are in the public catalog.
 
 | MJCF model | Count | Behaviors (id) | Typical terrain / slot |
 |------------|-------|----------------|------------------------|

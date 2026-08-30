@@ -2,7 +2,7 @@
 import { main as submit } from "./submit";
 import { validateAllBehaviors } from "./validate-registry";
 import { pullArtifact } from "./lib/pull-artifact";
-import type { Behavior, VerificationStatus } from "../registry/schema/behavior";
+import { isDiscoverableBehavior, type Behavior, type VerificationStatus } from "../registry/schema/behavior";
 
 const args = process.argv.slice(2);
 
@@ -117,11 +117,12 @@ export async function run(argv: string[] = args): Promise<number> {
     return 1;
   }
 
-  const { valid, behaviors, errors, warnings } = validation;
+  const { valid, behaviors: allBehaviors, errors, warnings } = validation;
   if (!valid) {
     console.error("Registry validation error:\n" + errors.join("\n"));
     return 1;
   }
+  const behaviors = allBehaviors.filter(isDiscoverableBehavior);
 
   switch (command) {
     case "list": {

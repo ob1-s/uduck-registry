@@ -23,6 +23,7 @@
     }
   ],
   "license": "Apache-2.0",
+  "discovery": { "status": "listed" },
   "verification": {
     "status": "verified_hardware",
     "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",

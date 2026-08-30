@@ -25,8 +25,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "verified_hardware",
-    "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",
-    "hardware_target": "MicroDuck v1 + Roller Skate Blades",
+    "summary": "Verified on physical Microduck on roller wheels performing controlled crouch-glide cycles.",
+    "hardware_target": "Microduck v1 + Roller Skate Blades",
     "notes": "Cycle duration: 3.5 seconds (period 5.0s, end phase 0.7)."
   },
   "contract": {
@@ -67,7 +67,7 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck crouching into a low tuck while gliding on wheels"
+    "caption": "Microduck crouching into a low tuck while gliding on wheels"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

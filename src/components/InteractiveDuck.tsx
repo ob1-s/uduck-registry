@@ -7,8 +7,10 @@ import { DuckMark } from "./DuckMark";
 export function InteractiveDuck() {
   const [isQuacking, setIsQuacking] = useState(false);
   const [isAgitated, setIsAgitated] = useState(false);
+  const [isOverheated, setIsOverheated] = useState(false);
   const [isSettling, setIsSettling] = useState(false);
   const [soundCueId, setSoundCueId] = useState(0);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
   const quackAudioRef = useRef<HTMLAudioElement | null>(null);
   const stompContextRef = useRef<AudioContext | null>(null);
   const clickTimesRef = useRef<number[]>([]);
@@ -17,7 +19,9 @@ export function InteractiveDuck() {
   const agitatedTimerRef = useRef<number | null>(null);
   const stompTimerRef = useRef<number | null>(null);
   const stompFadeTimerRef = useRef<number | null>(null);
+  const overheatedTimerRef = useRef<number | null>(null);
   const soundCueTimerRef = useRef<number | null>(null);
+  const hoverCueRolledRef = useRef(false);
   const nextAgitatedQuackRef = useRef(0);
 
   useEffect(() => {
@@ -32,18 +36,19 @@ export function InteractiveDuck() {
       if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
       if (stompTimerRef.current !== null) window.clearInterval(stompTimerRef.current);
       if (stompFadeTimerRef.current !== null) window.clearTimeout(stompFadeTimerRef.current);
+      if (overheatedTimerRef.current !== null) window.clearTimeout(overheatedTimerRef.current);
       if (soundCueTimerRef.current !== null) window.clearTimeout(soundCueTimerRef.current);
       audio.pause();
     };
   }, []);
 
-  function playQuack(agitated: boolean) {
+  function playQuack(agitated: boolean, quiet = false) {
     const now = performance.now();
     if (agitated && now < nextAgitatedQuackRef.current) return false;
 
     const audio = quackAudioRef.current ?? new Audio("/audio/quack.mp3");
     quackAudioRef.current = audio;
-    audio.volume = agitated ? 0.74 : 0.5;
+    audio.volume = agitated ? 0.74 : quiet ? 0.22 : 0.5;
     audio.playbackRate = agitated ? 1.02 + Math.pow(Math.random(), 0.72) * 0.08 : 0.96 + Math.random() * 0.08;
     audio.preservesPitch = false;
     audio.currentTime = 0;
@@ -51,6 +56,21 @@ export function InteractiveDuck() {
 
     if (agitated) nextAgitatedQuackRef.current = now + 900;
     return true;
+  }
+
+  function triggerQuack(agitated: boolean, quiet = false) {
+    if (!playQuack(agitated, quiet)) return;
+
+    setIsQuacking(true);
+    if (mouthTimerRef.current !== null) window.clearTimeout(mouthTimerRef.current);
+    mouthTimerRef.current = window.setTimeout(() => setIsQuacking(false), agitated ? 560 : 420);
+  }
+
+  function handleHover() {
+    if (!isAudioUnlocked || isAgitated || isQuacking || hoverCueRolledRef.current) return;
+
+    hoverCueRolledRef.current = true;
+    if (Math.random() < 0.002) triggerQuack(false, true);
   }
 
   function playStomp() {
@@ -76,6 +96,8 @@ export function InteractiveDuck() {
   }
 
   function handleClick() {
+    setIsAudioUnlocked(true);
+
     if (stompFadeTimerRef.current !== null) {
       window.clearTimeout(stompFadeTimerRef.current);
       stompFadeTimerRef.current = null;
@@ -100,50 +122,70 @@ export function InteractiveDuck() {
     const agitated = isAgitated || recentClicks.length >= 5;
     setIsAgitated(agitated);
 
+    if (agitated && !isOverheated && overheatedTimerRef.current === null) {
+      overheatedTimerRef.current = window.setTimeout(() => {
+        setIsOverheated(true);
+        overheatedTimerRef.current = null;
+      }, 2600);
+    }
+
     if (agitated && stompTimerRef.current === null) {
       playStomp();
       stompTimerRef.current = window.setInterval(playStomp, 140);
     }
 
-    if (playQuack(agitated)) {
-      setIsQuacking(true);
-      if (mouthTimerRef.current !== null) window.clearTimeout(mouthTimerRef.current);
-      mouthTimerRef.current = window.setTimeout(() => setIsQuacking(false), agitated ? 560 : 420);
-    }
+    triggerQuack(agitated);
 
-    if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
-    agitatedTimerRef.current = window.setTimeout(() => {
-      if (stompTimerRef.current !== null) {
-        window.clearInterval(stompTimerRef.current);
-        stompTimerRef.current = null;
-      }
+    if (agitated) {
+      if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
+      agitatedTimerRef.current = window.setTimeout(() => {
+        if (overheatedTimerRef.current !== null) {
+          window.clearTimeout(overheatedTimerRef.current);
+          overheatedTimerRef.current = null;
+        }
 
-      setIsSettling(true);
-      stompFadeTimerRef.current = window.setTimeout(() => {
-        playStomp();
+        if (stompTimerRef.current !== null) {
+          window.clearInterval(stompTimerRef.current);
+          stompTimerRef.current = null;
+        }
+
+        setIsSettling(true);
         stompFadeTimerRef.current = window.setTimeout(() => {
           playStomp();
           stompFadeTimerRef.current = window.setTimeout(() => {
-            setIsAgitated(false);
-            setIsSettling(false);
-            clickTimesRef.current = [];
-            nextAgitatedQuackRef.current = 0;
-            stompFadeTimerRef.current = null;
-          }, 140);
-        }, 160);
-      }, 140);
-    }, 2200);
+            playStomp();
+            stompFadeTimerRef.current = window.setTimeout(() => {
+              setIsAgitated(false);
+              setIsOverheated(false);
+              setIsSettling(false);
+              clickTimesRef.current = [];
+              nextAgitatedQuackRef.current = 0;
+              stompFadeTimerRef.current = null;
+            }, 140);
+          }, 160);
+        }, 140);
+      }, 2200);
+    }
   }
 
   return (
     <button
       type="button"
       className="hero-duck-button"
+      onMouseEnter={handleHover}
       onClick={handleClick}
-      aria-label={isAgitated ? "The duck is stomping and quacking" : isQuacking ? "The duck is quacking" : "Make the duck quack"}
+      aria-label={isOverheated ? "The duck's feet are cartoonishly hot" : isAgitated ? "The duck is stomping and quacking" : isQuacking ? "The duck is quacking" : "Make the duck quack"}
     >
       {soundCueId > 0 && (
         <span className="hero-sound-waves" key={soundCueId} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </span>
+      )}
+      {isOverheated && (
+        <span className="duck-hot-smoke" aria-hidden="true">
+          <span />
           <span />
           <span />
           <span />
@@ -154,6 +196,7 @@ export function InteractiveDuck() {
         className={["hero-duck", isSettling && "duck-mark-settling"].filter(Boolean).join(" ")}
         mouthOpen={isQuacking}
         agitated={isAgitated}
+        overheated={isOverheated}
       />
     </button>
   );

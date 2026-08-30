@@ -2,7 +2,7 @@
   "id": "genesis-backlash",
   "name": "Genesis Backlash Walk",
   "version": "1.0.0",
-  "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every MicroDuck servo in Genesis.",
+  "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every Microduck servo in Genesis.",
   "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
   "category": "locomotion",
   "tags": [
@@ -22,8 +22,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "community_experimental",
-    "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test is documented.",
-    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "summary": "Simulation-only backlash export from a community Genesis training port; no physical Microduck test is documented.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
     "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
   },
   "contract": {

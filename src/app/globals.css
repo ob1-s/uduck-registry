@@ -348,6 +348,63 @@ code {
 
 .duck-mark-agitated.duck-mark-settling .duck-stomp-right { animation-delay: -70ms; }
 
+.duck-foot {
+  transition: none;
+}
+
+.duck-foot-heat {
+  opacity: 0;
+  transform: scaleY(0);
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  transition: opacity 700ms ease-out, transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.duck-mark-overheated .duck-foot-heat {
+  opacity: 1;
+  transform: scaleY(0.56);
+  animation: duck-hot-heat 900ms ease-in-out infinite alternate;
+}
+
+.duck-mark-overheated .duck-foot-heat-right { animation-delay: -450ms; }
+
+@keyframes duck-hot-heat {
+  from {
+    filter: drop-shadow(0 0 0 rgba(255, 79, 67, 0));
+  }
+  to {
+    filter: drop-shadow(0 0 2px rgba(255, 79, 67, 0.6));
+  }
+}
+
+.duck-hot-smoke {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.duck-hot-smoke > span {
+  position: absolute;
+  width: 0.42rem;
+  height: 0.42rem;
+  border: 1px solid rgba(242, 236, 221, 0.42);
+  border-radius: 50%;
+  opacity: 0;
+  animation: duck-hot-smoke 1.25s ease-out infinite;
+}
+
+.duck-hot-smoke > span:nth-child(1) { left: 33%; bottom: 6%; }
+.duck-hot-smoke > span:nth-child(2) { left: 38%; bottom: 7%; animation-delay: 310ms; }
+.duck-hot-smoke > span:nth-child(3) { right: 38%; bottom: 7%; animation-delay: 620ms; }
+.duck-hot-smoke > span:nth-child(4) { right: 33%; bottom: 6%; animation-delay: 930ms; }
+
+@keyframes duck-hot-smoke {
+  0% { transform: translate(0, 0) scale(0.45); opacity: 0; }
+  24% { opacity: 0.38; }
+  100% { transform: translate(-1px, -12px) scale(1.08); opacity: 0; }
+}
+
 @keyframes duck-stomp {
   0%, 100% { transform: translateY(0) rotate(0); }
   38% { transform: translateY(-1.5px) rotate(-4deg); }
@@ -441,6 +498,8 @@ code {
   .duck-mark-agitated .duck-stomp-right,
   .duck-mark-agitated.duck-mark-settling .duck-stomp-left,
   .duck-mark-agitated.duck-mark-settling .duck-stomp-right { animation: none; }
+  .duck-mark-overheated .duck-foot-heat { animation: none; }
+  .duck-hot-smoke > span { animation: none; opacity: 0.35; }
   .hero-duck-button:hover .hero-duck,
   .hero-duck-button:active .hero-duck { transform: none; }
   html { scroll-behavior: auto; }

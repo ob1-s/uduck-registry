@@ -19,7 +19,7 @@ export function formatStatusBadge(status: VerificationStatus): string {
 
 function printHelp() {
   console.log(`
-\x1b[1m\x1b[33muDuck CLI\x1b[0m — Community behaviors for MicroDuck 🦆
+\x1b[1m\x1b[33muDuck CLI\x1b[0m — Community behaviors for Microduck 🦆
 
 Usage:
   pnpm cli list                List all behaviors in the registry

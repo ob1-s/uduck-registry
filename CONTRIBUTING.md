@@ -1,6 +1,6 @@
 # Contributing to uDuck Registry
 
-uDuck Registry is a directory of MicroDuck behavior policies. A contribution is one JSON descriptor that points to the policy artifact and its source.
+uDuck Registry is a directory of Microduck behavior policies. A contribution is one JSON descriptor that points to the policy artifact and its source.
 
 ## Add a behavior
 
@@ -44,7 +44,7 @@ uDuck Registry is a directory of MicroDuck behavior policies. A contribution is 
   "verification": {
     "status": "community_experimental",
     "summary": "Community policy with no physical deployment evidence yet.",
-    "hardware_target": "MicroDuck v1"
+    "hardware_target": "Microduck v1"
   },
   "contract": {
     "observation_dim": 61,

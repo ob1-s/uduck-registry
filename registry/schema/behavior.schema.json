@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://uduck.dev/schema/behavior.schema.json",
   "title": "MicroDuckBehavior",
-  "description": "Schema definition for MicroDuck behavior policies in uDuck Registry",
+  "description": "Schema definition for Microduck behavior policies in uDuck Registry",
   "$defs": {
     "nonEmptyString": {
       "type": "string",

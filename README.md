@@ -1,15 +1,15 @@
 # 🦆 uDuck Registry
 
-> A community directory of downloadable behavior policies for [MicroDuck](https://github.com/pollen-robotics/microduck).
+> A community directory of downloadable behavior policies for [Microduck](https://github.com/pollen-robotics/microduck).
 
 [![CI](https://github.com/ob1-s/uduck-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/ob1-s/uduck-registry/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## What is it?
 
-uDuck Registry is a searchable catalog of community and official MicroDuck behavior policies. Each entry links to its canonical ONNX artifact and source, describes the robot and accessories it needs, and includes the relevant `robotd` configuration.
+uDuck Registry is a searchable catalog of community and official Microduck behavior policies. Each entry links to its canonical ONNX artifact and source, describes the robot and accessories it needs, and includes the relevant `robotd` configuration.
 
-MicroDuck is a small biped robot from [Pollen Robotics](https://pollen-robotics.com). Policies in this catalog use the shared 61-observation, 14-action, 50 Hz runtime contract.
+Microduck is a small biped robot from [Pollen Robotics](https://pollen-robotics.com). Policies in this catalog use the shared 61-observation, 14-action, 50 Hz runtime contract.
 
 ## Behavior status
 
@@ -24,7 +24,7 @@ MicroDuck is a small biped robot from [Pollen Robotics](https://pollen-robotics.
 - **Observation:** 61 values — 48 proprioception values, 3 command values, 4 head-pose values, and 6 body-pose values.
 - **Action:** 14 joint targets — 5 left-leg, 4 neck/head, and 5 right-leg outputs.
 - **Rate:** 50 Hz with the policy's declared decimation and action scale.
-- **Actuator:** Dynamixel XL330 motors using the declared MicroDuck actuator model.
+- **Actuator:** Dynamixel XL330 motors using the declared Microduck actuator model.
 - The beak actuator is outside the fixed 14-action policy interface.
 
 See the [full contract](https://uduck-registry.pages.dev/docs/specification) and [behavior schema](https://uduck-registry.pages.dev/docs/schema).
@@ -46,7 +46,7 @@ The registry currently includes 14 indexed behaviors:
 11. `genesis-rough` — **Genesis Rough-Terrain Walk** *(Macmachi · Experimental)*
 12. `genesis-backlash` — **Genesis Backlash Walk** *(Macmachi · Experimental)*
 13. `jump` — **Vertical Jump** *(Liyucheng1997 · Experimental)*
-14. `courier` — **MicroDuck Courier** *(selinayfilizp · Experimental)*
+14. `courier` — **Microduck Courier** *(selinayfilizp · Experimental)*
 
 ## Machine-readable access
 

@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, ArrowLeft, Gauge, ShieldCheck } from "lucide-r
 
 export const metadata = {
   title: "Runtime contract — uDuck Registry",
-  description: "The MicroDuck observation, action, and timing contract.",
+  description: "The Microduck observation, action, and timing contract.",
 };
 
 export default function SpecificationPage() {
@@ -11,7 +11,7 @@ export default function SpecificationPage() {
     <div className="doc-page">
       <div className="doc-wrap">
         <Link href="/" className="back-link"><ArrowLeft size={14} aria-hidden="true" /> Back to behaviors</Link>
-        <header className="doc-header"><div className="doc-header-meta"><span className="doc-badge">Contract v1.0</span><small>MicroDuck runtime</small></div><h1>The shared rhythm behind every move.</h1><p>Behavior policies use one predictable interface: 61 observations in, 14 joint targets out, 50 times each second.</p></header>
+        <header className="doc-header"><div className="doc-header-meta"><span className="doc-badge">Contract v1.0</span><small>Microduck runtime</small></div><h1>The shared rhythm behind every move.</h1><p>Behavior policies use one predictable interface: 61 observations in, 14 joint targets out, 50 times each second.</p></header>
         <div className="doc-intro"><p>Keeping this shape fixed makes behaviors swappable. Normalization is baked into the ONNX graph — no external stats.</p></div>
         <section className="surface doc-section">
           <h2><Activity size={17} aria-hidden="true" /> 01 / Observation vector</h2>

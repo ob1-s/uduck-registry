@@ -2,7 +2,7 @@
   "id": "fall-recovery",
   "name": "Dynamic Fall Recovery",
   "version": "1.0.0",
-  "description": "Automatic fall recovery policy capable of restoring MicroDuck to standing posture from face-down, face-up, or sitting positions.",
+  "description": "Automatic fall recovery policy capable of restoring Microduck to standing posture from face-down, face-up, or sitting positions.",
   "details": "Triggered automatically when the onboard IMU's projected gravity vector exceeds tilt thresholds (or commanded via gamepad recovery button). The policy executes robust arm-less biped pushups, righting the duck without human intervention before handing off control back to the standing/walking state machine.",
   "category": "recovery",
   "tags": [
@@ -24,8 +24,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "verified_hardware",
-    "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
-    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
+    "summary": "Verified on physical Microduck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
+    "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
     "notes": "Requires full-body contact handling."
   },
   "contract": {
@@ -66,7 +66,7 @@
   "media": {
     "video_url": "https://pollen-robotics.com/assets/microduck/gallery/balance-recovery.mp4",
     "hero_type": "video",
-    "caption": "MicroDuck pushed over on carpet recovering to standing posture",
+    "caption": "Microduck pushed over on carpet recovering to standing posture",
     "thumbnail_url": "/media/thumbs/fall-recovery.jpg",
     "loop_url": "/media/loops/fall-recovery.mp4"
   },

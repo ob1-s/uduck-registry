@@ -4,11 +4,11 @@ import { Footer } from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "uDuck Registry — community moves for MicroDuck",
+  title: "uDuck Registry — community moves for Microduck",
   description:
-    "A small, searchable shelf of behavior policies for MicroDuck. 61-D observations, 14 policy joints, 50 Hz.",
+    "A small, searchable shelf of behavior policies for Microduck. 61-D observations, 14 policy joints, 50 Hz.",
   keywords: [
-    "MicroDuck",
+    "Microduck",
     "robotics",
     "behavior policies",
     "ONNX",

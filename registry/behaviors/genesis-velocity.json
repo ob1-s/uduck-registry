@@ -2,8 +2,8 @@
   "id": "genesis-velocity",
   "name": "Genesis Flat Walk",
   "version": "1.0.0",
-  "description": "Velocity-tracking walking policy trained in a Genesis port of the MicroDuck environment for flat terrain.",
-  "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
+  "description": "Velocity-tracking walking policy trained in a Genesis port of the Microduck environment for flat terrain.",
+  "details": "Macmachi's Genesis port of Pollen's Microduck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
   "category": "locomotion",
   "tags": [
     "community",
@@ -22,8 +22,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "community_experimental",
-    "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test is documented.",
-    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "summary": "Simulation-only export from a community Genesis training port; no physical Microduck test is documented.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
     "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
   },
   "contract": {

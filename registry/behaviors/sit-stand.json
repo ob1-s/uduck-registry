@@ -24,8 +24,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "verified_hardware",
-    "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
-    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+    "summary": "Verified on physical Microduck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
+    "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
     "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
   },
   "contract": {
@@ -64,7 +64,7 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck smooth sit and stand transition cycle",
+    "caption": "Microduck smooth sit and stand transition cycle",
     "thumbnail_url": "/media/thumbs/sit-stand.jpg",
     "loop_url": "/media/loops/sit-stand.mp4"
   },

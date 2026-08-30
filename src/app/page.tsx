@@ -13,10 +13,10 @@ export default function HomePage() {
       <section className="hero hero-quiet">
         <div className="site-container hero-layout">
           <div className="hero-copy">
-            <span className="eyebrow">uDuck / for MicroDuck</span>
+            <span className="eyebrow">uDuck / for Microduck</span>
             <h1 className="display">Teach your duck a <span className="display-accent">new move.</span></h1>
             <p className="lede">
-              A small library of community moves for MicroDuck. Pick one, see what it needs, and open the source.
+              A small library of community moves for Microduck. Pick one, see what it needs, and open the source.
             </p>
             <div className="button-row">
               <QuackAnchor href="#catalog" className="button-primary">Choose a behavior <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>

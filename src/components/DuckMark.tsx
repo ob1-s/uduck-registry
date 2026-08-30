@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 interface DuckMarkProps {
   size?: number;
   className?: string;
@@ -5,32 +7,44 @@ interface DuckMarkProps {
   accent?: string;
   mouthOpen?: boolean;
   agitated?: boolean;
+  overheated?: boolean;
 }
 
 /**
- * MicroDuck product mark, on-model: flattened capsule shell head,
+ * Microduck product mark, on-model: flattened capsule shell head,
  * fat donut camera eye (colored ring + recessed pupil), hinged orange beak,
  * exposed dark mech neck/legs, colorway feet.
  */
-export function DuckMark({ size = 34, className, accent = "#FFD23F", mouthOpen = false, agitated = false }: DuckMarkProps) {
+export function DuckMark({ size = 34, className, accent = "#FFD23F", mouthOpen = false, agitated = false, overheated = false }: DuckMarkProps) {
+  const heatGradientId = `duck-foot-heat-${useId().replace(/:/g, "")}`;
+
   return (
     <svg
       aria-hidden="true"
-      className={[className, mouthOpen && "duck-mark-mouth-open", agitated && "duck-mark-agitated"].filter(Boolean).join(" ") || undefined}
+      className={[className, mouthOpen && "duck-mark-mouth-open", agitated && "duck-mark-agitated", overheated && "duck-mark-overheated"].filter(Boolean).join(" ") || undefined}
       width={size}
       height={size}
       viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
+      <defs>
+        <linearGradient id={heatGradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ef665b" stopOpacity="0" />
+          <stop offset="0.58" stopColor="#ef665b" stopOpacity="0.42" />
+          <stop offset="1" stopColor="#ef665b" stopOpacity="0.94" />
+        </linearGradient>
+      </defs>
       {/* legs and feet */}
       <g className="duck-stomp-left">
         <rect x="16.5" y="32.5" width="3.2" height="8.5" fill="#26262f" />
-        <rect x="11" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+        <rect className="duck-foot duck-foot-left" x="11" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+        <rect className="duck-foot-heat duck-foot-heat-left" x="11" y="39.5" width="11.5" height="4.5" rx="2.25" fill={`url(#${heatGradientId})`} />
       </g>
       <g className="duck-stomp-right">
         <rect x="28.3" y="32.5" width="3.2" height="8.5" fill="#26262f" />
-        <rect x="25.5" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+        <rect className="duck-foot duck-foot-right" x="25.5" y="39.5" width="11.5" height="4.5" rx="2.25" fill={accent} />
+        <rect className="duck-foot-heat duck-foot-heat-right" x="25.5" y="39.5" width="11.5" height="4.5" rx="2.25" fill={`url(#${heatGradientId})`} />
       </g>
       {/* mech neck */}
       <rect x="20.2" y="23" width="7.6" height="11.5" rx="1.6" fill="#26262f" />

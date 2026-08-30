@@ -1,7 +1,7 @@
 {
   "name": "uduck-registry",
   "version": "1.0.0",
-  "description": "Community behavior registry for MicroDuck.",
+  "description": "Community behavior registry for Microduck.",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

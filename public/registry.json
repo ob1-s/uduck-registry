@@ -29,8 +29,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware on padded mats and carpet. Shipped in official MicroDuck release video montage.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "summary": "Verified on physical Microduck hardware on padded mats and carpet. Shipped in official Microduck release video montage.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
         "notes": "Recommend performing on padded surface, yoga mat, or carpet to avoid cosmetic shell scratches."
       },
       "contract": {
@@ -69,7 +69,7 @@
       },
       "media": {
         "hero_type": "badge",
-        "caption": "MicroDuck performing forward roll and recovering to feet"
+        "caption": "Microduck performing forward roll and recovering to feet"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -86,7 +86,7 @@
       "name": "Alpha Dynamic Walk",
       "version": "1.0.0",
       "description": "Standard bipedal walking gait with 50 Hz velocity tracking (vx, vy, yaw_rate) and active head-pose orientation control.",
-      "details": "The flagship locomotion policy for MicroDuck. Trained in MuJoCo Warp via mjlab and PPO using the BAM M6 actuator model for Dynamixel XL330 servos. Includes domain randomization on battery voltage, friction, and motor command delay. Exports a baked observation normalizer into the ONNX computational graph.",
+      "details": "The flagship locomotion policy for Microduck. Trained in MuJoCo Warp via mjlab and PPO using the BAM M6 actuator model for Dynamixel XL330 servos. Includes domain randomization on battery voltage, friction, and motor command delay. Exports a baked observation normalizer into the ONNX computational graph.",
       "category": "locomotion",
       "tags": [
         "official",
@@ -107,8 +107,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
+        "summary": "Verified on physical Microduck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
         "notes": "Operates at 50 Hz control loop. Velocity envelope: -0.2 to +0.25 m/s forward/back, ±1.0 rad/s angular yaw rate."
       },
       "contract": {
@@ -150,7 +150,7 @@
         "loop_url": "/media/loops/alpha-walking.mp4",
         "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/walk.webm",
         "hero_type": "video",
-        "caption": "MicroDuck walking under gamepad velocity control on hardware"
+        "caption": "Microduck walking under gamepad velocity control on hardware"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -189,8 +189,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware picking up objects from carpet and hard flooring with the beak gripper.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
+        "summary": "Verified on physical Microduck hardware picking up objects from carpet and hard flooring with the beak gripper.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
         "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
       },
       "contract": {
@@ -232,7 +232,7 @@
         "loop_url": "/media/loops/ground-pick.mp4",
         "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm",
         "hero_type": "video",
-        "caption": "MicroDuck picking up small object from the floor with its beak"
+        "caption": "Microduck picking up small object from the floor with its beak"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -248,7 +248,7 @@
       "id": "fall-recovery",
       "name": "Dynamic Fall Recovery",
       "version": "1.0.0",
-      "description": "Automatic fall recovery policy capable of restoring MicroDuck to standing posture from face-down, face-up, or sitting positions.",
+      "description": "Automatic fall recovery policy capable of restoring Microduck to standing posture from face-down, face-up, or sitting positions.",
       "details": "Triggered automatically when the onboard IMU's projected gravity vector exceeds tilt thresholds (or commanded via gamepad recovery button). The policy executes robust arm-less biped pushups, righting the duck without human intervention before handing off control back to the standing/walking state machine.",
       "category": "recovery",
       "tags": [
@@ -270,8 +270,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
+        "summary": "Verified on physical Microduck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
         "notes": "Requires full-body contact handling."
       },
       "contract": {
@@ -314,7 +314,7 @@
         "loop_url": "/media/loops/fall-recovery.mp4",
         "video_url": "https://pollen-robotics.com/assets/microduck/gallery/balance-recovery.mp4",
         "hero_type": "video",
-        "caption": "MicroDuck pushed over on carpet recovering to standing posture"
+        "caption": "Microduck pushed over on carpet recovering to standing posture"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -352,8 +352,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "summary": "Verified on physical Microduck hardware kicking a standard 70 mm lightweight practice ball.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
         "notes": "Targeted for 70mm diameter, 15g mass spheres."
       },
       "contract": {
@@ -396,7 +396,7 @@
         "thumbnail_url": "/media/thumbs/ball-kick-left.jpg",
         "loop_url": "/media/loops/ball-kick-left.mp4",
         "hero_type": "badge",
-        "caption": "MicroDuck left foot impulse kick striking a mini soccer ball"
+        "caption": "Microduck left foot impulse kick striking a mini soccer ball"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -434,8 +434,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "summary": "Verified on physical Microduck hardware kicking a standard 70 mm lightweight practice ball.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
         "notes": "Targeted for 70mm diameter, 15g mass spheres."
       },
       "contract": {
@@ -476,7 +476,7 @@
       },
       "media": {
         "hero_type": "badge",
-        "caption": "MicroDuck right foot impulse kick striking a mini soccer ball"
+        "caption": "Microduck right foot impulse kick striking a mini soccer ball"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -515,8 +515,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck on roller wheels performing controlled crouch-glide cycles.",
-        "hardware_target": "MicroDuck v1 + Roller Skate Blades",
+        "summary": "Verified on physical Microduck on roller wheels performing controlled crouch-glide cycles.",
+        "hardware_target": "Microduck v1 + Roller Skate Blades",
         "notes": "Cycle duration: 3.5 seconds (period 5.0s, end phase 0.7)."
       },
       "contract": {
@@ -557,7 +557,7 @@
       },
       "media": {
         "hero_type": "badge",
-        "caption": "MicroDuck crouching into a low tuck while gliding on wheels"
+        "caption": "Microduck crouching into a low tuck while gliding on wheels"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -574,7 +574,7 @@
       "name": "Roller Skate Velocity Drive",
       "version": "1.0.0",
       "description": "High-speed skating locomotion utilizing passive roller skate wheels mounted under the feet, featuring asymmetric velocity limits and turn rate damping.",
-      "details": "Converts MicroDuck into a mobile skating robot. When passive roller blade attachments are installed and D-pad up is held, robotd switches to the roller policy suite. Velocity profile allows up to +0.6 m/s forward acceleration and -0.5 m/s braking, with angular velocity clamped to 0.3 rad/s to prevent tipping.",
+      "details": "Converts Microduck into a mobile skating robot. When passive roller blade attachments are installed and D-pad up is held, robotd switches to the roller policy suite. Velocity profile allows up to +0.6 m/s forward acceleration and -0.5 m/s braking, with angular velocity clamped to 0.3 rad/s to prevent tipping.",
       "category": "roller-skate",
       "tags": [
         "official",
@@ -595,8 +595,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck equipped with official Pollen 3D-printed roller skate foot accessories.",
-        "hardware_target": "MicroDuck v1 + Roller Skate Accessories (passive bearings/wheels)",
+        "summary": "Verified on physical Microduck equipped with official Pollen 3D-printed roller skate foot accessories.",
+        "hardware_target": "Microduck v1 + Roller Skate Accessories (passive bearings/wheels)",
         "notes": "Requires passive roller foot frames and 22x16x4 bearings. Robot model is robot_allcollisions_rollers.xml."
       },
       "contract": {
@@ -640,7 +640,7 @@
         "loop_url": "/media/loops/roller-drive.mp4",
         "video_url": "https://pollen-robotics.com/assets/microduck/gallery/roller-skating.mp4",
         "hero_type": "video",
-        "caption": "MicroDuck gliding on roller skate wheels across smooth floor"
+        "caption": "Microduck gliding on roller skate wheels across smooth floor"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -678,8 +678,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "verified_hardware",
-        "summary": "Verified on physical MicroDuck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
-        "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+        "summary": "Verified on physical Microduck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
+        "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
         "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
       },
       "contract": {
@@ -720,7 +720,7 @@
         "thumbnail_url": "/media/thumbs/sit-stand.jpg",
         "loop_url": "/media/loops/sit-stand.mp4",
         "hero_type": "badge",
-        "caption": "MicroDuck smooth sit and stand transition cycle"
+        "caption": "Microduck smooth sit and stand transition cycle"
       },
       "sources": {
         "upstream_repo": "https://github.com/pollen-robotics/microduck",
@@ -736,7 +736,7 @@
       "id": "genesis-backlash",
       "name": "Genesis Backlash Walk",
       "version": "1.0.0",
-      "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every MicroDuck servo in Genesis.",
+      "description": "Walking policy fine-tuned with simulated ±1° gearbox play on every Microduck servo in Genesis.",
       "details": "Macmachi's Genesis port resumes flat walking with ±1° of backlash per servo. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
@@ -756,8 +756,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only backlash export from a community Genesis training port; no physical MicroDuck test is documented.",
-        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "summary": "Simulation-only backlash export from a community Genesis training port; no physical Microduck test is documented.",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
         "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
@@ -811,8 +811,8 @@
       "id": "genesis-velocity",
       "name": "Genesis Flat Walk",
       "version": "1.0.0",
-      "description": "Velocity-tracking walking policy trained in a Genesis port of the MicroDuck environment for flat terrain.",
-      "details": "Macmachi's Genesis port of Pollen's MicroDuck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
+      "description": "Velocity-tracking walking policy trained in a Genesis port of the Microduck environment for flat terrain.",
+      "details": "Macmachi's Genesis port of Pollen's Microduck walking task, with this export trained on flat terrain. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
         "community",
@@ -831,8 +831,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only export from a community Genesis training port; no physical MicroDuck test is documented.",
-        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "summary": "Simulation-only export from a community Genesis training port; no physical Microduck test is documented.",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
         "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
@@ -886,7 +886,7 @@
       "id": "genesis-rough",
       "name": "Genesis Rough-Terrain Walk",
       "version": "1.0.0",
-      "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the MicroDuck environment.",
+      "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the Microduck environment.",
       "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
       "category": "locomotion",
       "tags": [
@@ -906,8 +906,8 @@
       "license": "Apache-2.0",
       "verification": {
         "status": "community_experimental",
-        "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test is documented.",
-        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical Microduck test is documented.",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
         "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
       },
       "contract": {
@@ -959,10 +959,10 @@
     },
     {
       "id": "courier",
-      "name": "MicroDuck Courier",
+      "name": "Microduck Courier",
       "version": "1.0.0",
-      "description": "Pick, carry, and place a duck-scale paperback in a simulated MicroDuck apartment.",
-      "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
+      "description": "Pick, carry, and place a duck-scale paperback in a simulated Microduck apartment.",
+      "details": "Custom Mjlab-Courier-Flat-Microduck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
       "category": "manipulation",
       "tags": [
         "community",
@@ -983,7 +983,7 @@
       "verification": {
         "status": "community_experimental",
         "summary": "Successful simulated courier runs are documented in the source; no physical hardware evidence is listed.",
-        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
         "notes": "The source repository includes the Apache-2.0 microduck_rl component but no separate top-level artifact license. No physical robot deployment is claimed."
       },
       "contract": {
@@ -1022,7 +1022,7 @@
       },
       "media": {
         "hero_type": "badge",
-        "caption": "Community MicroDuck courier task policy"
+        "caption": "Community Microduck courier task policy"
       },
       "sources": {
         "upstream_repo": "https://github.com/selinayfilizp/microduck-courier",
@@ -1038,7 +1038,7 @@
       "name": "Vertical Jump",
       "version": "1.0.0",
       "description": "One-shot vertical jump policy that crouches, launches, lands, and returns to a standing pose.",
-      "details": "Custom policy from a browser simulator fork. The fork runs MicroDuck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
+      "details": "Custom policy from a browser simulator fork. The fork runs Microduck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
       "category": "agility-tricks",
       "tags": [
         "community",
@@ -1057,8 +1057,8 @@
       "license": "Not provided",
       "verification": {
         "status": "community_experimental",
-        "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
-        "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+        "summary": "Custom policy shown in a browser Microduck simulator; no physical hardware evidence reported.",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
         "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file."
       },
       "contract": {
@@ -1097,7 +1097,7 @@
       },
       "media": {
         "hero_type": "badge",
-        "caption": "Community vertical-jump policy in the MicroDuck browser simulator"
+        "caption": "Community vertical-jump policy in the Microduck browser simulator"
       },
       "sources": {
         "upstream_repo": "https://github.com/Liyucheng1997/318_lab-microduck-simulator",

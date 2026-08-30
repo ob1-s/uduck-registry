@@ -24,7 +24,7 @@ const SemverSchema = z
 
 /** Verification labels describe the evidence available for each behavior. */
 export const VerificationStatusSchema = z.enum([
-  "verified_hardware",      // Verified on physical MicroDuck hardware or shipped upstream
+  "verified_hardware",      // Verified on physical Microduck hardware or shipped upstream
   "claimed_hardware",       // Author claims physical hardware deployment
   "community_experimental", // Community work-in-progress or conceptual entry
 ]);
@@ -85,7 +85,7 @@ const BehaviorInputSchema = strict({
   verification: strict({
     status: VerificationStatusSchema,
     summary: NonEmptyStringSchema,
-    hardware_target: NonEmptyStringSchema, // e.g. "MicroDuck RK3566 Dev Board, Dynamixel XL330-M077"
+    hardware_target: NonEmptyStringSchema, // e.g. "Microduck RK3566 Dev Board, Dynamixel XL330-M077"
     notes: NonEmptyStringSchema.optional(),
   }),
 

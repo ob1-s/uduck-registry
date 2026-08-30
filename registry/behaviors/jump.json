@@ -3,7 +3,7 @@
   "name": "Vertical Jump",
   "version": "1.0.0",
   "description": "One-shot vertical jump policy that crouches, launches, lands, and returns to a standing pose.",
-  "details": "Custom policy from a browser simulator fork. The fork runs MicroDuck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
+  "details": "Custom policy from a browser simulator fork. The fork runs Microduck in MuJoCo WebAssembly and includes Pollen's official policies; this entry covers only its custom jump.onnx. It is a simulation/demo artifact with no physical deployment evidence.",
   "category": "agility-tricks",
   "tags": [
     "community",
@@ -22,8 +22,8 @@
   "license": "Not provided",
   "verification": {
     "status": "community_experimental",
-    "summary": "Custom policy shown in a browser MicroDuck simulator; no physical hardware evidence reported.",
-    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "summary": "Custom policy shown in a browser Microduck simulator; no physical hardware evidence reported.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
     "notes": "The source repository is a simulator fork and includes Pollen's official policies; this descriptor indexes only its custom jump.onnx. The repository does not include a license file."
   },
   "contract": {
@@ -62,7 +62,7 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "Community vertical-jump policy in the MicroDuck browser simulator"
+    "caption": "Community vertical-jump policy in the Microduck browser simulator"
   },
   "sources": {
     "upstream_repo": "https://github.com/Liyucheng1997/318_lab-microduck-simulator",

@@ -2,7 +2,7 @@
   "id": "genesis-rough",
   "name": "Genesis Rough-Terrain Walk",
   "version": "1.0.0",
-  "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the MicroDuck environment.",
+  "description": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the Microduck environment.",
   "details": "Macmachi's Genesis port resumes the flat walking run for rough-terrain fine-tuning. The standalone ONNX includes the observation normalizer. No physical robot test is documented.",
   "category": "locomotion",
   "tags": [
@@ -22,8 +22,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "community_experimental",
-    "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical MicroDuck test is documented.",
-    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "summary": "Simulation-only rough-terrain export from a community Genesis training port; no physical Microduck test is documented.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
     "notes": "No physical robot test is documented. This ONNX export declares a dynamic batch axis but preserves the 61-D input and 14-D output contract."
   },
   "contract": {

@@ -25,8 +25,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "verified_hardware",
-    "summary": "Verified on physical MicroDuck hardware picking up objects from carpet and hard flooring with the beak gripper.",
-    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
+    "summary": "Verified on physical Microduck hardware picking up objects from carpet and hard flooring with the beak gripper.",
+    "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
     "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
   },
   "contract": {
@@ -66,7 +66,7 @@
   "media": {
     "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm",
     "hero_type": "video",
-    "caption": "MicroDuck picking up small object from the floor with its beak",
+    "caption": "Microduck picking up small object from the floor with its beak",
     "thumbnail_url": "/media/thumbs/ground-pick.jpg",
     "loop_url": "/media/loops/ground-pick.mp4"
   },

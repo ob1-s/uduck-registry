@@ -1,9 +1,9 @@
 {
   "id": "courier",
-  "name": "MicroDuck Courier",
+  "name": "Microduck Courier",
   "version": "1.0.0",
-  "description": "Pick, carry, and place a duck-scale paperback in a simulated MicroDuck apartment.",
-  "details": "Custom Mjlab-Courier-Flat-MicroDuck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
+  "description": "Pick, carry, and place a duck-scale paperback in a simulated Microduck apartment.",
+  "details": "Custom Mjlab-Courier-Flat-Microduck task with an apartment scene, book, seated reader, and one ONNX export. The source reports 16/16 and 32/32 successful simulated delivery runs. The task-specific command slots carry book and reader targets; no physical robot deployment is documented.",
   "category": "manipulation",
   "tags": [
     "community",
@@ -24,7 +24,7 @@
   "verification": {
     "status": "community_experimental",
     "summary": "Successful simulated courier runs are documented in the source; no physical hardware evidence is listed.",
-    "hardware_target": "MicroDuck v1 (14 Dynamixel XL330 servos)",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
     "notes": "The source repository includes the Apache-2.0 microduck_rl component but no separate top-level artifact license. No physical robot deployment is claimed."
   },
   "contract": {
@@ -63,7 +63,7 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "Community MicroDuck courier task policy"
+    "caption": "Community Microduck courier task policy"
   },
   "sources": {
     "upstream_repo": "https://github.com/selinayfilizp/microduck-courier",

@@ -104,7 +104,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
               </div>
               <span className="detail-chip">slot: {behavior.compatibility.robotd_slot}</span>
             </div>
-            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{hasHardwareEvidence ? "Hardware testing assumes a matching MicroDuck, clear space, and a safe surface." : "No physical deployment evidence is listed for this entry. Review the source and compatibility before running it."} uDuck does not guarantee that a policy is safe to run.</span></div>
+            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{hasHardwareEvidence ? "Hardware testing assumes a matching Microduck, clear space, and a safe surface." : "No physical deployment evidence is listed for this entry. Review the source and compatibility before running it."} uDuck does not guarantee that a policy is safe to run.</span></div>
             <details className="deployment-disclosure">
               <summary className="deployment-summary">
                 <span>Configuration steps</span>

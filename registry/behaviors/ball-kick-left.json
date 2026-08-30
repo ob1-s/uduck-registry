@@ -24,8 +24,8 @@
   "license": "Apache-2.0",
   "verification": {
     "status": "verified_hardware",
-    "summary": "Verified on physical MicroDuck hardware kicking a standard 70 mm lightweight practice ball.",
-    "hardware_target": "MicroDuck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
+    "summary": "Verified on physical Microduck hardware kicking a standard 70 mm lightweight practice ball.",
+    "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
     "notes": "Targeted for 70mm diameter, 15g mass spheres."
   },
   "contract": {
@@ -66,7 +66,7 @@
   },
   "media": {
     "hero_type": "badge",
-    "caption": "MicroDuck left foot impulse kick striking a mini soccer ball",
+    "caption": "Microduck left foot impulse kick striking a mini soccer ball",
     "thumbnail_url": "/media/thumbs/ball-kick-left.jpg",
     "loop_url": "/media/loops/ball-kick-left.mp4"
   },

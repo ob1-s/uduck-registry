@@ -192,7 +192,7 @@ export function InteractiveDuck() {
         </span>
       )}
       <DuckMark
-        size={172}
+        size={150}
         className={["hero-duck", isSettling && "duck-mark-settling"].filter(Boolean).join(" ")}
         mouthOpen={isQuacking}
         agitated={isAgitated}

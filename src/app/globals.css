@@ -97,8 +97,6 @@ code {
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.logo-duck { transform: scaleX(0.88); }
-
 .brand:hover .brand-mark { transform: rotate(-5deg) translateY(-1px); box-shadow: 0.34rem 0.34rem 0 rgba(255, 210, 63, 0.3); }
 
 .brand-wordmark { display: flex; align-items: baseline; gap: 0.42rem; color: var(--ink); font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
@@ -261,12 +259,11 @@ code {
   z-index: 1;
   width: 100%;
   height: auto;
-  transform: scaleX(0.88);
   transition: transform 160ms ease;
 }
 
-.hero-duck-button:hover .hero-duck { transform: translateY(-2px) scaleX(0.88) scaleY(0.98); }
-.hero-duck-button:active .hero-duck { transform: translateY(1px) scaleX(0.88) scaleY(0.95); }
+.hero-duck-button:hover .hero-duck { transform: translateY(-2px) scaleY(0.98); }
+.hero-duck-button:active .hero-duck { transform: translateY(1px) scaleY(0.95); }
 .hero-duck-button:focus-visible { border-radius: 1rem; }
 
 .duck-beak .duck-mouth-gap { opacity: 0.25; transition: opacity 140ms ease; }
@@ -472,7 +469,7 @@ code {
   .duck-mark-overheated .duck-foot-heat { animation: none; }
   .duck-hot-smoke > span { animation: none; opacity: 0.35; }
   .hero-duck-button:hover .hero-duck,
-  .hero-duck-button:active .hero-duck { transform: scaleX(0.88); }
+  .hero-duck-button:active .hero-duck { transform: none; }
   html { scroll-behavior: auto; }
 }
 
@@ -619,6 +616,12 @@ code {
     var(--bg-inset);
 }
 
+.behavior-media:has(.behavior-thumb-wide) {
+  align-self: center;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+}
+
 .behavior-thumb {
   position: absolute;
   inset: 0;
@@ -627,7 +630,27 @@ code {
   object-fit: cover;
 }
 
-.behavior-media video.behavior-thumb { object-fit: contain; background: #000; }
+.behavior-thumb-wide { object-fit: contain; background: #101018; }
+
+.behavior-media-cue {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  border-radius: 999px;
+  padding: 0.24rem 0.42rem;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
 
 .behavior-body { display: block; padding: 0; align-self: center; }
 

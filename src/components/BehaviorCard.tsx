@@ -14,9 +14,9 @@ interface BehaviorCardProps {
 export function BehaviorCard({ behavior }: BehaviorCardProps) {
   return (
     <article className="behavior-card" data-category={behavior.category} aria-labelledby={`behavior-card-title-${behavior.id}`}>
-      <div className="behavior-media">
+      <Link href={`/behaviors/${behavior.id}`} className="behavior-media" aria-label={`Open ${behavior.name}`}>
         <MediaPreview media={behavior.media} title={behavior.name} variant="card" />
-      </div>
+      </Link>
 
       <div className="behavior-body">
         <div className="behavior-title-row">

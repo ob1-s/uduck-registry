@@ -72,7 +72,7 @@
     }
   },
   "media": {
-    "loop_url": "/media/max-height-jump/preview-4x.mp4",
+    "loop_url": "/media/max-height-jump/preview-loop.mp4",
     "video_url": "/media/max-height-jump/preview-4x.mp4",
     "hero_type": "video",
     "caption": "Four-times slow-motion direct-ONNX MuJoCo rollout; the quiet reset uses the separately documented standing-policy handoff."

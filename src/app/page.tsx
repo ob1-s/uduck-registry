@@ -29,7 +29,7 @@ export default function HomePage() {
             <div className="hero-figure-ring hero-figure-ring-front" aria-hidden="true" />
             <div className="hero-figure">
               <InteractiveDuck />
-              <span className="hero-figure-label">walk · roll · recover</span>
+              <span className="hero-figure-label">learn · move · share</span>
             </div>
             <span className="hero-sticker hero-sticker-left" aria-hidden="true">quack!</span>
             <span className="hero-sticker hero-sticker-right" aria-hidden="true">{stats.hardware} verified</span>
@@ -44,9 +44,9 @@ export default function HomePage() {
               <span>{stats.total} moves in the shelf</span><i>◆</i>
               <span>{stats.hardware} marked hardware-verified</span><i>◆</i>
               <span>{stats.community} experimental</span><i>◆</i>
-              <span>standard+rollers+ball</span><i>◆</i>
-              <span>ONNX</span><i>◆</i>
-              <span>contract</span><i>◆</i>
+              <span>open weights</span><i>◆</i>
+              <span>your policy here</span><i>◆</i>
+              <span>DUCKS!</span><i>◆</i>
             </div>
           ))}
         </div>

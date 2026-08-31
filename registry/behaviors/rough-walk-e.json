@@ -1,0 +1,79 @@
+{
+  "id": "rough-walk-e",
+  "name": "Rough Walk E",
+  "version": "1.0.0",
+  "description": "Velocity-commanded walking fine-tuned for grids, small steps, rubble, and slopes.",
+  "details": "Drop-in walking replacement for alpha-walking, fine-tuned for hostile terrain while retaining the same velocity and head-command layout. The publisher reports 14 falls in 110 rough-ground trials versus 32 for alpha-walking at similar flat-ground motor power. It remains a simulation-only export and has never been tested on hardware.",
+  "category": "locomotion",
+  "tags": [
+    "community",
+    "rough-terrain",
+    "velocity-tracking",
+    "sim2real",
+    "simulation-only",
+    "50hz"
+  ],
+  "authors": [
+    {
+      "name": "RemiFabre",
+      "github": "RemiFabre",
+      "url": "https://huggingface.co/RemiFabre"
+    }
+  ],
+  "license": "Apache-2.0",
+  "verification": {
+    "status": "community_experimental",
+    "summary": "Public simulation-only rough-terrain walking export; no physical Microduck deployment evidence is documented.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
+    "notes": "The simulation battery includes grids, small stairs, rubble, and slopes. Known limits include descending steps of 2 cm or more and stalled progress on larger rubble bumps."
+  },
+  "contract": {
+    "observation_dim": 61,
+    "observation_breakdown": {
+      "proprioception": 48,
+      "twist": 3,
+      "head_pose": 4,
+      "body_pose": 6
+    },
+    "action_dim": 14,
+    "action_breakdown": {
+      "left_leg": 5,
+      "neck_head": 4,
+      "right_leg": 5
+    },
+    "control_frequency_hz": 50,
+    "decimation": 4,
+    "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+    "action_scale": 1.0
+  },
+  "compatibility": {
+    "robot_model": "microduck-standard",
+    "accessories_required": [],
+    "terrain": [
+      "flat",
+      "rough",
+      "slope"
+    ],
+    "robotd_slot": "walk"
+  },
+  "artifacts": {
+    "onnx": {
+      "filename": "policy.onnx",
+      "url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e/resolve/fa7b27eeb5610d3b351362f4bd71691ee8be3d7d/policy.onnx",
+      "baked_normalizer": true
+    }
+  },
+  "media": {
+    "video_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e/resolve/fa7b27eeb5610d3b351362f4bd71691ee8be3d7d/media/preview.mp4",
+    "hero_type": "video",
+    "caption": "Microduck walking across rough terrain in simulation"
+  },
+  "sources": {
+    "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+    "training_code_url": "https://github.com/pollen-robotics/microduck_rl/commit/6cd45fc7a865299f118f7671142465d377853928",
+    "task_id": "Mjlab-Hostile-FinetuneFeetProgress-MicroDuck"
+  },
+  "deployment": {
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough-walk-e/policy.onnx\""
+  }
+}

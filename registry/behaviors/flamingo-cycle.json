@@ -1,0 +1,77 @@
+{
+  "id": "flamingo-cycle",
+  "name": "Flamingo Cycle",
+  "version": "1.0.0",
+  "description": "One-foot balance cycle that lifts either leg on command and returns to a two-foot stand.",
+  "details": "A single policy shifts onto the selected foot, lifts the other roughly 9 cm, holds the pose, and lowers it again. The command uses twist = [flag, side, 0], where flag selects one-foot mode and side selects the supporting foot. The publisher reports 20 held and 2 stepped-down recoveries in 24 random simulation trials; it has never been tested on hardware.",
+  "category": "agility-tricks",
+  "tags": [
+    "community",
+    "balance",
+    "one-foot",
+    "flamingo",
+    "simulation-only",
+    "50hz"
+  ],
+  "authors": [
+    {
+      "name": "RemiFabre",
+      "github": "RemiFabre",
+      "url": "https://huggingface.co/RemiFabre"
+    }
+  ],
+  "license": "Apache-2.0",
+  "verification": {
+    "status": "community_experimental",
+    "summary": "Public simulation-only one-foot balance export; no physical Microduck deployment evidence is documented.",
+    "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
+    "notes": "The publisher documents backward-push failure limits and step-down recovery in simulation. Use flag = 0 to return to a two-foot stand."
+  },
+  "contract": {
+    "observation_dim": 61,
+    "observation_breakdown": {
+      "proprioception": 48,
+      "twist": 3,
+      "head_pose": 4,
+      "body_pose": 6
+    },
+    "action_dim": 14,
+    "action_breakdown": {
+      "left_leg": 5,
+      "neck_head": 4,
+      "right_leg": 5
+    },
+    "control_frequency_hz": 50,
+    "decimation": 4,
+    "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+    "action_scale": 1.0
+  },
+  "compatibility": {
+    "robot_model": "microduck-standard",
+    "accessories_required": [],
+    "terrain": [
+      "flat"
+    ],
+    "robotd_slot": "walk"
+  },
+  "artifacts": {
+    "onnx": {
+      "filename": "policy.onnx",
+      "url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/policy.onnx",
+      "baked_normalizer": true
+    }
+  },
+  "media": {
+    "video_url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/media/preview.mp4",
+    "hero_type": "video",
+    "caption": "Microduck balancing on one foot in simulation"
+  },
+  "sources": {
+    "upstream_repo": "https://github.com/pollen-robotics/microduck_rl",
+    "training_code_url": "https://github.com/pollen-robotics/microduck_rl/commit/0bf989701f14d4008c866ffd6f09067870f99379",
+    "task_id": "Mjlab-FlamingoCycleHard-Flat-MicroDuck"
+  },
+  "deployment": {
+    "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/flamingo-cycle/policy.onnx\""
+  }
+}

@@ -792,7 +792,7 @@
         }
       },
       "media": {
-        "video_url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/media/preview.mp4",
+        "video_url": "/media/remote-cache/flamingo-cycle.mp4",
         "hero_type": "video",
         "caption": "Microduck balancing on one foot in simulation"
       },
@@ -1094,8 +1094,8 @@
         }
       },
       "media": {
-        "thumbnail_url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/2cd9da8d1ecfb850c0ab062654a63007cbd21b9d/artifacts/courier-policy.gif",
-        "video_url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/2cd9da8d1ecfb850c0ab062654a63007cbd21b9d/artifacts/courier-policy-track.mp4",
+        "thumbnail_url": "/media/remote-cache/courier.gif",
+        "video_url": "/media/remote-cache/courier.mp4",
         "hero_type": "video",
         "caption": "Tracked simulation rollout of the community Microduck courier policy"
       },
@@ -1171,7 +1171,7 @@
         }
       },
       "media": {
-        "video_url": "https://huggingface.co/HannesVonEssen/microduck-running/resolve/d839a07cd2cb4bdc2850ca72bf00d9b549ec600a/media/preview.mp4",
+        "video_url": "/media/remote-cache/running.mp4",
         "hero_type": "video",
         "caption": "Microduck running in simulation"
       },
@@ -1250,7 +1250,7 @@
         }
       },
       "media": {
-        "video_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e/resolve/fa7b27eeb5610d3b351362f4bd71691ee8be3d7d/media/preview.mp4",
+        "video_url": "/media/remote-cache/rough-walk-e.mp4",
         "hero_type": "video",
         "caption": "Microduck walking across rough terrain in simulation"
       },
@@ -1329,7 +1329,7 @@
         }
       },
       "media": {
-        "video_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-g/resolve/242876a0aa8b40b702142fb0a5677fd43bc88a4c/media/preview.mp4",
+        "video_url": "/media/remote-cache/rough-walk-g.mp4",
         "hero_type": "video",
         "caption": "Microduck walking across rough terrain in simulation"
       },

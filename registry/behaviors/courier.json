@@ -62,10 +62,10 @@
     }
   },
   "media": {
-    "video_url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/2cd9da8d1ecfb850c0ab062654a63007cbd21b9d/artifacts/courier-policy-track.mp4",
+    "video_url": "/media/remote-cache/courier.mp4",
     "hero_type": "video",
     "caption": "Tracked simulation rollout of the community Microduck courier policy",
-    "thumbnail_url": "https://raw.githubusercontent.com/selinayfilizp/microduck-courier/2cd9da8d1ecfb850c0ab062654a63007cbd21b9d/artifacts/courier-policy.gif"
+    "thumbnail_url": "/media/remote-cache/courier.gif"
   },
   "sources": {
     "upstream_repo": "https://github.com/selinayfilizp/microduck-courier",

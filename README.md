@@ -31,7 +31,7 @@ The descriptor schema is [`registry/schema/behavior.schema.json`](registry/schem
 
 ## Catalog
 
-The registry currently includes 18 indexed behaviors:
+The registry currently includes 19 indexed behaviors:
 
 1. `alpha-walking` — **Alpha Dynamic Walk** *(Pollen Robotics · Hardware verified)*
 2. `fall-recovery` — **Dynamic Fall Recovery** *(Pollen Robotics · Hardware verified)*
@@ -51,6 +51,7 @@ The registry currently includes 18 indexed behaviors:
 16. `flamingo-cycle` — **Flamingo Cycle** *(RemiFabre · Experimental)*
 17. `rough-walk-e` — **Rough Walk E** *(RemiFabre · Experimental)*
 18. `rough-walk-g` — **Rough Walk G** *(RemiFabre · Experimental)*
+19. `max-height-jump` — **Maximum-Height Jump** *(Thomas Burgess · Experimental)*
 
 ## Machine-readable access
 

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "updated_at": "2026-08-29T05:32:26.202Z",
-  "count": 18,
+  "count": 19,
   "behaviors": [
     {
       "id": "roulade",
@@ -1028,6 +1028,94 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\""
+      }
+    },
+    {
+      "id": "max-height-jump",
+      "name": "Maximum-Height Jump",
+      "version": "1.0.0",
+      "description": "Height-optimized one-shot vertical hop with an optional standing-policy handoff for a quiet reset.",
+      "details": "Trained with PPO in mjlab using twist-vx as a binary one-shot launch request: 1 requests launch and 0 requests settling. Height measures qualified whole-body visible rise after bilateral takeoff rather than toe extension. The canonical ONNX contains only the jump controller. In direct ONNX Runtime evaluation it crossed the stable-landing threshold with 40 ms of recovery margin but ended with a rotated head and narrow stance, so durable_landing remained false. The clean reset shown in the preview additionally evaluates a compatible 61D standing policy and smoothstep-blends the 14 actions beginning 0.22 s after trigger over 0.14 s.",
+      "category": "agility-tricks",
+      "tags": [
+        "community",
+        "jump",
+        "vertical-hop",
+        "maximum-height",
+        "one-shot",
+        "policy-handoff",
+        "simulation-only",
+        "50hz"
+      ],
+      "authors": [
+        {
+          "name": "Thomas Burgess",
+          "affiliation": "Burgess Software",
+          "github": "ThomasBurgess2000",
+          "url": "https://github.com/ThomasBurgess2000"
+        }
+      ],
+      "license": "Apache-2.0",
+      "verification": {
+        "status": "community_experimental",
+        "summary": "The published ONNX was evaluated directly in CPU MuJoCo with qualified takeoff and touchdown; durable standing requires the documented two-policy handoff, and no physical-hardware evidence exists.",
+        "hardware_target": "Microduck v1 (14 Dynamixel XL330 servos)",
+        "notes": "Model 34995's published ONNX reached 0.628 m/s launch velocity, 31.67 mm whole-body visible rise, 31.67 mm bilateral sole clearance, and 140 ms airtime. Alone it had stable_landing=true, failed_recovery=false, durable_landing=false, settle score 0.778, 44.02 degree maximum final head-joint error, and 37.26 mm final foot spacing. The demonstrated 0.22 s / 0.14 s standing-policy handoff had stable_landing=true, failed_recovery=false, durable_landing=true, 100 ms recovery margin, no non-foot body contact, settle score 0.860, 2.87 degree final tilt, 7.27 degree maximum final head-joint error, and 81.95 mm final foot spacing. This is one seeded standard-model simulation, not a randomized battery, backlash-model result, or hardware test."
+      },
+      "contract": {
+        "observation_dim": 61,
+        "observation_breakdown": {
+          "proprioception": 48,
+          "twist": 3,
+          "head_pose": 4,
+          "body_pose": 6
+        },
+        "action_dim": 14,
+        "action_breakdown": {
+          "left_leg": 5,
+          "neck_head": 4,
+          "right_leg": 5
+        },
+        "control_frequency_hz": 50,
+        "decimation": 4,
+        "actuator_model": "Dynamixel XL330 (BAM M6 voltage control law)",
+        "action_scale": 1
+      },
+      "compatibility": {
+        "robot_model": "microduck-standard",
+        "accessories_required": [],
+        "terrain": [
+          "flat"
+        ],
+        "robotd_slot": "custom"
+      },
+      "artifacts": {
+        "onnx": {
+          "filename": "max_height_jump.onnx",
+          "url": "https://raw.githubusercontent.com/ThomasBurgess2000/microduck-max-height-jump/7e5dc6028900f13d145e6710847378b007a675e9/policy/max_height_jump.onnx",
+          "baked_normalizer": true
+        },
+        "checkpoint": {
+          "url": "https://raw.githubusercontent.com/ThomasBurgess2000/microduck-max-height-jump/7e5dc6028900f13d145e6710847378b007a675e9/checkpoint/model_34995.pt",
+          "framework": "RSL-RL PPO on mjlab/MuJoCo Warp"
+        },
+        "config": {
+          "url": "https://raw.githubusercontent.com/ThomasBurgess2000/microduck-max-height-jump/7e5dc6028900f13d145e6710847378b007a675e9/training/env.yaml"
+        }
+      },
+      "media": {
+        "loop_url": "/media/max-height-jump/preview-loop.mp4",
+        "video_url": "/media/max-height-jump/preview-4x.mp4",
+        "hero_type": "video",
+        "caption": "Four-times slow-motion direct-ONNX MuJoCo rollout; the quiet reset uses the separately documented standing-policy handoff."
+      },
+      "sources": {
+        "upstream_repo": "https://github.com/ThomasBurgess2000/microduck-max-height-jump",
+        "training_code_url": "https://github.com/ThomasBurgess2000/microduck-max-height-jump/tree/7e5dc6028900f13d145e6710847378b007a675e9/training",
+        "task_id": "Mjlab-Jump-Flat-MicroDuck"
+      },
+      "deployment": {
+        "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/max_height_jump.onnx\"\n# twist-vx: 1 requests launch; return it to 0 after touchdown.\n# The preview's durable reset also needs the companion standing ONNX and the documented 0.22 s / 0.14 s runtime blend."
       }
     },
     {

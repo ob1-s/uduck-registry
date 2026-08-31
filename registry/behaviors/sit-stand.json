@@ -63,10 +63,10 @@
     }
   },
   "media": {
-    "hero_type": "badge",
-    "caption": "Microduck smooth sit and stand transition cycle",
-    "thumbnail_url": "/media/thumbs/sit-stand.jpg",
-    "loop_url": "/media/loops/sit-stand.mp4"
+    "video_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/sitstand.webm",
+    "hero_type": "video",
+    "caption": "Official Microduck sit-and-stand policy preview in simulation",
+    "thumbnail_url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/posters/sitstand.png"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

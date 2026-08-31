@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Play } from "lucide-react";
 import type { Behavior } from "@registry/schema/behavior";
 import { DuckMark } from "./DuckMark";
@@ -16,27 +16,75 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   const [videoFailed, setVideoFailed] = useState(false);
   const [wideMedia, setWideMedia] = useState(false);
   const [thumbnailReady, setThumbnailReady] = useState(variant !== "card" || !media.thumbnail_url);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [inViewport, setInViewport] = useState(variant !== "card");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const videoTimerRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (variant !== "card" || !media.thumbnail_url) {
-      setThumbnailReady(true);
+  // Viewport tracking attaches only to the always-present card fallback layer
+  // (not to the media elements), so observation survives every media swap,
+  // unmount, and retry without ever leaving the card in a dead state.
+  const observeMedia = useCallback((node: Element | null) => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+
+    if (variant !== "card" || !node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInViewport(true);
       return;
     }
 
-    const thumbnail = new Image();
-    thumbnail.onload = () => {
-      setWideMedia(thumbnail.naturalHeight > 0 && thumbnail.naturalWidth / thumbnail.naturalHeight > 1.6);
-      setThumbnailReady(true);
-    };
-    thumbnail.onerror = () => setThumbnailReady(true);
-    thumbnail.src = media.thumbnail_url;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInViewport(entry.isIntersecting),
+      { rootMargin: "200px 0px" },
+    );
+    observer.observe(node);
+    observerRef.current = observer;
+  }, [variant]);
 
-    return () => {
-      thumbnail.onload = null;
-      thumbnail.onerror = null;
-    };
-  }, [media.thumbnail_url, variant]);
+  useEffect(() => () => observerRef.current?.disconnect(), []);
+
+  const clearVideoTimer = useCallback(() => {
+    if (videoTimerRef.current !== null) {
+      window.clearTimeout(videoTimerRef.current);
+      videoTimerRef.current = null;
+    }
+  }, []);
+
+  // Card media is statically prerendered, so images often finish loading
+  // BEFORE hydration attaches the onLoad listener — the event is then missed
+  // and the layer would sit at opacity 0 forever. Syncing from the element
+  // on ref attach (complete/readyState) makes the reveal stateless against
+  // that race. Safe to call repeatedly; it only ever converges.
+  const syncImageState = useCallback((node: HTMLImageElement) => {
+    const { naturalWidth, naturalHeight } = node;
+
+    if (node.complete && naturalWidth === 0) {
+      setImageFailed(true);
+      if (variant === "card") setThumbnailReady(true);
+      return;
+    }
+
+    setImageLoaded(true);
+    if (variant === "card" && naturalHeight > 0 && naturalWidth / naturalHeight > 1.6) {
+      setWideMedia(true);
+    }
+    if (variant === "card") setThumbnailReady(true);
+  }, [variant]);
+
+  const imageRef = useCallback((node: HTMLImageElement | null) => {
+    if (node) syncImageState(node);
+  }, [syncImageState]);
+
+  const videoRef = useCallback((node: HTMLVideoElement | null) => {
+    // HAVE_CURRENT_DATA (2) = at least the first frame is available.
+    if (node && node.readyState >= 2) {
+      setVideoReady(true);
+      clearVideoTimer();
+    }
+  }, [clearVideoTimer]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -58,6 +106,7 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   const showVideo = canUseVideo
     && (preferVideo || !canUseImage)
     && cardVideoReady
+    && (variant !== "card" || inViewport)
     && !(variant === "card" && wideMedia && canUseImage)
     && !(variant === "card" && reducedMotion && canUseImage);
   const mediaClass = variant === "card"
@@ -71,55 +120,98 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
     </span>
   ) : null;
 
+  useEffect(() => {
+    if (variant !== "card" || !showVideo || reducedMotion) return;
+
+    videoTimerRef.current = window.setTimeout(() => {
+      videoTimerRef.current = null;
+      setVideoFailed(true);
+    }, 8000);
+
+    return clearVideoTimer;
+  }, [clearVideoTimer, reducedMotion, showVideo, variant]);
+
+  // Reset video reveal when the video unmounts (e.g. leaving the viewport)
+  // or switches source, so the fade-in can replay on the fresh element.
+  // (Images don't need this: their keyed remount re-runs imageRef, which
+  // syncs from element state — including the cached-and-already-complete
+  // case that the hydration race makes untrustworthy via events alone.)
+  useEffect(() => setVideoReady(false), [videoUrl, showVideo]);
+
+  const layerClass = variant === "card"
+    ? ` media-layer${(showVideo ? videoReady : imageLoaded) ? " media-ready" : ""}`
+    : "";
+
+  let mediaNode: ReactNode = null;
   if (showVideo && videoUrl) {
+    mediaNode = (
+      <video
+        key={videoUrl}
+        ref={videoRef}
+        className={mediaClass + layerClass}
+        src={videoUrl}
+        poster={imageUrl ?? undefined}
+        autoPlay={variant === "card" && !reducedMotion}
+        muted={variant === "card"}
+        controls={variant === "detail" || (variant === "card" && reducedMotion)}
+        loop={variant === "card"}
+        playsInline
+        preload={variant === "card" && !imageUrl ? "metadata" : "none"}
+        aria-label={`${title} preview`}
+        onCanPlay={() => {
+          setVideoReady(true);
+          clearVideoTimer();
+        }}
+        onLoadedMetadata={(event) => {
+          const { videoWidth, videoHeight } = event.currentTarget;
+          const isWide = videoHeight > 0 && videoWidth / videoHeight > 1.6;
+
+          if (variant === "card" && isWide) setWideMedia(true);
+        }}
+        onError={() => {
+          clearVideoTimer();
+          setVideoReady(false);
+          setVideoFailed(true);
+        }}
+      />
+    );
+  } else if (canUseImage && imageUrl) {
+    mediaNode = (
+      <img
+        key={imageUrl}
+        ref={imageRef}
+        className={mediaClass + layerClass}
+        src={imageUrl}
+        alt={media.caption ?? `${title} preview`}
+        loading={variant === "card" ? "lazy" : "eager"}
+        decoding="async"
+        onLoad={(event) => syncImageState(event.currentTarget)}
+        onError={() => {
+          setImageFailed(true);
+          if (variant === "card") setThumbnailReady(true);
+        }}
+      />
+    );
+  }
+
+  // Cards keep the duck visible underneath at all times: media fades in over
+  // it, so a slow network shows the mascot instead of an empty frame.
+  if (variant === "card") {
     return (
       <>
-        <video
-          className={mediaClass}
-          src={videoUrl}
-          poster={imageUrl}
-          autoPlay={variant === "card" && !reducedMotion}
-          muted={variant === "card"}
-          controls={variant === "detail" || (variant === "card" && reducedMotion)}
-          loop={variant === "card"}
-          playsInline
-          preload="metadata"
-          aria-label={`${title} preview`}
-          onLoadedMetadata={(event) => {
-            const { videoWidth, videoHeight } = event.currentTarget;
-            const isWide = videoHeight > 0 && videoWidth / videoHeight > 1.6;
-
-            if (variant === "card" && isWide) setWideMedia(true);
-          }}
-          onError={() => setVideoFailed(true)}
-        />
+        <div ref={observeMedia} className="media-fallback media-fallback-card" aria-hidden="true">
+          <DuckMark size={48} />
+        </div>
+        {mediaNode}
         {videoCue}
       </>
     );
   }
 
-  if (canUseImage && imageUrl) {
+  if (mediaNode) {
     return (
       <>
-        <img
-          className={mediaClass}
-          src={imageUrl}
-          alt={media.caption ?? `${title} preview`}
-          loading={variant === "card" ? "lazy" : "eager"}
-          decoding="async"
-          onLoad={(event) => {
-            const { naturalWidth, naturalHeight } = event.currentTarget;
-
-            if (variant === "card" && naturalHeight > 0 && naturalWidth / naturalHeight > 1.6) {
-              setWideMedia(true);
-            }
-            if (variant === "card") setThumbnailReady(true);
-          }}
-          onError={() => {
-            setImageFailed(true);
-            if (variant === "card") setThumbnailReady(true);
-          }}
-        />
+        {mediaNode}
         {videoCue}
       </>
     );
@@ -128,14 +220,11 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   return (
     <div
       className={`media-fallback media-fallback-${variant}`}
-      role={variant === "detail" ? "img" : undefined}
-      aria-label={variant === "detail" ? `${title} preview unavailable` : undefined}
-      aria-hidden={variant === "card" ? true : undefined}
+      role="img"
+      aria-label={`${title} preview unavailable`}
     >
-      <DuckMark size={variant === "card" ? 48 : 84} />
-      <span className={variant === "detail" ? "media-fallback-copy" : "sr-only"}>
-        Preview unavailable
-      </span>
+      <DuckMark size={84} />
+      <span className="media-fallback-copy">Preview unavailable</span>
     </div>
   );
 }

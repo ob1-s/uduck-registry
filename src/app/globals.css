@@ -268,6 +268,8 @@ code {
 
 .duck-beak .duck-mouth-gap { opacity: 0.25; transition: opacity 140ms ease; }
 .duck-beak .duck-beak-lower { transform-box: fill-box; transform-origin: center top; transition: transform 160ms ease; }
+.duck-mark-mouth-slightly-open .duck-mouth-gap { opacity: 0.65; }
+.duck-mark-mouth-slightly-open .duck-beak-lower { transform: translateY(1.1px) rotate(0.4deg); }
 .duck-mark-mouth-open .duck-mouth-gap { opacity: 1; }
 .duck-mark-mouth-open .duck-beak-lower { transform: translateY(2.8px) rotate(1deg); }
 
@@ -631,6 +633,13 @@ code {
 }
 
 .behavior-thumb-wide { object-fit: contain; background: #101018; }
+
+/* Card media fades in over the always-present duck fallback layer. */
+.media-layer { opacity: 0; transition: opacity 240ms ease; }
+.media-layer.media-ready { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .media-layer { transition: none; }
+}
 
 .behavior-media-cue {
   position: absolute;

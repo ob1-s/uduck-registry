@@ -68,8 +68,7 @@
     "video_url": "https://pollen-robotics.com/assets/microduck/gallery/roller-skating.mp4",
     "hero_type": "video",
     "caption": "Microduck gliding on roller skate wheels across smooth floor",
-    "thumbnail_url": "/media/thumbs/roller-drive.jpg",
-    "loop_url": "/media/loops/roller-drive.mp4"
+    "thumbnail_url": "https://pollen-robotics.com/assets/microduck/gallery/roller-skating-poster.jpg"
   },
   "sources": {
     "upstream_repo": "https://github.com/pollen-robotics/microduck",

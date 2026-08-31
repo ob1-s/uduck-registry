@@ -61,7 +61,7 @@
     }
   },
   "media": {
-    "video_url": "https://huggingface.co/HannesVonEssen/microduck-running/resolve/d839a07cd2cb4bdc2850ca72bf00d9b549ec600a/media/preview.mp4",
+    "video_url": "/media/remote-cache/running.mp4",
     "hero_type": "video",
     "caption": "Microduck running in simulation"
   },

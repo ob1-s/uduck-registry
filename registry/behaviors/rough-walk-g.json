@@ -64,7 +64,7 @@
     }
   },
   "media": {
-    "video_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-g/resolve/242876a0aa8b40b702142fb0a5677fd43bc88a4c/media/preview.mp4",
+    "video_url": "/media/remote-cache/rough-walk-g.mp4",
     "hero_type": "video",
     "caption": "Microduck walking across rough terrain in simulation"
   },

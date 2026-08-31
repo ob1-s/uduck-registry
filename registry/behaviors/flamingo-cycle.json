@@ -62,7 +62,7 @@
     }
   },
   "media": {
-    "video_url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/media/preview.mp4",
+    "video_url": "/media/remote-cache/flamingo-cycle.mp4",
     "hero_type": "video",
     "caption": "Microduck balancing on one foot in simulation"
   },

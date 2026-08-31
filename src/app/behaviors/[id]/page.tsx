@@ -7,6 +7,8 @@ import { formatAccessory, formatCategory } from "@/lib/labels";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { ContractSpec } from "@/components/ContractSpec";
 import { MediaPreview } from "@/components/MediaPreview";
+import { getSocialCopy, getSocialImagePath } from "@/lib/social";
+import { SITE_NAME } from "@/lib/site";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -20,7 +22,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const behavior = getBehaviorById(id);
   if (!behavior) return { title: "Behavior not found — uDuck Registry" };
-  return { title: `${behavior.name} — uDuck Registry`, description: behavior.description };
+
+  const canonicalPath = `/behaviors/${behavior.id}`;
+  const socialCopy = getSocialCopy(behavior);
+  const imageAlt = `${behavior.name} behavior performed by Microduck`;
+
+  return {
+    title: `${behavior.name} — uDuck Registry`,
+    description: behavior.description,
+    alternates: { canonical: canonicalPath },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      url: canonicalPath,
+      title: socialCopy.title,
+      description: socialCopy.description,
+      images: [{ url: getSocialImagePath(behavior.id, "openGraph"), width: 1200, height: 630, alt: imageAlt }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialCopy.title,
+      description: socialCopy.description,
+      images: [{ url: getSocialImagePath(behavior.id, "twitter"), width: 1200, height: 630, alt: imageAlt }],
+    },
+  };
 }
 
 export default async function BehaviorDetailPage({ params }: Props) {

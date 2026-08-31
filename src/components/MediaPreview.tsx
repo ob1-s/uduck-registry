@@ -138,8 +138,12 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   // case that the hydration race makes untrustworthy via events alone.)
   useEffect(() => setVideoReady(false), [videoUrl, showVideo]);
 
+  // Cards crossfade: when the media layer reveals, the duck fallback fades
+  // out — necessary because the Pollen clips are alpha-transparent WebMs,
+  // so an opaque-feeling video would still show the duck through it.
+  const mediaRevealed = showVideo ? videoReady : imageLoaded;
   const layerClass = variant === "card"
-    ? ` media-layer${(showVideo ? videoReady : imageLoaded) ? " media-ready" : ""}`
+    ? ` media-layer${mediaRevealed ? " media-ready" : ""}`
     : "";
 
   let mediaNode: ReactNode = null;
@@ -199,7 +203,11 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   if (variant === "card") {
     return (
       <>
-        <div ref={observeMedia} className="media-fallback media-fallback-card" aria-hidden="true">
+        <div
+          ref={observeMedia}
+          className={`media-fallback media-fallback-card${mediaRevealed ? " media-fallback-hidden" : ""}`}
+          aria-hidden="true"
+        >
           <DuckMark size={48} />
         </div>
         {mediaNode}

@@ -112,7 +112,7 @@ export function DuckGeometry({
       <rect x="7.72" y="7.5" width="32.56" height="18" rx="7.92" fill={palette.shell} />
       {/* face panel seam */}
       <path d="M7.72 20h32.56" stroke={palette.seam} strokeWidth="1.2" />
-      {/* beak: two hinged lips, with a dark mouth gap revealed on click */}
+      {/* beak: two hinged lips, with a dark mouth gap revealed when open */}
       <g className="duck-beak">
         <rect className="duck-mouth-gap" x="7.28" y="26.7" width="33.44" height={mouth === "closed" ? 2.6 : lowerBeakY - 26.7} rx="1.14" fill="#6D2708" fillOpacity={mouthGapOpacity} />
         <rect className="duck-beak-upper" x="5.96" y="24" width="36.08" height="3.6" rx="1.58" fill={palette.trim} />
@@ -131,6 +131,7 @@ interface DuckMarkProps {
   size?: number;
   className?: string;
   accent?: string;
+  mouth?: DuckMouth;
   mouthOpen?: boolean;
   agitated?: boolean;
   overheated?: boolean;
@@ -140,14 +141,17 @@ export function DuckMark({
   size = 34,
   className,
   accent = "#FFD23F",
+  mouth,
   mouthOpen = false,
   agitated = false,
   overheated = false,
 }: DuckMarkProps) {
   const heatGradientId = `duck-foot-heat-${useId().replace(/:/g, "")}`;
+  const mouthState = mouth ?? (mouthOpen ? "open" : "closed");
   const stateClassName = [
     className,
-    mouthOpen && "duck-mark-mouth-open",
+    mouthState === "slightly-open" && "duck-mark-mouth-slightly-open",
+    mouthState === "open" && "duck-mark-mouth-open",
     agitated && "duck-mark-agitated",
     overheated && "duck-mark-overheated",
   ].filter(Boolean).join(" ") || undefined;
@@ -160,6 +164,7 @@ export function DuckMark({
       agitated={agitated}
       includeHeat
       heatGradientId={heatGradientId}
+      mouth="closed"
     />
   );
 }

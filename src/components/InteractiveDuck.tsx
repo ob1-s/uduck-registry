@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DuckMark } from "./DuckMark";
+import { DuckMark, type DuckMouth } from "./DuckMark";
 
 // "quack" by Mari0411, CC0: https://freesound.org/people/Mari0411/sounds/791152/
 export function InteractiveDuck() {
@@ -9,9 +9,11 @@ export function InteractiveDuck() {
   const [isAgitated, setIsAgitated] = useState(false);
   const [isOverheated, setIsOverheated] = useState(false);
   const [isSettling, setIsSettling] = useState(false);
+  const [passiveMouth, setPassiveMouth] = useState<DuckMouth>("closed");
   const [soundCueId, setSoundCueId] = useState(0);
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
   const quackAudioRef = useRef<HTMLAudioElement | null>(null);
+  const actionQuackAudioRef = useRef<HTMLAudioElement | null>(null);
   const stompContextRef = useRef<AudioContext | null>(null);
   const clickTimesRef = useRef<number[]>([]);
   const soundCueCountRef = useRef(0);
@@ -21,7 +23,11 @@ export function InteractiveDuck() {
   const stompFadeTimerRef = useRef<number | null>(null);
   const overheatedTimerRef = useRef<number | null>(null);
   const soundCueTimerRef = useRef<number | null>(null);
+  const passiveOpenTimerRef = useRef<number | null>(null);
+  const passiveCloseTimerRef = useRef<number | null>(null);
   const hoverCueRolledRef = useRef(false);
+  const passiveHoverBoostRef = useRef(false);
+  const passiveHoverBoostUntilRef = useRef(0);
   const nextAgitatedQuackRef = useRef(0);
 
   useEffect(() => {
@@ -31,6 +37,12 @@ export function InteractiveDuck() {
     audio.preservesPitch = false;
     quackAudioRef.current = audio;
 
+    const actionAudio = new Audio("/audio/action-quack.mp3");
+    actionAudio.preload = "auto";
+    actionAudio.volume = 0.56;
+    actionAudio.preservesPitch = false;
+    actionQuackAudioRef.current = actionAudio;
+
     return () => {
       if (mouthTimerRef.current !== null) window.clearTimeout(mouthTimerRef.current);
       if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
@@ -38,18 +50,55 @@ export function InteractiveDuck() {
       if (stompFadeTimerRef.current !== null) window.clearTimeout(stompFadeTimerRef.current);
       if (overheatedTimerRef.current !== null) window.clearTimeout(overheatedTimerRef.current);
       if (soundCueTimerRef.current !== null) window.clearTimeout(soundCueTimerRef.current);
+      if (passiveOpenTimerRef.current !== null) window.clearTimeout(passiveOpenTimerRef.current);
+      if (passiveCloseTimerRef.current !== null) window.clearTimeout(passiveCloseTimerRef.current);
       audio.pause();
+      actionAudio.pause();
     };
   }, []);
 
-  function playQuack(agitated: boolean, quiet = false) {
+  useEffect(() => {
+    if (isAgitated || isQuacking || passiveMouth !== "closed") return;
+
+    passiveOpenTimerRef.current = window.setTimeout(() => {
+      passiveOpenTimerRef.current = null;
+      const nextMouth: DuckMouth = Math.random() < 0.82 ? "slightly-open" : "open";
+
+      setPassiveMouth(nextMouth);
+      passiveHoverBoostRef.current = true;
+      passiveHoverBoostUntilRef.current = performance.now() + 2200;
+      passiveCloseTimerRef.current = window.setTimeout(() => {
+        passiveCloseTimerRef.current = null;
+        setPassiveMouth("closed");
+      }, nextMouth === "slightly-open" ? 720 : 900);
+    }, 9000 + Math.random() * 9000);
+
+    return () => {
+      if (passiveOpenTimerRef.current !== null) {
+        window.clearTimeout(passiveOpenTimerRef.current);
+        passiveOpenTimerRef.current = null;
+      }
+    };
+  }, [isAgitated, isQuacking, passiveMouth]);
+
+  function playQuack(agitated: boolean, quiet = false, sound: "real" | "action" = "real") {
     const now = performance.now();
     if (agitated && now < nextAgitatedQuackRef.current) return false;
 
-    const audio = quackAudioRef.current ?? new Audio("/audio/quack.mp3");
-    quackAudioRef.current = audio;
-    audio.volume = agitated ? 0.74 : quiet ? 0.22 : 0.5;
-    audio.playbackRate = agitated ? 1.02 + Math.pow(Math.random(), 0.72) * 0.08 : 0.96 + Math.random() * 0.08;
+    const audio = sound === "action"
+      ? actionQuackAudioRef.current ?? new Audio("/audio/action-quack.mp3")
+      : quackAudioRef.current ?? new Audio("/audio/quack.mp3");
+
+    if (sound === "action") {
+      actionQuackAudioRef.current = audio;
+      audio.volume = 0.56;
+      audio.playbackRate = 1.05 + Math.random() * 0.08;
+    } else {
+      quackAudioRef.current = audio;
+      audio.volume = agitated ? 0.74 : quiet ? 0.22 : 0.5;
+      audio.playbackRate = agitated ? 1.02 + Math.pow(Math.random(), 0.72) * 0.08 : 0.96 + Math.random() * 0.08;
+    }
+
     audio.preservesPitch = false;
     audio.currentTime = 0;
     void audio.play();
@@ -58,8 +107,8 @@ export function InteractiveDuck() {
     return true;
   }
 
-  function triggerQuack(agitated: boolean, quiet = false) {
-    if (!playQuack(agitated, quiet)) return;
+  function triggerQuack(agitated: boolean, quiet = false, sound: "real" | "action" = "real") {
+    if (!playQuack(agitated, quiet, sound)) return;
 
     setIsQuacking(true);
     if (mouthTimerRef.current !== null) window.clearTimeout(mouthTimerRef.current);
@@ -67,7 +116,18 @@ export function InteractiveDuck() {
   }
 
   function handleHover() {
-    if (!isAudioUnlocked || isAgitated || isQuacking || hoverCueRolledRef.current) return;
+    if (!isAudioUnlocked || isAgitated || isQuacking) return;
+
+    const now = performance.now();
+    if (passiveHoverBoostRef.current) {
+      passiveHoverBoostRef.current = false;
+      if (now < passiveHoverBoostUntilRef.current) {
+        if (Math.random() < 0.05) triggerQuack(false, true, "action");
+        return;
+      }
+    }
+
+    if (hoverCueRolledRef.current) return;
 
     hoverCueRolledRef.current = true;
     if (Math.random() < 0.002) triggerQuack(false, true);
@@ -194,7 +254,7 @@ export function InteractiveDuck() {
       <DuckMark
         size={150}
         className={["hero-duck", isSettling && "duck-mark-settling"].filter(Boolean).join(" ")}
-        mouthOpen={isQuacking}
+        mouth={isQuacking ? "open" : passiveMouth}
         agitated={isAgitated}
         overheated={isOverheated}
       />

@@ -58,4 +58,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: npm
           wranglerVersion: "4.127.1"
-          command: pages deploy out --project-name=uduck-registry
+          workingDirectory: ${{ runner.temp }}
+          command: pages deploy ${{ github.workspace }}/out --project-name=uduck-registry

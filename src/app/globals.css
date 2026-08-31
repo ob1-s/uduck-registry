@@ -901,7 +901,7 @@ code {
 
 /* ---------- deployment ---------- */
 
-.deployment-card { padding: 1.5rem; }
+.deployment-card { min-width: 0; padding: 1.5rem; }
 .deployment-head { display: flex; align-items: center; gap: 0.55rem; margin: 0 0 0.8rem; font-size: 1rem; font-weight: 800; }
 
 .deployment-disclosure { margin-top: 1.25rem; border-top: 1px solid var(--line); }
@@ -928,9 +928,9 @@ code {
 .deployment-summary-action svg { transition: transform 160ms ease; }
 .deployment-disclosure[open] .deployment-summary-action svg { transform: rotate(180deg); }
 
-.deployment-steps { display: grid; gap: 1rem; margin-top: 0.9rem; padding-bottom: 0.3rem; }
+.deployment-steps { display: grid; min-width: 0; gap: 1rem; margin-top: 0.9rem; padding-bottom: 0.3rem; }
 
-.deployment-step { border: 1px solid var(--line); border-radius: 1rem 1rem 1rem 0.35rem; padding: 1rem; background: var(--bg-panel); }
+.deployment-step { min-width: 0; border: 1px solid var(--line); border-radius: 1rem 1rem 1rem 0.35rem; padding: 1rem; background: var(--bg-panel); }
 
 .deployment-step-label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.65rem; color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
 
@@ -947,7 +947,7 @@ code {
   font-weight: 800;
 }
 
-.deployment-code { margin: 0; }
+.deployment-code { max-width: 100%; min-width: 0; margin: 0; }
 
 .download-link { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--cyan); font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.04em; }
 .download-link:hover { color: var(--ink); }

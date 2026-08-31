@@ -637,8 +637,13 @@ code {
 /* Card media fades in over the always-present duck fallback layer. */
 .media-layer { opacity: 0; transition: opacity 240ms ease; }
 .media-layer.media-ready { opacity: 1; }
+/* ...and the duck fades out with it: the Pollen clips are alpha-transparent
+   WebMs, so a lingering duck would show through the transparent regions. */
+.media-fallback-card { transition: opacity 240ms ease; }
+.media-fallback-card.media-fallback-hidden { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
-  .media-layer { transition: none; }
+  .media-layer,
+  .media-fallback-card { transition: none; }
 }
 
 .behavior-media-cue {

@@ -21,13 +21,13 @@ export function InteractiveDuck() {
   const agitatedTimerRef = useRef<number | null>(null);
   const stompTimerRef = useRef<number | null>(null);
   const stompFadeTimerRef = useRef<number | null>(null);
-  const overheatedTimerRef = useRef<number | null>(null);
   const soundCueTimerRef = useRef<number | null>(null);
   const passiveOpenTimerRef = useRef<number | null>(null);
   const passiveCloseTimerRef = useRef<number | null>(null);
   const hoverCueRolledRef = useRef(false);
   const passiveHoverBoostRef = useRef(false);
   const passiveHoverBoostUntilRef = useRef(0);
+  const angryQuackCountRef = useRef(0);
   const nextAgitatedQuackRef = useRef(0);
 
   useEffect(() => {
@@ -48,7 +48,6 @@ export function InteractiveDuck() {
       if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
       if (stompTimerRef.current !== null) window.clearInterval(stompTimerRef.current);
       if (stompFadeTimerRef.current !== null) window.clearTimeout(stompFadeTimerRef.current);
-      if (overheatedTimerRef.current !== null) window.clearTimeout(overheatedTimerRef.current);
       if (soundCueTimerRef.current !== null) window.clearTimeout(soundCueTimerRef.current);
       if (passiveOpenTimerRef.current !== null) window.clearTimeout(passiveOpenTimerRef.current);
       if (passiveCloseTimerRef.current !== null) window.clearTimeout(passiveCloseTimerRef.current);
@@ -108,11 +107,12 @@ export function InteractiveDuck() {
   }
 
   function triggerQuack(agitated: boolean, quiet = false, sound: "real" | "action" = "real") {
-    if (!playQuack(agitated, quiet, sound)) return;
+    if (!playQuack(agitated, quiet, sound)) return false;
 
     setIsQuacking(true);
     if (mouthTimerRef.current !== null) window.clearTimeout(mouthTimerRef.current);
     mouthTimerRef.current = window.setTimeout(() => setIsQuacking(false), agitated ? 560 : 420);
+    return true;
   }
 
   function handleHover() {
@@ -179,31 +179,25 @@ export function InteractiveDuck() {
     recentClicks.push(now);
     clickTimesRef.current = recentClicks;
 
-    const agitated = isAgitated || recentClicks.length >= 5;
+    const wasAgitated = isAgitated;
+    const agitated = wasAgitated || recentClicks.length >= 5;
+    if (agitated && !wasAgitated) angryQuackCountRef.current = 0;
     setIsAgitated(agitated);
-
-    if (agitated && !isOverheated && overheatedTimerRef.current === null) {
-      overheatedTimerRef.current = window.setTimeout(() => {
-        setIsOverheated(true);
-        overheatedTimerRef.current = null;
-      }, 2600);
-    }
 
     if (agitated && stompTimerRef.current === null) {
       playStomp();
       stompTimerRef.current = window.setInterval(playStomp, 140);
     }
 
-    triggerQuack(agitated);
+    const angryQuackPlayed = triggerQuack(agitated);
+    if (agitated && wasAgitated && angryQuackPlayed) {
+      angryQuackCountRef.current += 1;
+      if (angryQuackCountRef.current >= 2) setIsOverheated(true);
+    }
 
     if (agitated) {
       if (agitatedTimerRef.current !== null) window.clearTimeout(agitatedTimerRef.current);
       agitatedTimerRef.current = window.setTimeout(() => {
-        if (overheatedTimerRef.current !== null) {
-          window.clearTimeout(overheatedTimerRef.current);
-          overheatedTimerRef.current = null;
-        }
-
         if (stompTimerRef.current !== null) {
           window.clearInterval(stompTimerRef.current);
           stompTimerRef.current = null;
@@ -219,12 +213,13 @@ export function InteractiveDuck() {
               setIsOverheated(false);
               setIsSettling(false);
               clickTimesRef.current = [];
+              angryQuackCountRef.current = 0;
               nextAgitatedQuackRef.current = 0;
               stompFadeTimerRef.current = null;
             }, 140);
           }, 160);
         }, 140);
-      }, 2200);
+      }, 1800);
     }
   }
 
@@ -244,12 +239,11 @@ export function InteractiveDuck() {
         </span>
       )}
       {isOverheated && (
-        <span className="duck-hot-smoke" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
-        </span>
+        <svg className="duck-hot-smoke" viewBox="0 0 150 150" aria-hidden="true">
+          <path className="duck-hot-wisp duck-hot-wisp-left" d="M53 130 C46 123 61 117 53 110 C47 104 58 97 55 89" />
+          <path className="duck-hot-wisp duck-hot-wisp-center" d="M75 129 C68 121 82 116 75 108 C69 101 80 96 77 87" />
+          <path className="duck-hot-wisp duck-hot-wisp-right" d="M98 130 C106 123 91 117 99 109 C105 103 95 97 100 89" />
+        </svg>
       )}
       <DuckMark
         size={150}

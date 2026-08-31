@@ -351,28 +351,34 @@ code {
   position: absolute;
   z-index: 2;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
 }
 
-.duck-hot-smoke > span {
-  position: absolute;
-  width: 0.42rem;
-  height: 0.42rem;
-  border: 1px solid rgba(242, 236, 221, 0.42);
-  border-radius: 50%;
+.duck-hot-smoke path {
+  fill: none;
+  stroke: #f2ecdd;
+  stroke-width: 4.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   opacity: 0;
-  animation: duck-hot-smoke 1.25s ease-out infinite;
+  filter: blur(0.35px);
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: duck-hot-wisp 1.25s ease-out infinite;
 }
 
-.duck-hot-smoke > span:nth-child(1) { left: 33%; bottom: 6%; }
-.duck-hot-smoke > span:nth-child(2) { left: 38%; bottom: 7%; animation-delay: 310ms; }
-.duck-hot-smoke > span:nth-child(3) { right: 38%; bottom: 7%; animation-delay: 620ms; }
-.duck-hot-smoke > span:nth-child(4) { right: 33%; bottom: 6%; animation-delay: 930ms; }
+.duck-hot-wisp-left { --smoke-drift: -5px; --smoke-turn: -5deg; animation-delay: -420ms; }
+.duck-hot-wisp-center { --smoke-drift: 2px; --smoke-turn: 3deg; animation-delay: -140ms; }
+.duck-hot-wisp-right { --smoke-drift: 5px; --smoke-turn: 5deg; animation-delay: -760ms; }
 
-@keyframes duck-hot-smoke {
-  0% { transform: translate(0, 0) scale(0.45); opacity: 0; }
-  24% { opacity: 0.38; }
-  100% { transform: translate(-1px, -12px) scale(1.08); opacity: 0; }
+@keyframes duck-hot-wisp {
+  0% { transform: translate(0, 8px) scale(0.55); opacity: 0; stroke-width: 4; }
+  18% { opacity: 0.56; }
+  55% { transform: translate(calc(var(--smoke-drift) * 0.35), -10px) scale(0.82) rotate(var(--smoke-turn)); opacity: 0.42; stroke-width: 5; }
+  100% { transform: translate(var(--smoke-drift), -29px) scale(1.08) rotate(var(--smoke-turn)); opacity: 0; stroke-width: 5.6; }
 }
 
 @keyframes duck-stomp {
@@ -469,7 +475,7 @@ code {
   .duck-mark-agitated.duck-mark-settling .duck-stomp-left,
   .duck-mark-agitated.duck-mark-settling .duck-stomp-right { animation: none; }
   .duck-mark-overheated .duck-foot-heat { animation: none; }
-  .duck-hot-smoke > span { animation: none; opacity: 0.35; }
+  .duck-hot-smoke path { animation: none; opacity: 0.4; }
   .hero-duck-button:hover .hero-duck,
   .hero-duck-button:active .hero-duck { transform: none; }
   html { scroll-behavior: auto; }
@@ -1015,6 +1021,8 @@ code {
 
 .share-strip-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding-block: clamp(2.5rem, 6vw, 4.2rem); }
 
+.share-strip-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.75rem; }
+
 .share-strip .eyebrow { color: var(--orange-deep); }
 .share-strip .eyebrow::before { border-color: var(--orange-deep); background: radial-gradient(circle, var(--orange) 0 0.1rem, transparent 0.11rem); }
 
@@ -1122,7 +1130,7 @@ code {
   .behavior-byline { margin-top: 0.45rem; font-size: 0.56rem; }
   .behavior-footer { min-width: 0; margin-top: -0.4rem; }
   .share-strip-inner { display: block; }
-  .share-strip .button-secondary { margin-top: 1.2rem; }
+  .share-strip-actions { justify-content: flex-start; margin-top: 1.2rem; }
   .footer-compact { grid-template-columns: 1fr; gap: 0.9rem; padding-block: 2rem 1.1rem; }
   .footer-compact-links { justify-content: flex-start; }
   .footer-compact-meta { grid-column: auto; }

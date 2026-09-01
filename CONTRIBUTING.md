@@ -24,13 +24,15 @@ uDuck Registry is a directory of Microduck behavior policies. A contribution is 
 
 3. The filename must match the lowercase kebab-case `id`. Use `community_experimental` unless the upstream project or a pull request provides physical-run evidence. Use `claimed_hardware` when the author reports a physical run that the registry has not reproduced. Use `verified_hardware` only for an upstream-supported behavior or a submission with physical evidence.
 
-4. Point `artifacts.onnx.url` at the canonical ONNX file. The registry links to that file and does not copy policy weights into the repository.
+4. Point `artifacts.onnx.url` at the canonical ONNX file. Use `https://huggingface.co/...` or `https://raw.githubusercontent.com/...`; these are the artifact hosts accepted by registry validation. The registry links to that file and does not copy policy weights into the repository.
 
 5. Run the checks and rebuild the catalog:
 
    ```bash
    pnpm check
    ```
+
+   This refreshes `README.md` and `public/registry.json`; include both generated files in your pull request.
 
 6. Open a pull request with the upstream source, license, hardware requirements, and any evidence supporting the verification label.
 

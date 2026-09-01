@@ -11,6 +11,9 @@ interface FilterBarProps {
   setSelectedVerification: (v: string) => void;
   selectedAccessory: string;
   setSelectedAccessory: (a: string) => void;
+  selectedSlot: string;
+  setSelectedSlot: (s: string) => void;
+  slots: Array<{ id: string; label: string }>;
   totalCount: number;
   filteredCount: number;
 }
@@ -48,6 +51,9 @@ export function FilterBar({
   setSelectedVerification,
   selectedAccessory,
   setSelectedAccessory,
+  selectedSlot,
+  setSelectedSlot,
+  slots,
   totalCount,
   filteredCount,
 }: FilterBarProps) {
@@ -55,13 +61,15 @@ export function FilterBar({
     search.trim() !== "" ||
     selectedCategory !== "all" ||
     selectedVerification !== "all" ||
-    selectedAccessory !== "all";
+    selectedAccessory !== "all" ||
+    selectedSlot !== "all";
 
   const clearAllFilters = () => {
     setSearch("");
     setSelectedCategory("all");
     setSelectedVerification("all");
     setSelectedAccessory("all");
+    setSelectedSlot("all");
   };
 
   return (
@@ -102,6 +110,13 @@ export function FilterBar({
           <span className="sr-only">Required accessories</span>
           <select id="accessory-filter" className="filter-select" value={selectedAccessory} onChange={(event) => setSelectedAccessory(event.target.value)} aria-label="Filter by required accessories">
             {accessories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <label htmlFor="slot-filter">
+          <span className="sr-only">Robotd slot</span>
+          <select id="slot-filter" className="filter-select" value={selectedSlot} onChange={(event) => setSelectedSlot(event.target.value)} aria-label="Filter by robotd slot">
+            <option value="all">Any slot</option>
+            {slots.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
         <div className="filter-count" aria-live="polite">

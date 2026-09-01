@@ -342,6 +342,39 @@
         }
       }
     },
+    "simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional CI simulation-check configuration. When omitted, the profile is derived from compatibility.robotd_slot.",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": ["velocity", "standing", "sitstand", "oneshot_phase", "oneshot_zero"]
+        },
+        "duration_s": { "type": "number", "minimum": 1, "maximum": 30 },
+        "period_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 30 },
+        "end_phase": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "hold_s": { "type": "number", "minimum": 0, "maximum": 30 },
+        "allow_fall": { "type": "boolean" },
+        "expect_tracking": { "type": "boolean" },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["duration_s", "vx", "vy", "wz"],
+            "properties": {
+              "duration_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 30 },
+              "vx": { "type": "number" },
+              "vy": { "type": "number" },
+              "wz": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
     "sources": {
       "type": "object",
       "additionalProperties": false,

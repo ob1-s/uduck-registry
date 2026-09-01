@@ -153,6 +153,30 @@ const BehaviorInputSchema = strict({
   deployment: strict({
     robotd_toml: NonEmptyStringSchema,
   }),
+
+  // Optional CI simulation-check configuration. When omitted, the command
+  // profile is derived from compatibility.robotd_slot.
+  simulation: strict({
+    profile: z.enum([
+      "velocity",
+      "standing",
+      "sitstand",
+      "oneshot_phase",
+      "oneshot_zero",
+    ]).optional(),
+    duration_s: z.number().min(1).max(30).optional(),
+    period_s: z.number().positive().max(30).optional(),
+    end_phase: z.number().positive().max(1).optional(),
+    hold_s: z.number().min(0).max(30).optional(),
+    allow_fall: z.boolean().optional(),
+    expect_tracking: z.boolean().optional(),
+    segments: z.array(strict({
+      duration_s: z.number().positive().max(30),
+      vx: z.number(),
+      vy: z.number(),
+      wz: z.number(),
+    })).min(1).max(12).optional(),
+  }).optional(),
 });
 
 export const BehaviorSchema = BehaviorInputSchema;

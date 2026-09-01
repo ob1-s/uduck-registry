@@ -44,6 +44,27 @@ uDuck Registry is a directory of Microduck behavior policies. A contribution is 
 
 For a local media path such as `/media/my-move/loop.mp4`, include the matching file at `public/media/my-move/loop.mp4` in the pull request.
 
+### CI simulation check
+
+Every pull request that adds or edits a descriptor is automatically run
+through a headless MuJoCo simulation (the `Sim Check` workflow): the registry
+downloads your canonical ONNX, drives it at the shared 50 Hz runtime contract
+under a command profile derived from `compatibility.robotd_slot`, and verifies
+the rollout is finite, stable, and (for velocity policies) tracking in the
+commanded direction. It also renders a standardized 512x512 `loop.mp4`
+thumbnail you can adopt as your `media.loop_url` — self-hosted on
+uduckmoves.com, so it loads in regions where GitHub/Hugging Face media is
+unreliable.
+
+- Profile details and the pass criteria: [`simulation/README.md`](simulation/README.md).
+- If your behavior intentionally leaves the feet (rolls, jumps), set `"simulation": { "allow_fall": true }`.
+- If your policy needs a specific trigger protocol, encode it with the
+  `simulation.profile` / `simulation.segments` options; the check runs your
+  protocol, not ours.
+
+A failing Sim Check means the policy could not be validated in simulation
+under the declared contract — expect review questions.
+
 ## Descriptor shape
 
 ```json

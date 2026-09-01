@@ -1,0 +1,114 @@
+name: Sim Check
+
+# Spins a headless MuJoCo simulation for each changed behavior descriptor,
+# runs the policy under the standard command profile, and renders the
+# standardized thumbnail loop. A failing rollout verdict fails the check.
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "registry/behaviors/**"
+      - "simulation/**"
+      - ".github/workflows/sim-check.yml"
+  workflow_dispatch:
+    inputs:
+      behavior:
+        description: "Behavior id to check (empty = all descriptors)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  MUJOCO_GL: egl
+  PYOUT: sim-results
+
+jobs:
+  detect:
+    name: Detect changed behaviors
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.set.outputs.ids }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: set
+        run: |
+          if [ -n "${{ github.event.inputs.behavior }}" ]; then
+            ids="${{ github.event.inputs.behavior }}"
+          else
+            base="${{ github.event.pull_request.base.sha || github.sha }}"
+            ids=$(git diff --name-only "$base" HEAD -- registry/behaviors \
+              | sed -n 's#registry/behaviors/\(.*\)\.json$#\1#p' \
+              | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+          echo "ids=$ids" >> "$GITHUB_OUTPUT"
+          echo "changed behaviors: $ids"
+
+  simulate:
+    name: Sim ${{ matrix.id }}
+    needs: detect
+    if: needs.detect.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        id: ${{ fromJson(needs.detect.outputs.ids) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install GL + ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libegl1 libgl1 ffmpeg
+
+      - name: Install Python deps
+        run: pip install -r simulation/requirements.txt
+
+      - name: Cache pinned sim assets
+        uses: actions/cache@v4
+        with:
+          path: .simcache
+          key: sim-assets-${{ hashFiles('simulation/assets.lock.json') }}
+
+      - name: Run simulation check
+        run: |
+          python simulation/run_check.py \
+            --behavior "${{ matrix.id }}" \
+            --out "$PYOUT" \
+            --keep-media
+
+      - name: Upload sim report + render
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-${{ matrix.id }}
+          path: |
+            ${{ env.PYOUT }}/${{ matrix.id }}/report.json
+            ${{ env.PYOUT }}/${{ matrix.id }}/loop.mp4
+            ${{ env.PYOUT }}/${{ matrix.id }}/poster.png
+          if-no-files-found: warn
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Sim check: ${{ matrix.id }}"
+            if [ -f "$PYOUT/${{ matrix.id }}/report.json" ]; then
+              echo '```json'
+              cat "$PYOUT/${{ matrix.id }}/report.json"
+              echo '```'
+            else
+              echo "No report produced (run error)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

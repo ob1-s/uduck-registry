@@ -59,6 +59,16 @@ The table below is generated from the descriptors in `registry/behaviors/`.
 
 <!-- END GENERATED BEHAVIOR TABLE -->
 
+## Simulation CI
+
+Pull requests touching `registry/behaviors/` are automatically run through a
+headless MuJoCo simulation check (`Sim Check` workflow): the contributed ONNX
+is executed at the shared 50 Hz runtime contract under a standard command
+profile, verified (finite outputs, stability, recovery, tracking), and a
+standardized 512x512 render loop is produced as a catalog-ready thumbnail.
+See [`simulation/README.md`](simulation/README.md) for the render standard,
+command profiles, and fidelity notes.
+
 ## Machine-readable access
 
 The generated catalog is available at:

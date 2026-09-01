@@ -141,4 +141,39 @@ describe("behavior schema", () => {
     expect(BehaviorSchema.safeParse(badCompatibilityKey).success).toBe(false);
   });
 
+  it("accepts the optional simulation block and rejects bad values", () => {
+    const withSim = fixture();
+    withSim.simulation = {
+      profile: "velocity",
+      duration_s: 8,
+      segments: [
+        { duration_s: 2, vx: 0.2, vy: 0, wz: 0 },
+        { duration_s: 1.5, vx: 0.1, vy: 0, wz: 0.5 },
+      ],
+    };
+    expect(BehaviorSchema.safeParse(withSim).success).toBe(true);
+
+    const minimal = fixture();
+    minimal.simulation = { profile: "standing" };
+    expect(BehaviorSchema.safeParse(minimal).success).toBe(true);
+
+    for (const sim of [
+      { profile: "teleport" },
+      { duration_s: 0.5 },
+      { duration_s: 60 },
+      { end_phase: 1.5 },
+      { segments: [{ duration_s: 0, vx: 0, vy: 0, wz: 0 }] },
+      { segments: [{ duration_s: 1, vx: 0, vy: 0, wz: 0, boost: 1 }] },
+    ]) {
+      const bad = fixture();
+      bad.simulation = sim;
+      expect(BehaviorSchema.safeParse(bad).success, JSON.stringify(sim)).toBe(false);
+    }
+
+    const badKey = fixture();
+    badKey.simulation = { profile: "standing", warp: true };
+    expect(BehaviorSchema.safeParse(badKey).success).toBe(false);
+  });
+
 });
+

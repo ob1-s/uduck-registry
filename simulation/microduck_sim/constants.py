@@ -10,13 +10,15 @@ be changed casually:
 - Observation layout (61D, unified command mode):
   3 base angular velocity + 3 projected gravity + 14 joint pos (relative to
   the default pose) + 14 joint velocities + 14 last actions + 13 command.
-  The legacy layout (51D) replaces the 13D command with the 3D twist command.
 - Command (13D): twist (vx, vy, wz) + head offset (4) + body pose (6).
 """
 
 from __future__ import annotations
 
 import numpy as np
+
+OBSERVATION_DIM = 61
+ACTION_DIM = 14
 
 TIMESTEP = 0.005  # infer_policy.py overrides the MJCF's 0.002 with this.
 DECIMATION = 4  # 4 * 0.005 s = 0.02 s -> 50 Hz control.

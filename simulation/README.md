@@ -89,6 +89,6 @@ against the official browser simulator (`app/src/game/game.js` and
 `constants.js` in the `microduck-simulator` Space). The port was validated by
 driving both the upstream reference script and this runtime with the same
 policy/scene/command: observations match exactly at reset and trunk trajectories
-agree within ~3% over 8 s (float-ordering drift). Both 61D (unified 13D
-command) and legacy 51D (3D twist) policies are supported, selected by the
-ONNX input shape.
+agree within ~3% over 8 s (float-ordering drift). The registry contract is fixed
+at 61 observations (including the unified 13D command) and 14 actions; the
+runtime rejects artifacts with other input or output dimensions.

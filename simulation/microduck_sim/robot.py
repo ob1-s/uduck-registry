@@ -22,10 +22,12 @@ import numpy as np
 import onnxruntime as ort
 
 from .constants import (
+    ACTION_DIM,
     ACTION_SCALE,
     DECIMATION,
     DEFAULT_POSE,
     INITIAL_TRUNK_Z,
+    OBSERVATION_DIM,
     TIMESTEP,
     TRUNK_BODY,
     TRUNK_FREEJOINT,
@@ -122,11 +124,15 @@ class DuckRuntime:
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
         in_shape = self.session.get_inputs()[0].shape
-        last = in_shape[-1] if isinstance(in_shape[-1], int) else None
-        if last not in (51, 61, None):
-            raise ValueError(f"Policy expects {in_shape}; expected 51 or 61 obs dims")
-        self.use_13d = last is None or last == 61
-        self.obs_dim = 61 if self.use_13d else 51
+        out_shape = self.session.get_outputs()[0].shape
+        input_dim = in_shape[-1] if in_shape and isinstance(in_shape[-1], int) else None
+        output_dim = out_shape[-1] if out_shape and isinstance(out_shape[-1], int) else None
+        if input_dim != OBSERVATION_DIM:
+            raise ValueError(f"Policy expects {in_shape}; expected {OBSERVATION_DIM} obs dims")
+        if output_dim != ACTION_DIM:
+            raise ValueError(f"Policy returns {out_shape}; expected {ACTION_DIM} actions")
+        self.use_13d = True
+        self.obs_dim = OBSERVATION_DIM
 
         self.imu_ang_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR,
                                                 IMU_GYRO_SENSOR)

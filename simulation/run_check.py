@@ -37,6 +37,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 import mujoco  # noqa: E402
 
 from microduck_sim import checks, render  # noqa: E402
+from microduck_sim.constants import ACTION_DIM, OBSERVATION_DIM  # noqa: E402
 from microduck_sim.profiles import make_command_fn, profile_from_descriptor  # noqa: E402
 from microduck_sim.robot import DuckRuntime, load_model  # noqa: E402
 
@@ -78,6 +79,11 @@ def download_onnx(descriptor: dict, dest_dir: Path) -> Path:
 def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
     descriptor = load_descriptor(behavior_id)
     contract = descriptor["contract"]
+    if (contract["observation_dim"], contract["action_dim"]) != (OBSERVATION_DIM, ACTION_DIM):
+        raise ValueError(
+            f"descriptor contract must be {OBSERVATION_DIM} observations and "
+            f"{ACTION_DIM} actions"
+        )
     slot = descriptor["compatibility"]["robotd_slot"]
     sim_block = descriptor.get("simulation")
     spec = profile_from_descriptor(sim_block, slot)

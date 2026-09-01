@@ -51,10 +51,9 @@ through a headless MuJoCo simulation (the `Sim Check` workflow): the registry
 downloads your canonical ONNX, drives it at the shared 50 Hz runtime contract
 under a command profile derived from `compatibility.robotd_slot`, and verifies
 the rollout is finite, stable, and (for velocity policies) tracking in the
-commanded direction. It also renders a standardized 512x512 `loop.mp4`
-thumbnail you can adopt as your `media.loop_url` — self-hosted on
-uduckmoves.com, so it loads in regions where GitHub/Hugging Face media is
-unreliable.
+commanded direction. It also renders a standardized 512x512 `loop.mp4` and
+`poster.png`, which are uploaded to the workflow run for review. They are not
+published to the catalog automatically.
 
 - Profile details and the pass criteria: [`simulation/README.md`](simulation/README.md).
 - If your behavior intentionally leaves the feet (rolls, jumps), set `"simulation": { "allow_fall": true }`.

@@ -44,8 +44,9 @@ is byte-identical to the one in `microduck_rl`.
 
 ## Findings that matter
 
-- Community ONNX policies may declare a dynamic batch axis or the legacy 51D
-  obs (3D twist command). The runtime auto-detects via input shape.
+- The registry contract is fixed at 61 observations (including the unified 13D
+  command) and 14 actions. The runtime accepts a dynamic batch axis but rejects
+  artifacts whose feature or action dimensions do not match that contract.
 - Deterministic CPU sim under-reports locomotion speed vs hardware claims
   (~40-50% of commanded vx for the official walk policy with a step command).
   Tracking checks verify direction + a minimum fraction, not equality.
@@ -55,12 +56,12 @@ is byte-identical to the one in `microduck_rl`.
 
 ## China / restricted-region angle
 
-Sim-rendered loops are generated in CI and committed under
-`public/media/sim/<id>/loop.mp4` — first-party assets on our own domain, no
-raw.githubusercontent.com / HF signed-redirect dependency. They are also a
-fallback for behaviors whose authors did not provide media, so every card can
-have a standardized preview. Original author media remains canonical and
-preferred where available (mirrored via the existing `remote-cache`).
+Sim-rendered loops are generated in CI and uploaded as workflow artifacts for
+review. The current workflow does not commit them under `public/media/sim/`,
+publish them to uduckmoves.com, or update descriptors automatically. Original
+author media remains canonical and preferred where available (mirrored via the
+existing `remote-cache`). Deciding whether and how to publish generated renders
+is a separate integration step.
 
 ## Costs
 

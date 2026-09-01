@@ -59,9 +59,11 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
   // on ref attach (complete/readyState) makes the reveal stateless against
   // that race. Safe to call repeatedly; it only ever converges.
   const syncImageState = useCallback((node: HTMLImageElement) => {
+    if (!node.complete) return;
+
     const { naturalWidth, naturalHeight } = node;
 
-    if (node.complete && naturalWidth === 0) {
+    if (naturalWidth === 0) {
       setImageFailed(true);
       if (variant === "card") setThumbnailReady(true);
       return;

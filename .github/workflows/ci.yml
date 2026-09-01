@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate:
-    name: Validate Registry & Artifacts
+    name: Validate Registry & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code

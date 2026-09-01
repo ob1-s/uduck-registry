@@ -1,4 +1,4 @@
-/** Shared registry validation constants used by the CLI and validator. */
+/** Shared registry validation constants used by the descriptor schema and validator. */
 
 /** Only these hosts may serve canonical ONNX artifacts (HTTPS only). */
 export const HOST_ALLOWLIST = ["huggingface.co", "raw.githubusercontent.com"] as const;

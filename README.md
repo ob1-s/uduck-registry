@@ -63,23 +63,9 @@ curl -s https://uduckmoves.com/registry.json | jq .
 
 The same snapshot is in [`public/registry.json`](public/registry.json). The static site also exposes one JSON endpoint per behavior at `/api/behaviors/<id>`.
 
-## Quickstart
-
-```bash
-git clone https://github.com/ob1-s/uduck-registry.git
-cd uduck-registry
-pnpm install
-
-pnpm cli list
-pnpm cli info alpha-walking
-pnpm cli pull alpha-walking ./policies
-```
-
-Use `pnpm cli info <id>` or `pnpm cli toml <id>` for the exact `robotd` configuration for a behavior. Check the compatibility and accessory requirements before running a policy on hardware.
-
 ## Contributing
 
-Add one descriptor at `registry/behaviors/<id>.json`, run `pnpm validate`, `pnpm test`, and `pnpm compile`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
+Add one descriptor at `registry/behaviors/<id>.json`, run `pnpm check`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
 
 ## Attribution and license
 

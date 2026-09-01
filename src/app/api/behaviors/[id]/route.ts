@@ -12,7 +12,7 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: Request, { params }: Props) {
+export async function GET(_request: Request, { params }: Props) {
   const { id } = await params;
   const behavior = getBehaviorById(id);
 

@@ -1,4 +1,4 @@
-import type { BehaviorCategory } from "@registry/schema/behavior";
+import type { BehaviorCategory, RobotDSlot } from "@registry/schema/behavior";
 
 const categoryLabels: Record<BehaviorCategory, string> = {
   locomotion: "Locomotion",
@@ -7,6 +7,18 @@ const categoryLabels: Record<BehaviorCategory, string> = {
   manipulation: "Manipulation",
   recovery: "Recovery",
   experimental: "Experimental",
+};
+
+const robotdSlotLabels: Record<RobotDSlot, string> = {
+  walk: "Walk",
+  stand: "Stand",
+  sitstand: "Sit ↔ stand",
+  roulade: "Roulade",
+  kick_left: "Kick left",
+  kick_right: "Kick right",
+  ground_pick: "Ground pick",
+  roller: "Roller mode",
+  custom: "Custom",
 };
 
 export function formatCategory(category: BehaviorCategory) {
@@ -20,4 +32,8 @@ export function formatAccessory(accessory: string) {
   };
 
   return labels[accessory] ?? accessory.replaceAll("_", " ");
+}
+
+export function formatRobotdSlot(slot: RobotDSlot) {
+  return robotdSlotLabels[slot];
 }

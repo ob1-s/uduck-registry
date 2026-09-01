@@ -12,9 +12,17 @@ uDuck Registry is a directory of Microduck behavior policies. A contribution is 
    pnpm install
    ```
 
-2. Add `registry/behaviors/<id>.json`. The filename must match the lowercase kebab-case `id`.
+   First-time fork contributions may show a pending workflow until a maintainer approves it.
 
-3. Use `community_experimental` unless the upstream project or a pull request provides physical-run evidence. Use `claimed_hardware` when the author reports a physical run that the registry has not reproduced. Use `verified_hardware` only for an upstream-supported behavior or a submission with physical evidence.
+2. Generate a descriptor scaffold so the fixed Microduck contract does not need to be written by hand:
+
+   ```bash
+   pnpm --silent new-behavior id=my-cool-trick name="My Cool Duck Trick" category=agility-tricks author="Your Name" > registry/behaviors/my-cool-trick.json
+   ```
+
+   Replace the TODO values and update the source, artifact, compatibility, deployment, and media fields. The command only writes JSON to stdout; it does not contact GitHub or open a pull request.
+
+3. The filename must match the lowercase kebab-case `id`. Use `community_experimental` unless the upstream project or a pull request provides physical-run evidence. Use `claimed_hardware` when the author reports a physical run that the registry has not reproduced. Use `verified_hardware` only for an upstream-supported behavior or a submission with physical evidence.
 
 4. Point `artifacts.onnx.url` at the canonical ONNX file. The registry links to that file and does not copy policy weights into the repository.
 

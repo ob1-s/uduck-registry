@@ -40,10 +40,10 @@ jobs:
       - name: Compile Public Registry Index
         run: pnpm compile
 
-      - name: Snapshot-diff registry.json
+      - name: Snapshot-diff generated catalog
         run: |
-          if ! git diff --exit-code public/registry.json; then
-            echo "::error::public/registry.json is stale — run 'pnpm compile' and commit the result."
+          if ! git diff --exit-code -- public/registry.json README.md; then
+            echo "::error::Generated catalog is stale — run 'pnpm compile' and commit the result."
             exit 1
           fi
 

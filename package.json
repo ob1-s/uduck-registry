@@ -8,6 +8,7 @@
     "start": "python3 -m http.server 3000 --directory out",
     "test": "vitest run",
     "check": "pnpm validate && pnpm test && pnpm compile && pnpm build",
+    "new-behavior": "tsx scripts/new-behavior.ts",
     "validate": "tsx scripts/validate-registry.ts",
     "compile": "tsx scripts/generate-registry-index.ts"
   },

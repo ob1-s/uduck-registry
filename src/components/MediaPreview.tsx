@@ -162,7 +162,7 @@ export function MediaPreview({ media, title, variant }: MediaPreviewProps) {
         controls={variant === "detail" || (variant === "card" && reducedMotion)}
         loop={variant === "card"}
         playsInline
-        preload={variant === "card" && !imageUrl ? "metadata" : "none"}
+        preload={!imageUrl ? "metadata" : "none"}
         aria-label={`${title} preview`}
         onCanPlay={() => {
           setVideoReady(true);

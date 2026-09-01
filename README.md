@@ -71,7 +71,7 @@ The same snapshot is in [`public/registry.json`](public/registry.json). The stat
 
 ## Contributing
 
-Generate a starting descriptor with `pnpm --silent new-behavior id=my-move name="My Move" category=locomotion author="Your Name"`, run `pnpm check`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
+Generate a starting descriptor with `pnpm --silent new-behavior id=my-move name="My Move" category=locomotion author="Your Name"`, run `pnpm check`, include the refreshed `README.md` and `public/registry.json`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
 
 ## Attribution and license
 

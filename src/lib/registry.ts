@@ -49,18 +49,11 @@ export function getBehaviorById(id: string): Behavior | null {
 export function getRegistryStats() {
   const all = getAllBehaviors();
   const hardware = all.filter((b) => b.verification.status === "verified_hardware").length;
-  const claimed = all.filter((b) => b.verification.status === "claimed_hardware").length;
   const community = all.filter((b) => b.verification.status === "community_experimental").length;
-
-  const categories = Array.from(new Set(all.map((b) => b.category)));
-  const allTags = Array.from(new Set(all.flatMap((b) => b.tags)));
 
   return {
     total: all.length,
     hardware,
-    claimed,
     community,
-    categories,
-    allTags,
   };
 }

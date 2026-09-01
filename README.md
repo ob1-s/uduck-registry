@@ -31,27 +31,33 @@ The descriptor schema is [`registry/schema/behavior.schema.json`](registry/schem
 
 ## Catalog
 
-The registry currently includes 19 indexed behaviors:
+The table below is generated from the descriptors in `registry/behaviors/`.
 
-1. `alpha-walking` — **Alpha Dynamic Walk** *(Pollen Robotics · Hardware verified)*
-2. `fall-recovery` — **Dynamic Fall Recovery** *(Pollen Robotics · Hardware verified)*
-3. `ground-pick` — **Autonomous Ground Pick** *(Pollen Robotics · Hardware verified)*
-4. `sit-stand` — **Smooth Sit ↔ Stand** *(Pollen Robotics · Hardware verified)*
-5. `roulade` — **Acrobatic Roulade (Forward Roll)** *(Pollen Robotics · Hardware verified)*
-6. `ball-kick-left` — **Impulse Ball Kick (Left Foot)** *(Pollen Robotics · Hardware verified)*
-7. `ball-kick-right` — **Impulse Ball Kick (Right Foot)** *(Pollen Robotics · Hardware verified)*
-8. `roller-drive` — **Roller Skate Velocity Drive** *(Pollen Robotics · Hardware verified)*
-9. `roller-crouch` — **Roller Blade Crouch Glide** *(Pollen Robotics · Hardware verified)*
-10. `genesis-velocity` — **Genesis Flat Walk** *(Macmachi · Experimental)*
-11. `genesis-rough` — **Genesis Rough-Terrain Walk** *(Macmachi · Experimental)*
-12. `genesis-backlash` — **Genesis Backlash Walk** *(Macmachi · Experimental)*
-13. `jump` — **Vertical Jump** *(Liyucheng1997 · Experimental)*
-14. `courier` — **Microduck Courier** *(selinayfilizp · Experimental)*
-15. `running` — **Microduck Running** *(HannesVonEssen · Experimental)*
-16. `flamingo-cycle` — **Flamingo Cycle** *(RemiFabre · Experimental)*
-17. `rough-walk-e` — **Rough Walk E** *(RemiFabre · Experimental)*
-18. `rough-walk-g` — **Rough Walk G** *(RemiFabre · Experimental)*
-19. `max-height-jump` — **Maximum-Height Jump** *(Thomas Burgess · Experimental)*
+<!-- BEGIN GENERATED BEHAVIOR TABLE -->
+
+| Behavior | ID | Category | Status | Publisher | Setup | Preview |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Acrobatic Roulade (Forward Roll)](https://uduckmoves.com/behaviors/roulade) | `roulade` | agility tricks | Hardware verified | Pollen Robotics | none | — |
+| [Alpha Dynamic Walk](https://uduckmoves.com/behaviors/alpha-walking) | `alpha-walking` | locomotion | Hardware verified | Pollen Robotics | none | video + poster |
+| [Autonomous Ground Pick](https://uduckmoves.com/behaviors/ground-pick) | `ground-pick` | manipulation | Hardware verified | Pollen Robotics | none | video + poster |
+| [Dynamic Fall Recovery](https://uduckmoves.com/behaviors/fall-recovery) | `fall-recovery` | recovery | Hardware verified | Pollen Robotics | none | video + poster |
+| [Impulse Ball Kick (Left Foot)](https://uduckmoves.com/behaviors/ball-kick-left) | `ball-kick-left` | manipulation | Hardware verified | Pollen Robotics | 70mm practice ball | video + poster |
+| [Impulse Ball Kick (Right Foot)](https://uduckmoves.com/behaviors/ball-kick-right) | `ball-kick-right` | manipulation | Hardware verified | Pollen Robotics | 70mm practice ball | — |
+| [Roller Blade Crouch Glide](https://uduckmoves.com/behaviors/roller-crouch) | `roller-crouch` | roller skate | Hardware verified | Pollen Robotics | roller skate blades | — |
+| [Roller Skate Velocity Drive](https://uduckmoves.com/behaviors/roller-drive) | `roller-drive` | roller skate | Hardware verified | Pollen Robotics | roller skate blades | video + poster |
+| [Smooth Sit ↔ Stand](https://uduckmoves.com/behaviors/sit-stand) | `sit-stand` | locomotion | Hardware verified | Pollen Robotics | none | video + poster |
+| [Flamingo Cycle](https://uduckmoves.com/behaviors/flamingo-cycle) | `flamingo-cycle` | agility tricks | Experimental | RemiFabre | none | video |
+| [Genesis Backlash Walk](https://uduckmoves.com/behaviors/genesis-backlash) | `genesis-backlash` | locomotion | Experimental | Macmachi | none | — |
+| [Genesis Flat Walk](https://uduckmoves.com/behaviors/genesis-velocity) | `genesis-velocity` | locomotion | Experimental | Macmachi | none | — |
+| [Genesis Rough-Terrain Walk](https://uduckmoves.com/behaviors/genesis-rough) | `genesis-rough` | locomotion | Experimental | Macmachi | none | — |
+| [Maximum-Height Jump](https://uduckmoves.com/behaviors/max-height-jump) | `max-height-jump` | agility tricks | Experimental | Thomas Burgess | none | loop + video |
+| [Microduck Courier](https://uduckmoves.com/behaviors/courier) | `courier` | manipulation | Experimental | selinayfilizp | none | video + poster |
+| [Microduck Running](https://uduckmoves.com/behaviors/running) | `running` | locomotion | Experimental | HannesVonEssen | none | video |
+| [Rough Walk E](https://uduckmoves.com/behaviors/rough-walk-e) | `rough-walk-e` | locomotion | Experimental | RemiFabre | none | video |
+| [Rough Walk G](https://uduckmoves.com/behaviors/rough-walk-g) | `rough-walk-g` | locomotion | Experimental | RemiFabre | none | video |
+| [Vertical Jump](https://uduckmoves.com/behaviors/jump) | `jump` | agility tricks | Experimental | Liyucheng1997 | none | — |
+
+<!-- END GENERATED BEHAVIOR TABLE -->
 
 ## Machine-readable access
 
@@ -63,23 +69,9 @@ curl -s https://uduckmoves.com/registry.json | jq .
 
 The same snapshot is in [`public/registry.json`](public/registry.json). The static site also exposes one JSON endpoint per behavior at `/api/behaviors/<id>`.
 
-## Quickstart
-
-```bash
-git clone https://github.com/ob1-s/uduck-registry.git
-cd uduck-registry
-pnpm install
-
-pnpm cli list
-pnpm cli info alpha-walking
-pnpm cli pull alpha-walking ./policies
-```
-
-Use `pnpm cli info <id>` or `pnpm cli toml <id>` for the exact `robotd` configuration for a behavior. Check the compatibility and accessory requirements before running a policy on hardware.
-
 ## Contributing
 
-Add one descriptor at `registry/behaviors/<id>.json`, run `pnpm validate`, `pnpm test`, and `pnpm compile`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
+Generate a starting descriptor with `pnpm --silent new-behavior id=my-move name="My Move" category=locomotion author="Your Name"`, run `pnpm check`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
 
 ## Attribution and license
 

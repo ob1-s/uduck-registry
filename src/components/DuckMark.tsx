@@ -132,7 +132,6 @@ interface DuckMarkProps {
   className?: string;
   accent?: string;
   mouth?: DuckMouth;
-  mouthOpen?: boolean;
   agitated?: boolean;
   overheated?: boolean;
 }
@@ -142,12 +141,11 @@ export function DuckMark({
   className,
   accent = "#FFD23F",
   mouth,
-  mouthOpen = false,
   agitated = false,
   overheated = false,
 }: DuckMarkProps) {
   const heatGradientId = `duck-foot-heat-${useId().replace(/:/g, "")}`;
-  const mouthState = mouth ?? (mouthOpen ? "open" : "closed");
+  const mouthState = mouth ?? "closed";
   const stateClassName = [
     className,
     mouthState === "slightly-open" && "duck-mark-mouth-slightly-open",

@@ -1,11 +1,71 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
-import { type RegistryIndex } from "../registry/schema/behavior";
+import { type Behavior, type RegistryIndex } from "../registry/schema/behavior";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
+const README_PATH = path.resolve(process.cwd(), "README.md");
 const FALLBACK_UPDATED_AT = "1970-01-01T00:00:00.000Z";
+const README_TABLE_START = "<!-- BEGIN GENERATED BEHAVIOR TABLE -->";
+const README_TABLE_END = "<!-- END GENERATED BEHAVIOR TABLE -->";
+
+const verificationLabels: Record<Behavior["verification"]["status"], string> = {
+  verified_hardware: "Hardware verified",
+  claimed_hardware: "Hardware claimed",
+  community_experimental: "Experimental",
+};
+
+function escapeTableCell(value: string): string {
+  return value.replaceAll("|", "\\|").replace(/\r?\n/g, " ");
+}
+
+function formatLabel(value: string): string {
+  return value.replaceAll("_", " ").replaceAll("-", " ");
+}
+
+function mediaLabel(behavior: Behavior): string {
+  const labels = [
+    behavior.media.loop_url && "loop",
+    behavior.media.video_url && "video",
+    behavior.media.thumbnail_url && "poster",
+  ].filter(Boolean);
+  return labels.length > 0 ? labels.join(" + ") : "—";
+}
+
+export function renderReadmeCatalog(behaviors: Behavior[]): string {
+  const rows = behaviors.map((behavior) => {
+    const authors = behavior.authors.map((author) => author.name).join(", ");
+    const accessories = behavior.compatibility.accessories_required.length > 0
+      ? behavior.compatibility.accessories_required.map(formatLabel).join(", ")
+      : "none";
+
+    return `| [${escapeTableCell(behavior.name)}](https://uduckmoves.com/behaviors/${behavior.id}) | \`${behavior.id}\` | ${escapeTableCell(formatLabel(behavior.category))} | ${verificationLabels[behavior.verification.status]} | ${escapeTableCell(authors)} | ${escapeTableCell(accessories)} | ${mediaLabel(behavior)} |`;
+  });
+
+  return [
+    README_TABLE_START,
+    "",
+    "| Behavior | ID | Category | Status | Publisher | Setup | Preview |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
+    ...rows,
+    "",
+    README_TABLE_END,
+  ].join("\n");
+}
+
+export function updateReadmeCatalog(behaviors: Behavior[], readmePath = README_PATH): void {
+  const readme = fs.readFileSync(readmePath, "utf-8");
+  const start = readme.indexOf(README_TABLE_START);
+  const end = readme.indexOf(README_TABLE_END);
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error(`README is missing the generated catalog markers: ${README_TABLE_START} / ${README_TABLE_END}`);
+  }
+
+  const before = readme.slice(0, start);
+  const after = readme.slice(end + README_TABLE_END.length);
+  fs.writeFileSync(readmePath, `${before}${renderReadmeCatalog(behaviors)}${after}`, "utf-8");
+}
 
 /**
  * Keep snapshot generation byte-for-byte stable. Release automation may set
@@ -76,7 +136,8 @@ export function generateRegistryIndex(): RegistryIndex {
   }
 
   fs.writeFileSync(REGISTRY_OUT, JSON.stringify(index, null, 2), "utf-8");
-  console.log(`\x1b[32mSuccessfully compiled ${behaviors.length} behaviors into public/registry.json\x1b[0m`);
+  updateReadmeCatalog(behaviors);
+  console.log(`\x1b[32mSuccessfully compiled ${behaviors.length} behaviors and refreshed README.md\x1b[0m`);
   return index;
 }
 

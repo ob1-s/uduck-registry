@@ -57,6 +57,13 @@
     ],
     "robotd_slot": "custom"
   },
+  "simulation": {
+    "profile": "oneshot_trigger",
+    "trigger_s": 0.2,
+    "duration_s": 4,
+    "allow_fall": true,
+    "expect_tracking": false
+  },
   "artifacts": {
     "onnx": {
       "filename": "max_height_jump.onnx",

@@ -30,6 +30,9 @@ class ProfileSpec:
     hold_s: float = 2.0
     # oneshot_zero: seconds the zeroed command window lasts (kicks, roulade).
     duration_s: float = 0.5
+    # oneshot_trigger: binary launch request followed by the zero command
+    # (custom one-shot policies such as jumps).
+    trigger_s: float = 0.2
     # Values the checks use to decide pass/fail.
     allow_fall: bool = False
     expect_tracking: bool = True
@@ -84,6 +87,7 @@ def profile_from_descriptor(sim_block: Optional[dict], slot: str) -> ProfileSpec
     spec.allow_fall = bool(sim_block.get("allow_fall", spec.allow_fall))
     spec.expect_tracking = bool(sim_block.get("expect_tracking", spec.expect_tracking))
     spec.duration_s = float(sim_block.get("duration_s", spec.duration_s))
+    spec.trigger_s = float(sim_block.get("trigger_s", spec.trigger_s))
     spec.period_s = float(sim_block.get("period_s", spec.period_s))
     spec.end_phase = float(sim_block.get("end_phase", spec.end_phase))
     spec.hold_s = float(sim_block.get("hold_s", spec.hold_s))
@@ -156,5 +160,17 @@ def make_command_fn(spec: ProfileSpec, use_13d: bool) -> Callable[[float], np.nd
         def zero_fn(t: float) -> np.ndarray:
             return wrap(np.zeros(3, dtype=np.float32))
         return zero_fn
+
+    if spec.kind == "oneshot_trigger":
+        # Custom one-shot policies documented by their authors as a binary
+        # launch request in twist-vx, followed by the settling command.
+        trigger_s = spec.trigger_s
+
+        def trigger_fn(t: float) -> np.ndarray:
+            cmd = (np.array([1.0, 0.0, 0.0], dtype=np.float32)
+                   if t < trigger_s else np.zeros(3, dtype=np.float32))
+            return wrap(cmd)
+
+        return trigger_fn
 
     raise ValueError(f"Unknown simulation profile kind: {spec.kind!r}")

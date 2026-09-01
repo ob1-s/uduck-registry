@@ -36,7 +36,7 @@ uniformly (and host them from our own domain — relevant for regions where
 GitHub/HF media is unreliable, e.g. mainland China):
 
 - square 512x512, H.264 `yuv420p`, 30 fps, muted, faststart;
-- fixed smoothing chase camera (side-on, −12° elevation, 0.65 m);
+- fixed smoothing chase camera (side-on, −12° elevation, 0.72 m);
 - rollout equals the profile duration (default 6 s);
 - deterministic given the policy artifact and profile.
 
@@ -51,7 +51,7 @@ The command schedule defaults from `compatibility.robotd_slot`:
 | `roulade` | 2 s zeroed one-shot window, falls allowed |
 | `kick_left`, `kick_right` | 0.5 s zeroed one-shot window |
 | `ground_pick` | phase-encoded `[cos, sin, 0]` one-shot (period 4 s, ends at 0.7) |
-| `custom` | standing hold |
+| `custom` | standing hold smoke check |
 
 Descriptors can override with an optional `simulation` block:
 
@@ -67,6 +67,13 @@ Descriptors can override with an optional `simulation` block:
   "expect_tracking": true
 }
 ```
+
+Known one-shot custom policies can use `oneshot_trigger`: it sends a short
+`twist-vx = 1` launch request, then `0` for the rest of the rollout. This is
+used by the published jump descriptors. The current robotd design does not
+define a `jump` slot, so those descriptors correctly remain `custom`; the
+profile describes their documented command semantics rather than claiming an
+official slot.
 
 `allow_fall` marks behaviors that intentionally leave the feet (roulade,
 jumps): the check then requires the robot to recover upright instead of never

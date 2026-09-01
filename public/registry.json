@@ -1116,6 +1116,13 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/max_height_jump.onnx\"\n# twist-vx: 1 requests launch; return it to 0 after touchdown.\n# The preview's durable reset also needs the companion standing ONNX and the documented 0.22 s / 0.14 s runtime blend."
+      },
+      "simulation": {
+        "profile": "oneshot_trigger",
+        "duration_s": 4,
+        "trigger_s": 0.2,
+        "allow_fall": true,
+        "expect_tracking": false
       }
     },
     {
@@ -1503,6 +1510,13 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/jump.onnx\""
+      },
+      "simulation": {
+        "profile": "oneshot_trigger",
+        "duration_s": 4,
+        "trigger_s": 0.2,
+        "allow_fall": true,
+        "expect_tracking": false
       }
     }
   ]

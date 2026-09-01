@@ -24,10 +24,11 @@ from PIL import Image, ImageDraw  # noqa: E402
 
 LOOP_SIZE = 512
 LOOP_FPS = 30
-CAM_DISTANCE = 0.65
+SOURCE_FPS = 25  # 50 Hz control, sampled every other step
+CAM_DISTANCE = 0.72
 CAM_ELEVATION = -12.0
 CAM_AZIMUTH = 100.0
-CAM_SMOOTH = 0.08  # per-control-step lookat lerp factor
+CAM_SMOOTH = 0.2  # per-control-step lookat lerp factor
 
 
 class LoopRenderer:
@@ -44,8 +45,9 @@ class LoopRenderer:
         self._frames: list[np.ndarray] = []
 
     def capture(self, step_index: int, sample) -> None:
-        # Render every other control step: 50 Hz sim -> 25 fps source, played
-        # at 30 fps for a slightly sped-up, looping-friendly feel.
+        # Render every other control step: 50 Hz sim -> 25 fps source. The
+        # encoder declares that source rate and converts it to the 30 fps
+        # delivery rate, so the loop keeps the rollout's real duration.
         if step_index % 2 != 0:
             return
         pos = np.asarray(sample.trunk_pos, dtype=float)
@@ -68,7 +70,8 @@ class LoopRenderer:
         proc = subprocess.Popen(
             [ffmpeg, "-y", "-loglevel", "error",
              "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{w}x{h}",
-             "-r", str(LOOP_FPS), "-i", "-",
+             "-framerate", str(SOURCE_FPS), "-i", "-",
+             "-r", str(LOOP_FPS),
              "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
              "-movflags", "+faststart", str(out_path)],
             stdin=subprocess.PIPE)

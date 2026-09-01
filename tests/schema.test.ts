@@ -157,11 +157,16 @@ describe("behavior schema", () => {
     minimal.simulation = { profile: "standing" };
     expect(BehaviorSchema.safeParse(minimal).success).toBe(true);
 
+    const oneShot = fixture();
+    oneShot.simulation = { profile: "oneshot_trigger", trigger_s: 0.2 };
+    expect(BehaviorSchema.safeParse(oneShot).success).toBe(true);
+
     for (const sim of [
       { profile: "teleport" },
       { duration_s: 0.5 },
       { duration_s: 60 },
       { end_phase: 1.5 },
+      { trigger_s: 5.5 },
       { segments: [{ duration_s: 0, vx: 0, vy: 0, wz: 0 }] },
       { segments: [{ duration_s: 1, vx: 0, vy: 0, wz: 0, boost: 1 }] },
     ]) {

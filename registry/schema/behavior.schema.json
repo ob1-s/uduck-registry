@@ -349,9 +349,10 @@
       "properties": {
         "profile": {
           "type": "string",
-          "enum": ["velocity", "standing", "sitstand", "oneshot_phase", "oneshot_zero"]
+          "enum": ["velocity", "standing", "sitstand", "oneshot_phase", "oneshot_zero", "oneshot_trigger"]
         },
         "duration_s": { "type": "number", "minimum": 1, "maximum": 30 },
+        "trigger_s": { "type": "number", "minimum": 0, "maximum": 5 },
         "period_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 30 },
         "end_phase": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
         "hold_s": { "type": "number", "minimum": 0, "maximum": 30 },

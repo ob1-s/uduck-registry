@@ -37,3 +37,7 @@ session-*.md
 .simcache/
 sim-results/
 .research/
+
+# Python
+__pycache__/
+*.pyc

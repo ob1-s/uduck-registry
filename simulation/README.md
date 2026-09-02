@@ -1,17 +1,91 @@
-# CI simulation check (`simulation/`)
+# Registry simulation (`simulation/`)
 
-A headless Microduck policy runtime used by the `Sim Check` GitHub Actions
-workflow. For a behavior descriptor it:
+The registry runner produces a deterministic diagnostic rollout and review
+media for policies that explicitly opt into its constrained environment. A
+render is not hardware verification and does not reproduce arbitrary publisher
+training environments.
 
-1. downloads the canonical ONNX artifact (registry artifact host allowlist only),
-2. loads the pinned official Microduck MJCF (`pollen-robotics/microduck-simulator`,
-   hash-pinned in `assets.lock.json`),
-3. runs a deterministic MuJoCo rollout at the shared runtime contract
-   (50 Hz control, decimation 4, 61D observation / 14 action),
-4. evaluates pass/fail checks, and
-5. renders a standardized, deterministic thumbnail loop for the catalog.
+## Recipe model
 
-## Usage
+Simulation is independent from `compatibility.robotd_slot`:
+
+```json
+"simulation": {
+  "runner": "microduck-standard-v1",
+  "scene": "flat-v1",
+  "start": { "preset": "standing_pose" },
+  "scenario": "velocity",
+  "duration_s": 6,
+  "checks": ["no_fall", "ends_upright", "velocity_tracking"],
+  "segments": [
+    { "duration_s": 1, "vx": 0, "vy": 0, "wz": 0 },
+    { "duration_s": 3, "vx": 0.25, "vy": 0, "wz": 0 },
+    { "duration_s": 2, "vx": 0, "vy": 0, "wz": 0 }
+  ]
+}
+```
+
+- `scene` is persistent world geometry. V1 supports only the registry-owned
+  `flat-v1` scene; a rough-terrain policy rendered there is only a flat-world
+  diagnostic.
+- `model` selects the pinned robot asset variant and must match the behavior's
+  compatibility model. It defaults to that compatibility model; V1 supports
+  `microduck-standard` and the official `microduck-rollers` model.
+- `start` is the robot state at time zero. V1 supports the raw
+  `standing_pose` (contact is not implied), `settled_standing`, and a bounded
+  `airborne_drop` preset. An airborne reset is reported as such and is not
+  counted as takeoff.
+- `scenario` is the command schedule: `velocity`, `standing`, `sitstand`,
+  `oneshot_phase`, `oneshot_zero`, or `oneshot_trigger`.
+- `checks` selects runner-defined assertions. Descriptors cannot provide check
+  prose or results.
+
+Before downloading a policy or starting MuJoCo, the runner performs a
+deterministic admission check. It verifies the declared contract, model, scene,
+start preset, scenario, and command schedule. Velocity schedules must be
+explicit, cover the rollout exactly, and stay within the runner's supported
+command range. A recipe that does not fit is rejected; command values are
+never silently clipped or replaced with a default.
+
+If the policy requires custom assets, a different observation/action contract,
+or a publisher-specific environment, declare that boundary instead of adding
+code to the registry runner:
+
+```json
+"simulation": {
+  "runner": "external",
+  "reason": "custom_environment",
+  "notes": "Uses the publisher's obstacle scene."
+}
+```
+
+Having the fixed 61D/14D ONNX contract is not enough for admission: the
+command protocol and environment must also be represented. Do not give CI a
+convenient but inaccurate command schedule just so the policy can be rendered.
+If the policy's command protocol or environment is not supported, use
+`external` until it has a matching runner profile.
+
+Omitting `simulation` is also valid and produces an unsupported/no-recipe CI
+report when that descriptor changes.
+
+## What the report says
+
+Top-level execution is one of `rendered`, `unsupported`, `rejected`, or
+`failed`. A rendered report includes exact observations and individual check
+outcomes. It never emits a general policy-validation or hardware-validation
+claim.
+
+The report also records the preflight status and any runtime-fidelity warnings,
+such as a descriptor declaring BAM actuator dynamics while the registry runner
+uses its deterministic position-control diagnostic model. That warning does not
+turn a render into a reproduction claim.
+
+Baseline numerical-integrity and bounded-drift checks always run. Requested
+checks may additionally cover falls, final posture, velocity tracking,
+supported takeoff, and bilateral touchdown after takeoff. A failing requested
+check fails CI only after the report and media have been produced for review.
+
+## Usage and outputs
 
 ```bash
 python -m venv .venv && . .venv/bin/activate
@@ -21,81 +95,45 @@ python simulation/run_check.py --behavior alpha-walking --keep-media --out sim-r
 
 Outputs under `sim-results/<id>/`:
 
-| File | What |
+| File | Meaning |
 | --- | --- |
-| `report.json` | verdict, per-check details, metrics, policy sha256 |
-| `loop.mp4` | 512x512 H.264, 30 fps, muted render loop (the thumbnail standard) |
-| `poster.png` | middle frame + caption bar |
+| `report.json` | Execution status, recipe, observations, checks, and provenance |
+| `loop.mp4` | 512×512 H.264, 30 fps, muted diagnostic rollout |
+| `poster.png` | 512×512 midpoint frame with an inset caption bar |
 
-Exit code: 0 pass, 1 check failed, 2 could not run.
+Exit code 0 means rendered checks passed or the recipe is explicitly
+unsupported; 1 means a requested check failed; 2 means preflight rejected the
+recipe or execution failed.
 
-## Render standard
+After human review, a maintainer may deliberately publish one result to the
+site:
 
-Every sim-rendered loop is identical in shape so catalog cards can treat them
-uniformly (and host them from our own domain — relevant for regions where
-GitHub/HF media is unreliable, e.g. mainland China):
-
-- square 512x512, H.264 `yuv420p`, 30 fps, muted, faststart;
-- fixed smoothing chase camera (side-on, −12° elevation, 0.72 m);
-- rollout equals the profile duration (default 6 s);
-- deterministic given the policy artifact and profile.
-
-## Command profiles
-
-The command schedule defaults from `compatibility.robotd_slot`:
-
-| robotd_slot | Default profile |
-| --- | --- |
-| `walk`, `roller` | velocity showcase: settle → forward → arc → settle |
-| `sitstand`, `stand` | sit/stand posture-flag cycle |
-| `roulade` | 2 s zeroed one-shot window, falls allowed |
-| `kick_left`, `kick_right` | 0.5 s zeroed one-shot window |
-| `ground_pick` | phase-encoded `[cos, sin, 0]` one-shot (period 4 s, ends at 0.7) |
-| `custom` | standing hold smoke check |
-
-Descriptors can override with an optional `simulation` block:
-
-```json
-"simulation": {
-  "profile": "velocity",
-  "segments": [
-    { "duration_s": 1, "vx": 0, "vy": 0, "wz": 0 },
-    { "duration_s": 3, "vx": 0.25, "vy": 0, "wz": 0 }
-  ],
-  "duration_s": 4,
-  "allow_fall": false,
-  "expect_tracking": true
-}
+```bash
+python simulation/publish_result.py sim-results/alpha-walking
 ```
 
-Known one-shot custom policies can use `oneshot_trigger`: it sends a short
-`twist-vx = 1` launch request, then `0` for the rest of the rollout. This is
-used by the published jump descriptors. The current robotd design does not
-define a `jump` slot, so those descriptors correctly remain `custom`; the
-profile describes their documented command semantics rather than claiming an
-official slot.
+Publisher media is never replaced. Published registry renders are used as card
+and hero fallbacks when publisher media is absent, and otherwise appear in a
+separate **Registry simulation** section on the behavior page.
 
-`allow_fall` marks behaviors that intentionally leave the feet (roulade,
-jumps): the check then requires the robot to recover upright instead of never
-falling.
+## CI isolation
 
-## What "pass" means
+- A changed descriptor runs only that behavior.
+- Shared runner/schema/workflow changes run the fixed golden set:
+  `alpha-walking`, `jump`, `max-height-jump`, and `roulade`.
+- A full-catalog run is manual through `workflow_dispatch`.
+- Artifacts are retained for 14 days and are not automatically published.
 
-The verdict certifies **"the policy runs under the standard sim profile and
-behaves safely"** — finite outputs, no unplanned falls, bounded drift, plus
-profile-specific extras (velocity direction/fraction tracking, upright
-recovery). It does **not** certify hardware behavior or reproduce an author's
-bespoke evaluation protocol; those stay the contributor's responsibility.
+Fork PRs use read-only permissions, no secrets, and the `pull_request` event.
+The runner does not execute contributor Python, install per-policy dependencies,
+or accept contributor-provided scenes.
 
-## Fidelity
+## Render and runtime standard
 
-The observation builder, action application (`ctrl = default_pose +
-action * scale`), timestep (0.005), decimation (4), and reset pose are ported
-from `pollen-robotics/microduck_rl` `scripts/infer_policy.py` and cross-checked
-against the official browser simulator (`app/src/game/game.js` and
-`constants.js` in the `microduck-simulator` Space). The port was validated by
-driving both the upstream reference script and this runtime with the same
-policy/scene/command: observations match exactly at reset and trunk trajectories
-agree within ~3% over 8 s (float-ordering drift). The registry contract is fixed
-at 61 observations (including the unified 13D command) and 14 actions; the
-runtime rejects artifacts with other input or output dimensions.
+- MuJoCo EGL offscreen renderer, square 512×512 H.264 `yuv420p`, 30 fps;
+- fixed smoothed chase camera and registry-owned visual stage;
+- pinned official Microduck MJCF variant and deterministic CPU rollout;
+- 50 Hz control, decimation 4, 61 observations, and 14 actions.
+
+The runtime is a constrained compatibility aid. Publisher footage and external
+evaluation remain the source of truth for environments the runner does not own.

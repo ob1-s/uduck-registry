@@ -5,13 +5,14 @@
 ## What was built
 
 - `simulation/` — headless Microduck policy runtime (Python, MuJoCo + onnxruntime),
-  hash-pinned upstream assets, command profiles, pass/fail checks, and a
-  deterministic 512x512 H.264 render loop + poster generator.
+  hash-pinned upstream assets, explicit registry recipes, measured checks, and
+  a deterministic 512x512 H.264 render loop + poster generator.
 - `.github/workflows/sim-check.yml` — PR-gated workflow: detects changed
   descriptors, runs one sim job per behavior, uploads report + render artifacts,
-  writes a job summary. Fails the PR on an unsafe or non-running policy.
-- Optional `simulation` descriptor block (JSON Schema + zod) to pin a command
-  profile per behavior.
+  and writes a job summary. Requested runner checks can fail the PR; an explicit
+  external recipe is reported as unsupported rather than treated as a failure.
+- Optional `simulation` descriptor block (JSON Schema + zod) to pin a runner,
+  robot model, scene, start state, scenario, and requested checks per behavior.
 
 ## Ground truth chain
 
@@ -51,17 +52,18 @@ is byte-identical to the one in `microduck_rl`.
   (~40-50% of commanded vx for the official walk policy with a step command).
   Tracking checks verify direction + a minimum fraction, not equality.
 - Policy behavior is highly sensitive to the exact command protocol (sitstand
-  flag, phase-encoded one-shots, kick windows). The profiles encode the
-  documented upstream semantics (from `constants.js`/`infer_policy.py`).
+  flag, phase-encoded one-shots, kick windows). The named scenarios encode the
+  documented upstream semantics (from `constants.js`/`infer_policy.py`) without
+  making the installation slot select a render recipe.
 
 ## China / restricted-region angle
 
 Sim-rendered loops are generated in CI and uploaded as workflow artifacts for
-review. The current workflow does not commit them under `public/media/sim/`,
-publish them to uduckmoves.com, or update descriptors automatically. Original
+review. A maintainer may deliberately promote a reviewed result under
+`public/media/registry-sim/`; the site uses it only as a fallback when publisher
+media is absent and otherwise shows it as a separate diagnostic. Original
 author media remains canonical and preferred where available (mirrored via the
-existing `remote-cache`). Deciding whether and how to publish generated renders
-is a separate integration step.
+existing `remote-cache`). CI does not publish generated renders automatically.
 
 ## Costs
 

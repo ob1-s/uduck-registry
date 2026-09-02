@@ -53,6 +53,11 @@
     ],
     "robotd_slot": "walk"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_environment",
+    "notes": "Trained for rough terrain in a Genesis environment; the registry runner currently owns only a flat scene."
+  },
   "artifacts": {
     "onnx": {
       "filename": "rough.onnx",

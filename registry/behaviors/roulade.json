@@ -55,6 +55,18 @@
     ],
     "robotd_slot": "roulade"
   },
+  "simulation": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_zero",
+    "duration_s": 4,
+    "checks": [
+      "recover_upright"
+    ]
+  },
   "artifacts": {
     "onnx": {
       "filename": "roulade.onnx",

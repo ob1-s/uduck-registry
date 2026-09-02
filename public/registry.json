@@ -79,6 +79,18 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nroulade = \"/opt/robot/policies/roulade.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_zero",
+        "duration_s": 4,
+        "checks": [
+          "recover_upright"
+        ]
       }
     },
     {
@@ -159,6 +171,40 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/BEST_alpha_walking.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "velocity",
+        "duration_s": 6,
+        "checks": [
+          "no_fall",
+          "ends_upright",
+          "velocity_tracking"
+        ],
+        "segments": [
+          {
+            "duration_s": 1,
+            "vx": 0,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 3,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 2,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0.5
+          }
+        ]
       }
     },
     {
@@ -240,6 +286,21 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nground_pick = \"/opt/robot/policies/alpha_ground_pick.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_phase",
+        "duration_s": 2.5,
+        "checks": [
+          "no_fall",
+          "ends_upright"
+        ],
+        "period_s": 4,
+        "end_phase": 0.7
       }
     },
     {
@@ -321,6 +382,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nstand = \"/opt/robot/policies/BEST_alpha_stand.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "Recovery starts from publisher-specific fall states and full-body contacts that the registry runner does not reproduce."
       }
     },
     {
@@ -403,6 +469,19 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nkick_left = \"/opt/robot/policies/ball_kick_left.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_zero",
+        "duration_s": 2.5,
+        "checks": [
+          "no_fall",
+          "ends_upright"
+        ]
       }
     },
     {
@@ -483,6 +562,19 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nkick_right = \"/opt/robot/policies/ball_kick_right.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_zero",
+        "duration_s": 2.5,
+        "checks": [
+          "no_fall",
+          "ends_upright"
+        ]
       }
     },
     {
@@ -564,6 +656,22 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nmode = \"roller\"\nground_pick = \"/opt/robot/policies/BEST_roller_crouch.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "model": "microduck-rollers",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_phase",
+        "duration_s": 5,
+        "checks": [
+          "no_fall",
+          "ends_upright"
+        ],
+        "period_s": 5,
+        "end_phase": 0.6
       }
     },
     {
@@ -646,6 +754,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nmode = \"roller\"\nwalk = \"/opt/robot/policies/BEST_roller.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_assets",
+        "notes": "Requires the publisher's roller-wheel model; the registry runner currently renders the standard-foot model only."
       }
     },
     {
@@ -726,6 +839,19 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nsitstand = \"/opt/robot/policies/BEST_alpha_sitstand.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "sitstand",
+        "duration_s": 6,
+        "checks": [
+          "recover_upright"
+        ],
+        "hold_s": 2
       }
     },
     {
@@ -803,6 +929,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/flamingo-cycle/policy.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_contract",
+        "notes": "Uses the publisher-defined twist = [flag, side, 0] balance command rather than the registry velocity schedule."
       }
     },
     {
@@ -878,6 +1009,40 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/backlash.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "velocity",
+        "duration_s": 6,
+        "checks": [
+          "no_fall",
+          "ends_upright",
+          "velocity_tracking"
+        ],
+        "segments": [
+          {
+            "duration_s": 1,
+            "vx": 0,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 3,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 2,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0.5
+          }
+        ]
       }
     },
     {
@@ -953,6 +1118,40 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/velocity.onnx\""
+      },
+      "simulation": {
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "velocity",
+        "duration_s": 6,
+        "checks": [
+          "no_fall",
+          "ends_upright",
+          "velocity_tracking"
+        ],
+        "segments": [
+          {
+            "duration_s": 1,
+            "vx": 0,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 3,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0
+          },
+          {
+            "duration_s": 2,
+            "vx": 0.25,
+            "vy": 0,
+            "wz": 0.5
+          }
+        ]
       }
     },
     {
@@ -1028,6 +1227,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "Trained for rough terrain in a Genesis environment; the registry runner currently owns only a flat scene."
       }
     },
     {
@@ -1118,11 +1322,14 @@
         "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/max_height_jump.onnx\"\n# twist-vx: 1 requests launch; return it to 0 after touchdown.\n# The preview's durable reset also needs the companion standing ONNX and the documented 0.22 s / 0.14 s runtime blend."
       },
       "simulation": {
-        "profile": "oneshot_trigger",
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_trigger",
         "duration_s": 4,
-        "trigger_s": 0.2,
-        "allow_fall": true,
-        "expect_tracking": false
+        "trigger_s": 0.2
       }
     },
     {
@@ -1201,6 +1408,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/courier-policy.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "Uses a publisher-specific apartment, objects, and task command semantics that the registry runner does not reproduce."
       }
     },
     {
@@ -1277,6 +1489,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/running/policy.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "The published Mjlab-Running-Flat-MicroDuck task uses a 2.2 m/s command envelope and training/runtime details outside the registry standard-v1 diagnostic runner."
       }
     },
     {
@@ -1356,6 +1573,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough-walk-e/policy.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "The published behavior targets rough ground, stairs, rubble, and slopes; the registry runner currently owns only a flat scene."
       }
     },
     {
@@ -1435,6 +1657,11 @@
       },
       "deployment": {
         "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/rough-walk-g/policy.onnx\""
+      },
+      "simulation": {
+        "runner": "external",
+        "reason": "custom_environment",
+        "notes": "The published behavior targets rough ground, stairs, rubble, and slopes; the registry runner currently owns only a flat scene."
       }
     },
     {
@@ -1512,11 +1739,14 @@
         "robotd_toml": "[policy]\ncustom = \"/opt/robot/policies/jump.onnx\""
       },
       "simulation": {
-        "profile": "oneshot_trigger",
+        "runner": "microduck-standard-v1",
+        "scene": "flat-v1",
+        "start": {
+          "preset": "settled_standing"
+        },
+        "scenario": "oneshot_trigger",
         "duration_s": 4,
-        "trigger_s": 0.2,
-        "allow_fall": true,
-        "expect_tracking": false
+        "trigger_s": 0.2
       }
     }
   ]

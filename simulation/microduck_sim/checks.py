@@ -1,6 +1,7 @@
-"""Pass/fail checks over a rollout. Kept conservative: a check failure means
-the policy could not be validated in simulation, not that the behavior is bad.
-Profiles that intentionally leave the feet (roulade, jumps) set allow_fall.
+"""Runner-owned observations and explicitly requested diagnostic checks.
+
+A completed render is never a behavior or hardware validation claim. Checks
+only describe what this pinned rollout measured.
 """
 
 from __future__ import annotations
@@ -26,52 +27,72 @@ MAX_DRIFT_M = 2.5
 
 
 def evaluate(result, spec) -> dict:
-    """Return {verdict: pass|fail, checks: [...], metrics: {...}} for a rollout."""
+    """Return exact observations and pass/fail results for requested checks."""
     metrics = result.metrics()
-    checks = []
+    check_results = []
 
     def add(name: str, passed: bool, detail: str) -> None:
-        checks.append({"check": name, "passed": bool(passed), "detail": detail})
+        check_results.append({"check": name, "passed": bool(passed), "detail": detail})
 
+    # Baseline integrity checks always run and cannot be disabled by a
+    # descriptor. They say the rollout was numerically usable, nothing more.
     add("finite_outputs", metrics["all_finite"],
         f"max |action| = {metrics['max_abs_action']}")
-
-    if spec.allow_fall:
-        add("recover_upright", metrics["final_tilt_deg"] < 60.0,
-            f"final tilt {metrics['final_tilt_deg']} deg, final height "
-            f"{metrics['final_trunk_height_m']} m")
-    else:
-        add("no_fall", metrics["min_trunk_height_m"] > FALL_HEIGHT_M,
-            f"min trunk height {metrics['min_trunk_height_m']} m")
-        add("ends_upright", metrics["final_tilt_deg"] < 45.0,
-            f"final tilt {metrics['final_tilt_deg']} deg")
-
     add("bounded_drift", metrics["displacement_m"] < MAX_DRIFT_M,
         f"displacement {metrics['displacement_m']} m")
 
-    tracking = None
-    if spec.expect_tracking and spec.kind == "velocity":
-        results = _tracking_errors(result, spec)
-        if results:
-            worst_fraction = min(r["fraction"] for r in results)
-            worst_cos = min(r["direction_cos"] for r in results)
-            mean_err = float(np.mean([r["abs_err"] for r in results]))
-            tracking = round(mean_err, 4)
-            ok = (worst_fraction >= TRACKING_MIN_FRACTION
-                  and worst_cos >= TRACKING_DIRECTION_COS)
-            add("velocity_tracking", ok,
-                f"steady-state speed >= {TRACKING_MIN_FRACTION:.0%} of command "
-                f"(worst {worst_fraction:.0%}), direction cos >= "
-                f"{TRACKING_DIRECTION_COS} (worst {worst_cos:.2f}), "
-                f"mean |v_cmd - v_xy| = {tracking:.3f} m/s")
-    if spec.expect_tracking and spec.kind == "velocity" and tracking is None:
-        add("velocity_tracking", False, "no non-zero command segments found")
+    for name in spec.checks:
+        if name == "no_fall":
+            add(name, metrics["min_trunk_height_m"] > FALL_HEIGHT_M,
+                f"min trunk height {metrics['min_trunk_height_m']} m")
+        elif name == "ends_upright":
+            add(name, metrics["final_tilt_deg"] < 45.0,
+                f"final tilt {metrics['final_tilt_deg']} deg")
+        elif name == "recover_upright":
+            add(name, metrics["final_tilt_deg"] < 60.0,
+                f"final tilt {metrics['final_tilt_deg']} deg, final height "
+                f"{metrics['final_trunk_height_m']} m")
+        elif name == "takeoff":
+            add(name, metrics["takeoff_after_support"],
+                "foot contact was lost after a supported state" if metrics["takeoff_after_support"]
+                else "no contact loss after a supported state")
+        elif name == "touchdown_after_takeoff":
+            add(name, metrics["touchdown_after_takeoff"],
+                "bilateral contact returned after takeoff" if metrics["touchdown_after_takeoff"]
+                else "no bilateral touchdown observed after takeoff")
+        elif name == "velocity_tracking":
+            _add_velocity_tracking(result, spec, metrics, add)
+        else:
+            raise ValueError(f"unsupported simulation check: {name}")
 
-    verdict = "pass" if all(c["passed"] for c in checks) else "fail"
-    out = {"verdict": verdict, "checks": checks, "metrics": metrics}
-    if tracking is not None:
-        out["metrics"]["mean_tracking_error_mps"] = tracking
-    return out
+    checks_status = "passed" if all(c["passed"] for c in check_results) else "failed"
+    return {
+        "execution": "rendered",
+        "checks_status": checks_status,
+        "checks": check_results,
+        "observations": metrics,
+    }
+
+
+def _add_velocity_tracking(result, spec, metrics: dict, add) -> None:
+    if spec.kind != "velocity":
+        add("velocity_tracking", False, "velocity tracking requires a velocity scenario")
+        return
+    results = _tracking_errors(result, spec)
+    if not results:
+        add("velocity_tracking", False, "no non-zero command segments found")
+        return
+    worst_fraction = min(r["fraction"] for r in results)
+    worst_cos = min(r["direction_cos"] for r in results)
+    tracking = round(float(np.mean([r["abs_err"] for r in results])), 4)
+    metrics["mean_tracking_error_mps"] = tracking
+    ok = (worst_fraction >= TRACKING_MIN_FRACTION
+          and worst_cos >= TRACKING_DIRECTION_COS)
+    add("velocity_tracking", ok,
+        f"steady-state speed >= {TRACKING_MIN_FRACTION:.0%} of command "
+        f"(worst {worst_fraction:.0%}), direction cos >= "
+        f"{TRACKING_DIRECTION_COS} (worst {worst_cos:.2f}), "
+        f"mean |v_cmd - v_xy| = {tracking:.3f} m/s")
 
 
 def _tracking_errors(result, spec) -> list:

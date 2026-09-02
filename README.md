@@ -62,12 +62,12 @@ The table below is generated from the descriptors in `registry/behaviors/`.
 ## Simulation CI
 
 Pull requests touching `registry/behaviors/` are automatically run through a
-headless MuJoCo simulation check (`Sim Check` workflow): the contributed ONNX
-is executed at the shared 50 Hz runtime contract under a standard command
-profile, verified (finite outputs, stability, recovery, tracking), and a
-standardized 512x512 render loop is produced as a workflow artifact for review.
+headless MuJoCo diagnostic (`Sim Check` workflow) when the descriptor declares
+an explicit registry simulation recipe. The runner records exactly what it
+observed and produces a standardized 512×512 review artifact; it does not claim
+hardware validation or reproduce arbitrary publisher environments.
 See [`simulation/README.md`](simulation/README.md) for the render standard,
-command profiles, and fidelity notes.
+scenario model, CI isolation rules, and unsupported cases.
 
 ## Machine-readable access
 

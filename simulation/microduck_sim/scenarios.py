@@ -1,15 +1,14 @@
-"""Command profiles: how the 13D (or legacy 3D) command evolves over a rollout.
+"""Named scenarios: how the 13D command evolves over a diagnostic rollout.
 
-A profile is a callable that maps elapsed control time -> command vector.
-Descriptors may pin a profile and its parameters via the optional
-`simulation` block; otherwise a profile is derived from `compatibility.robotd_slot`.
+A scenario is selected explicitly by a descriptor's `simulation` block.
+Compatibility and robotd installation slots are intentionally not inputs.
 """
 
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable
 
 import numpy as np
 
@@ -17,7 +16,7 @@ from .constants import VEL_MAX_ANG, VEL_MAX_X, VEL_MAX_Y, VEL_MIN_X, VEL_MIN_Y
 
 
 @dataclass
-class ProfileSpec:
+class ScenarioSpec:
     """Declarative description of a command schedule."""
 
     kind: str = "velocity"
@@ -33,73 +32,63 @@ class ProfileSpec:
     # oneshot_trigger: binary launch request followed by the zero command
     # (custom one-shot policies such as jumps).
     trigger_s: float = 0.2
-    # Values the checks use to decide pass/fail.
-    allow_fall: bool = False
-    expect_tracking: bool = True
-    # Alias of the profile for reports.
+    # Runner-defined checks requested by the descriptor. These are assertions
+    # over measured telemetry, not contributor-authored validation claims.
+    checks: list[str] = field(default_factory=list)
+    # Alias of the scenario for reports.
     name: str = ""
 
 
-def clamp_vel(vx: float, vy: float, wz: float) -> tuple:
-    return (
-        float(np.clip(vx, VEL_MIN_X, VEL_MAX_X)),
-        float(np.clip(vy, VEL_MIN_Y, VEL_MAX_Y)),
-        float(np.clip(wz, -VEL_MAX_ANG, VEL_MAX_ANG)),
+def validate_velocity(vx: float, vy: float, wz: float) -> tuple:
+    """Return a velocity command unchanged, rejecting unsupported values.
+
+    A registry recipe is declarative input, not a user-control stream. Silently
+    clipping it would make the rendered rollout differ from what the descriptor
+    says, so out-of-range values are an explicit error.
+    """
+    limits = (
+        ("vx", vx, VEL_MIN_X, VEL_MAX_X),
+        ("vy", vy, VEL_MIN_Y, VEL_MAX_Y),
+        ("wz", wz, -VEL_MAX_ANG, VEL_MAX_ANG),
     )
+    for axis, value, minimum, maximum in limits:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value):
+            raise ValueError(f"{axis} command must be finite")
+        if value < minimum or value > maximum:
+            raise ValueError(
+                f"{axis} command {value:g} exceeds the registry runner's "
+                f"supported range [{minimum:g}, {maximum:g}]"
+            )
+    return float(vx), float(vy), float(wz)
 
 
-def default_profile_for_slot(slot: str) -> ProfileSpec:
-    """Derive a sensible default command profile from the robotd slot."""
-    if slot in ("walk", "roller"):
-        return ProfileSpec(
-            kind="velocity",
-            segments=[
-                (1.0, 0.0, 0.0, 0.0),         # settle
-                (3.0, 0.25, 0.0, 0.0),        # walk forward (Space VEL_FWD)
-                (2.0, 0.25, 0.0, 0.5),        # arc right
-            ],
-            name=f"{slot}:showcase",
-        )
-    if slot in ("sitstand", "stand"):
-        # Sitting rests the trunk on the hull (~0.06-0.07 m), which is below
-        # the standing-height fall threshold; the recovery check applies.
-        return ProfileSpec(kind="sitstand", allow_fall=True,
-                           expect_tracking=False, name=f"{slot}:cycle")
-    if slot == "roulade":
-        return ProfileSpec(kind="oneshot_zero", duration_s=2.0, allow_fall=True,
-                           expect_tracking=False, name=f"{slot}:oneshot")
-    if slot in ("kick_left", "kick_right"):
-        return ProfileSpec(kind="oneshot_zero", duration_s=0.5, expect_tracking=False,
-                           name=f"{slot}:oneshot")
-    if slot == "ground_pick":
-        return ProfileSpec(kind="oneshot_phase", period_s=4.0, end_phase=0.7,
-                           expect_tracking=False, name=f"{slot}:phase")
-    return ProfileSpec(kind="standing", expect_tracking=False, name="standing:hold")
+def scenario_from_descriptor(sim_block: dict) -> ScenarioSpec:
+    """Build a scenario solely from an explicit registry simulation recipe."""
+    if sim_block.get("runner") != "microduck-standard-v1":
+        raise ValueError("descriptor does not declare a registry simulation recipe")
 
-
-def profile_from_descriptor(sim_block: Optional[dict], slot: str) -> ProfileSpec:
-    """Build a ProfileSpec from a descriptor's optional `simulation` block."""
-    spec = default_profile_for_slot(slot)
-    if not sim_block:
-        return spec
-    spec.kind = sim_block.get("profile", spec.kind)
+    spec = ScenarioSpec()
+    spec.kind = sim_block["scenario"]
     spec.name = spec.kind
-    spec.allow_fall = bool(sim_block.get("allow_fall", spec.allow_fall))
-    spec.expect_tracking = bool(sim_block.get("expect_tracking", spec.expect_tracking))
-    spec.duration_s = float(sim_block.get("duration_s", spec.duration_s))
+    spec.checks = list(sim_block.get("checks", []))
+    spec.duration_s = float(sim_block["duration_s"])
     spec.trigger_s = float(sim_block.get("trigger_s", spec.trigger_s))
     spec.period_s = float(sim_block.get("period_s", spec.period_s))
     spec.end_phase = float(sim_block.get("end_phase", spec.end_phase))
     spec.hold_s = float(sim_block.get("hold_s", spec.hold_s))
     segments = sim_block.get("segments")
-    if segments:
+    if spec.kind == "velocity":
+        if not isinstance(segments, list) or not segments:
+            raise ValueError("velocity scenario requires explicit segments")
         spec.segments = [(float(s["duration_s"]), float(s["vx"]), float(s["vy"]),
                           float(s["wz"])) for s in segments]
+    elif "segments" in sim_block:
+        raise ValueError("simulation.segments is only valid with the velocity scenario")
     return spec
 
 
-def make_command_fn(spec: ProfileSpec, use_13d: bool) -> Callable[[float], np.ndarray]:
-    """Return f(t) -> command vector for the profile.
+def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.ndarray]:
+    """Return f(t) -> command vector for the scenario.
 
     `use_13d` selects the unified 13D command (twist + head + body pose);
     otherwise the legacy 3D twist command is produced.
@@ -110,7 +99,9 @@ def make_command_fn(spec: ProfileSpec, use_13d: bool) -> Callable[[float], np.nd
         return np.concatenate([cmd, np.zeros(10, dtype=np.float32)]).astype(np.float32)
 
     if spec.kind == "velocity":
-        segments = spec.segments or [(spec.duration_s or 6.0, 0.0, 0.0, 0.0)]
+        if not spec.segments:
+            raise ValueError("velocity scenario requires explicit segments")
+        segments = spec.segments
 
         def vel_fn(t: float) -> np.ndarray:
             remaining = t
@@ -121,7 +112,7 @@ def make_command_fn(spec: ProfileSpec, use_13d: bool) -> Callable[[float], np.nd
                     break
                 remaining -= duration
             _, vx, vy, wz = chosen
-            return wrap(np.array(clamp_vel(vx, vy, wz), dtype=np.float32))
+            return wrap(np.array(validate_velocity(vx, vy, wz), dtype=np.float32))
 
         return vel_fn
 
@@ -173,4 +164,4 @@ def make_command_fn(spec: ProfileSpec, use_13d: bool) -> Callable[[float], np.nd
 
         return trigger_fn
 
-    raise ValueError(f"Unknown simulation profile kind: {spec.kind!r}")
+    raise ValueError(f"Unknown simulation scenario kind: {spec.kind!r}")

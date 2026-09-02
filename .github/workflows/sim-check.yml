@@ -1,14 +1,15 @@
 name: Sim Check
 
-# Spins a headless MuJoCo simulation for each changed behavior descriptor,
-# runs the policy under the standard command profile, and renders the
-# standardized thumbnail loop. A failing rollout verdict fails the check.
+# Produces a diagnostic render for each changed behavior that declares a
+# registry-owned recipe. Shared runner changes exercise only a small golden
+# set; full-catalog runs remain an explicit manual action.
 
 on:
   pull_request:
     branches: [main, master]
     paths:
       - "registry/behaviors/**"
+      - "registry/schema/**"
       - "simulation/**"
       - ".github/workflows/sim-check.yml"
   workflow_dispatch:
@@ -38,13 +39,27 @@ jobs:
           fetch-depth: 0
       - id: set
         run: |
-          if [ -n "${{ github.event.inputs.behavior }}" ]; then
-            ids="${{ github.event.inputs.behavior }}"
+          requested="${{ github.event.inputs.behavior }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "$requested" ]; then
+            ids=$(jq -cn --arg id "$requested" '[$id]')
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ids=$(find registry/behaviors -maxdepth 1 -name '*.json' -printf '%f\n' \
+              | sed 's/\.json$//' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
           else
-            base="${{ github.event.pull_request.base.sha || github.sha }}"
-            ids=$(git diff --name-only "$base" HEAD -- registry/behaviors \
+            base="${{ github.event.pull_request.base.sha }}"
+            changed=$(git diff --name-only "$base" HEAD)
+            descriptor_ids=$(printf '%s\n' "$changed" \
               | sed -n 's#registry/behaviors/\(.*\)\.json$#\1#p' \
               | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            shared=$(printf '%s\n' "$changed" \
+              | sed -n '\#^simulation/\|^registry/schema/\|^\.github/workflows/sim-check.yml$#p')
+            if [ -n "$shared" ]; then
+              golden='["alpha-walking","jump","max-height-jump","roulade"]'
+              ids=$(jq -cn --argjson changed "$descriptor_ids" --argjson golden "$golden" \
+                '$changed + $golden | unique')
+            else
+              ids="$descriptor_ids"
+            fi
           fi
           echo "ids=$ids" >> "$GITHUB_OUTPUT"
           echo "changed behaviors: $ids"
@@ -81,6 +96,9 @@ jobs:
           path: .simcache
           key: sim-assets-${{ hashFiles('simulation/assets.lock.json') }}
 
+      - name: Test simulation runner
+        run: PYTHONPATH=simulation python -m unittest discover -s simulation/tests
+
       - name: Run simulation check
         run: |
           python simulation/run_check.py \
@@ -98,12 +116,17 @@ jobs:
             ${{ env.PYOUT }}/${{ matrix.id }}/loop.mp4
             ${{ env.PYOUT }}/${{ matrix.id }}/poster.png
           if-no-files-found: warn
+          retention-days: 14
 
       - name: Job summary
         if: always()
         run: |
           {
             echo "## Sim check: ${{ matrix.id }}"
+            echo "Diagnostic render only — this does not validate hardware behavior or reproduce arbitrary publisher environments."
+            echo
+            echo "Download \`sim-${{ matrix.id }}\` from the artifacts on [this workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+            echo
             if [ -f "$PYOUT/${{ matrix.id }}/report.json" ]; then
               echo '```json'
               cat "$PYOUT/${{ matrix.id }}/report.json"

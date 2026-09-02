@@ -56,6 +56,21 @@
     ],
     "robotd_slot": "ground_pick"
   },
+  "simulation": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_phase",
+    "duration_s": 2.5,
+    "checks": [
+      "no_fall",
+      "ends_upright"
+    ],
+    "period_s": 4,
+    "end_phase": 0.7
+  },
   "artifacts": {
     "onnx": {
       "filename": "alpha_ground_pick.onnx",

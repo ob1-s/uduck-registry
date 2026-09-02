@@ -47,22 +47,26 @@ For a local media path such as `/media/my-move/loop.mp4`, include the matching f
 ### CI simulation check
 
 Every pull request that adds or edits a descriptor is automatically run
-through a headless MuJoCo simulation (the `Sim Check` workflow): the registry
-downloads your canonical ONNX, drives it at the shared 50 Hz runtime contract
-under a command profile derived from `compatibility.robotd_slot`, and verifies
-the rollout is finite, stable, and (for velocity policies) tracking in the
-commanded direction. It also renders a standardized 512x512 `loop.mp4` and
-`poster.png`, which are uploaded to the workflow run for review. They are not
-published to the catalog automatically.
+through the registry's headless MuJoCo runner only when it declares an explicit
+`simulation` recipe. `compatibility.robotd_slot` never selects the simulation
+scenario. The workflow uploads `report.json`, `loop.mp4`, and `poster.png` for
+human review; it does not publish them automatically.
 
-- Profile details and the pass criteria: [`simulation/README.md`](simulation/README.md).
-- If your behavior intentionally leaves the feet (rolls, jumps), set `"simulation": { "allow_fall": true }`.
-- If your policy needs a specific trigger protocol, encode it with the
-  `simulation.profile` / `simulation.segments` options; the check runs your
-  protocol, not ours.
+The report distinguishes a completed render from its individual observations.
+Requested checks use a fixed registry vocabulary, and their results are
+measured by the runner—not authored in the descriptor. A render is not hardware
+verification or proof that a publisher's training environment was reproduced.
+The runner rejects recipes it cannot represent before downloading the policy;
+it does not silently clamp command values.
 
-A failing Sim Check means the policy could not be validated in simulation
-under the declared contract — expect review questions.
+If the policy requires custom environment code, objects, meshes, dependencies,
+or a different observation/action contract, use `"runner": "external"` with
+an honest reason and provide publisher-owned media instead. Do not give CI a
+convenient but inaccurate command schedule just so the policy can be rendered.
+Do not add per-policy executable code to this repository.
+
+See [`simulation/README.md`](simulation/README.md) for recipe examples, start
+states, supported scenarios, exact report semantics, and CI isolation rules.
 
 ## Descriptor shape
 

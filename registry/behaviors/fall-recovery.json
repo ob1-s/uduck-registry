@@ -56,6 +56,11 @@
     ],
     "robotd_slot": "stand"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_environment",
+    "notes": "Recovery starts from publisher-specific fall states and full-body contacts that the registry runner does not reproduce."
+  },
   "artifacts": {
     "onnx": {
       "filename": "BEST_alpha_stand.onnx",

@@ -5,17 +5,19 @@ import { ArrowUpRight } from "lucide-react";
 import { VerificationBadge } from "./VerificationBadge";
 import { MediaPreview } from "./MediaPreview";
 import { formatAccessory, formatCategory } from "@/lib/labels";
-import type { Behavior } from "@registry/schema/behavior";
+import { preferredMedia, type BehaviorWithSimulation } from "@/lib/simulation";
 
 interface BehaviorCardProps {
-  behavior: Behavior;
+  behavior: BehaviorWithSimulation;
 }
 
 export function BehaviorCard({ behavior }: BehaviorCardProps) {
+  const previewMedia = preferredMedia(behavior, behavior.registrySimulation);
+
   return (
     <article className="behavior-card" data-category={behavior.category} aria-labelledby={`behavior-card-title-${behavior.id}`}>
       <Link href={`/behaviors/${behavior.id}`} className="behavior-media" aria-label={`Open ${behavior.name}`}>
-        <MediaPreview media={behavior.media} title={behavior.name} variant="card" />
+        <MediaPreview media={previewMedia} title={behavior.name} variant="card" />
       </Link>
 
       <div className="behavior-body">

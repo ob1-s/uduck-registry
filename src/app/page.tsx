@@ -4,9 +4,10 @@ import { BehaviorCatalog } from "@/components/BehaviorCatalog";
 import { CopyPromptButton } from "@/components/CopyPromptButton";
 import { InteractiveDuck } from "@/components/InteractiveDuck";
 import { QuackAnchor } from "@/components/QuackAction";
+import { withRegistrySimulation } from "@/lib/simulation-results";
 
 export default function HomePage() {
-  const behaviors = getAllBehaviors();
+  const behaviors = getAllBehaviors().map(withRegistrySimulation);
   const stats = getRegistryStats();
 
   return (

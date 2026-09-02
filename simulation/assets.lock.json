@@ -198,5 +198,43 @@
       "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/yaw_roll_motion.stl",
       "sha256": "ae3740fde29a261b79650a25825baedd84d538fc67b6b20b79589125e5e05592"
     }
-  ]
+  ],
+  "variants": {
+    "rollers": {
+      "model_dir": "microduck-mjlab-rollers",
+      "model_path": "robot_allcollisions_rollers.xml",
+      "files": [
+        {
+          "path": "robot_allcollisions_rollers.xml",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/robot_allcollisions_rollers.xml",
+          "sha256": "c201a72ecbc4dd8e110c840cb79b1647aab59e6c76db7369a88c34a33307447e"
+        },
+        {
+          "path": "assets/ankle_l_v1.stl",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/ankle_l_v1.stl",
+          "sha256": "74f9a51e15ac8fef93fc2efa35b61dc53cf832d798f75c3229700bd9b3aed4c4"
+        },
+        {
+          "path": "assets/ankle_r_v1.stl",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/ankle_r_v1.stl",
+          "sha256": "c200102fb6f067cbec73f048fe2020b127e61d47fcffd7dbd84c90439767fd3f"
+        },
+        {
+          "path": "assets/rim.stl",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/rim.stl",
+          "sha256": "a6d58f80ec60041e721cba1de7af5c834700166a5c10e7f68d1a2b79c7b78cb0"
+        },
+        {
+          "path": "assets/roller_blade.stl",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/roller_blade.stl",
+          "sha256": "a8b0e6dbdb593eceaba1a0cc2a70ad8aac56f4c3b22676dbfb97409c1a094615"
+        },
+        {
+          "path": "assets/tire.stl",
+          "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/robot/mjlab/meshes/tire.stl",
+          "sha256": "14c08d73185a4b521897aca74fb8b2a6d306a20d80e8822aa56cf1b4ace29bec"
+        }
+      ]
+    }
+  }
 }

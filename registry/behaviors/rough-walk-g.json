@@ -56,6 +56,11 @@
     ],
     "robotd_slot": "walk"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_environment",
+    "notes": "The published behavior targets rough ground, stairs, rubble, and slopes; the registry runner currently owns only a flat scene."
+  },
   "artifacts": {
     "onnx": {
       "filename": "policy.onnx",

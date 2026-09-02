@@ -3,7 +3,7 @@
 Output contract (the "sim render standard"):
 - loop.mp4 : H.264 yuv420p, 30 fps, square 512x512, muted, ~CRF 20,
              duration == rollout duration, deterministic given the rollout.
-- poster.png : the middle frame, 512x512, with a bottom caption bar.
+- poster.png : the middle frame, 512x512, with an inset bottom caption bar.
 
 The camera is a smoothed chase view (side-on, slight elevation) so every
 behavior gets a comparable, stable thumbnail.
@@ -88,10 +88,8 @@ class LoopRenderer:
         bar = Image.new("RGB", (img.width, bar_h), (17, 24, 39))
         draw = ImageDraw.Draw(bar)
         draw.text((10, 15), caption, fill=(226, 232, 240))
-        out = Image.new("RGB", (img.width, img.height + bar_h))
-        out.paste(img, (0, 0))
-        out.paste(bar, (0, img.height))
-        out.save(out_path)
+        img.paste(bar, (0, img.height - bar_h))
+        img.save(out_path)
 
     def finalize(self, out_dir: Path, caption: str) -> dict:
         out_dir = Path(out_dir)

@@ -5,7 +5,8 @@ Assets: the official `pollen-robotics/microduck-simulator` Space's
 `robot_allcollisions.xml` plus its 38 mesh files. `assets.lock.json` pins
 URLs and sha256 digests so CI rollouts are reproducible.
 
-Usage: python fetch_assets.py [--cache-dir DIR]   (default: <repo>/.simcache)
+Usage: python fetch_assets.py [--cache-dir DIR] [--variant standard|rollers]
+  (default: <repo>/.simcache, standard)
 """
 
 from __future__ import annotations
@@ -27,11 +28,29 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def fetch(cache_dir: Path | None = None) -> Path:
+def select_variant(lock: dict, variant: str) -> dict:
+    if variant == "standard":
+        return lock
+
+    config = lock.get("variants", {}).get(variant)
+    if config is None:
+        available = ", ".join(sorted(lock.get("variants", {}))) or "standard"
+        raise ValueError(f"unknown simulation asset variant {variant!r}; use {available}")
+
+    files = {entry["path"]: entry for entry in lock["files"]}
+    files.update({entry["path"]: entry for entry in config["files"]})
+    return {
+        "model_dir": config["model_dir"],
+        "model_path": config["model_path"],
+        "files": list(files.values()),
+    }
+
+
+def fetch(cache_dir: Path | None = None, variant: str = "standard") -> Path:
     if cache_dir is None:
         repo_root = Path(__file__).resolve().parent.parent
         cache_dir = repo_root / ".simcache"
-    lock = json.loads(LOCK.read_text())
+    lock = select_variant(json.loads(LOCK.read_text()), variant)
     model_dir = cache_dir / lock["model_dir"]
     mesh_dir = model_dir / "assets"
     mesh_dir.mkdir(parents=True, exist_ok=True)
@@ -69,14 +88,15 @@ def fetch(cache_dir: Path | None = None) -> Path:
             print(f"ERROR {f}", file=sys.stderr)
         sys.exit(1)
     resolved = model_dir / lock["model_path"]
-    print(f"assets ready: {resolved}")
+    print(f"assets ready ({variant}): {resolved}")
     return resolved
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cache-dir", default=None)
+    parser.add_argument("--variant", choices=("standard", "rollers"), default="standard")
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parent.parent
     default_cache = repo_root / ".simcache"
-    fetch(Path(args.cache_dir) if args.cache_dir else default_cache)
+    fetch(Path(args.cache_dir) if args.cache_dir else default_cache, args.variant)

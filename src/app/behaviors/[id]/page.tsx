@@ -9,6 +9,9 @@ import { ContractSpec } from "@/components/ContractSpec";
 import { MediaPreview } from "@/components/MediaPreview";
 import { getSocialCopy, getSocialImagePath } from "@/lib/social";
 import { SITE_NAME } from "@/lib/site";
+import { RegistrySimulation } from "@/components/RegistrySimulation";
+import { getRegistrySimulationResult } from "@/lib/simulation-results";
+import { hasPublisherMedia, preferredMedia } from "@/lib/simulation";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -56,6 +59,9 @@ export default async function BehaviorDetailPage({ params }: Props) {
   const author = behavior.authors[0];
   const authorUrl = author?.url ?? (author?.github ? `https://github.com/${author.github}` : undefined);
   const artifact = behavior.artifacts.onnx;
+  const registrySimulation = getRegistrySimulationResult(behavior);
+  const publisherHasMedia = hasPublisherMedia(behavior);
+  const heroMedia = preferredMedia(behavior, registrySimulation ?? undefined);
   const hasHardwareEvidence = behavior.verification.status !== "community_experimental";
   const downloadCommand = `curl --fail --location --output "${artifact.filename}" "${artifact.url}"`;
 
@@ -84,13 +90,20 @@ export default async function BehaviorDetailPage({ params }: Props) {
         </header>
 
         <figure className="detail-media-figure">
-          <div className="media-frame">
-            <MediaPreview media={behavior.media} title={behavior.name} variant="detail" />
+          <div className={`media-frame${!publisherHasMedia && registrySimulation ? " registry-simulation-frame" : ""}`}>
+            <MediaPreview media={heroMedia} title={behavior.name} variant="detail" />
           </div>
-          {behavior.media.caption && <figcaption className="media-caption">{behavior.media.caption}</figcaption>}
+          {heroMedia.caption && <figcaption className="media-caption">{heroMedia.caption}</figcaption>}
         </figure>
 
         <div className="detail-stack">
+          {registrySimulation && (
+            <RegistrySimulation
+              result={registrySimulation}
+              title={behavior.name}
+              hasPublisherMedia={publisherHasMedia}
+            />
+          )}
           {behavior.details && (
             <section className="surface detail-card">
               <h2><Layers size={17} aria-hidden="true" /> About this behavior</h2>

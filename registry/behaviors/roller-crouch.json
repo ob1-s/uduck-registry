@@ -58,6 +58,22 @@
     ],
     "robotd_slot": "ground_pick"
   },
+  "simulation": {
+    "runner": "microduck-standard-v1",
+    "model": "microduck-rollers",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_phase",
+    "duration_s": 5,
+    "period_s": 5,
+    "end_phase": 0.6,
+    "checks": [
+      "no_fall",
+      "ends_upright"
+    ]
+  },
   "artifacts": {
     "onnx": {
       "filename": "BEST_roller_crouch.onnx",

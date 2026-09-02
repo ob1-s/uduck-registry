@@ -855,6 +855,64 @@ code {
 .detail-card h2 svg { color: var(--orange); }
 .detail-card p { margin: 0; color: var(--ink-soft); font-size: 0.85rem; line-height: 1.65; }
 
+.registry-simulation { display: grid; gap: 1.2rem; }
+.registry-simulation-secondary { padding: 0; }
+.registry-simulation-disclosure { min-width: 0; }
+.registry-simulation-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+}
+.registry-simulation-summary::-webkit-details-marker { display: none; }
+.registry-simulation-summary-copy { display: grid; gap: 0.28rem; min-width: 0; }
+.registry-simulation-summary-title { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 800; }
+.registry-simulation-summary-title svg { color: var(--orange); }
+.registry-simulation-summary-note { color: var(--quiet); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.04em; }
+.registry-simulation-summary-action { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 0.32rem; color: var(--orange); font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.registry-simulation-summary-action svg { transition: transform 160ms ease; }
+.registry-simulation-disclosure[open] .registry-simulation-summary { border-bottom: 1px solid var(--line); }
+.registry-simulation-disclosure[open] .registry-simulation-summary-action svg { transform: rotate(180deg); }
+.registry-simulation-content { display: grid; gap: 1.1rem; padding: 1.1rem 1.25rem 1.25rem; }
+.registry-simulation-note { margin: 0; color: var(--muted); font-size: 0.78rem; line-height: 1.55; }
+.registry-simulation-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.registry-simulation-head h2 { margin-bottom: 0.45rem; }
+.registry-simulation-head p { max-width: 44rem; }
+.registry-simulation-diagnostics { border-top: 1px solid var(--line); }
+.registry-simulation-diagnostics-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--orange);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.registry-simulation-diagnostics-summary::-webkit-details-marker { display: none; }
+.registry-simulation-diagnostics-summary svg { transition: transform 160ms ease; }
+.registry-simulation-diagnostics[open] .registry-simulation-diagnostics-summary svg { transform: rotate(180deg); }
+.registry-simulation-diagnostics-content { padding-top: 0.7rem; }
+.registry-simulation-figure { margin: 0; }
+.registry-simulation-frame { width: min(100%, 34rem); aspect-ratio: 1; background: var(--bg-inset); }
+.registry-simulation-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 1.2rem; }
+.registry-checks { display: grid; align-content: start; gap: 0.55rem; }
+.registry-check { display: flex; align-items: flex-start; gap: 0.55rem; border-bottom: 1px dashed var(--line); padding: 0.45rem 0 0.65rem; color: var(--ink-soft); }
+.registry-check:last-child { border-bottom: 0; }
+.registry-check > svg { flex: 0 0 auto; margin-top: 0.12rem; color: var(--cyan); }
+.registry-check:has(.lucide-circle-x) > svg { color: var(--magenta); }
+.registry-check span { display: grid; gap: 0.18rem; }
+.registry-check strong { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.registry-check small { color: var(--quiet); font-size: 0.7rem; line-height: 1.45; }
+
 .detail-list { margin: 0; }
 .detail-list div { padding: 0.55rem 0; border-bottom: 1px dashed var(--line); }
 .detail-list div:last-child { border-bottom: 0; }
@@ -1125,6 +1183,10 @@ code {
   .behavior-description { font-size: 0.7rem; -webkit-line-clamp: 2; }
   .behavior-byline { margin-top: 0.45rem; font-size: 0.56rem; }
   .behavior-footer { min-width: 0; margin-top: -0.4rem; }
+  .registry-simulation-head { display: grid; }
+  .registry-simulation-summary { align-items: flex-start; }
+  .registry-simulation-diagnostics-summary { align-items: flex-start; }
+  .registry-simulation-grid { grid-template-columns: 1fr; }
   .share-strip-inner { display: block; }
   .share-strip-actions { justify-content: flex-start; margin-top: 1.2rem; }
   .footer-compact { grid-template-columns: 1fr; gap: 0.9rem; padding-block: 2rem 1.1rem; }

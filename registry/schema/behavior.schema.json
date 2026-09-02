@@ -342,6 +342,102 @@
         }
       }
     },
+    "simulation": {
+      "description": "Optional diagnostic render recipe, independent from compatibility.robotd_slot.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["runner", "scene", "start", "scenario", "duration_s"],
+          "properties": {
+            "runner": { "type": "string", "const": "microduck-standard-v1" },
+            "model": { "type": "string", "enum": ["microduck-standard", "microduck-rollers"] },
+            "scene": { "type": "string", "const": "flat-v1" },
+            "start": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["preset"],
+                  "properties": { "preset": { "type": "string", "const": "standing_pose" } }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["preset"],
+                  "properties": {
+                    "preset": { "type": "string", "const": "settled_standing" },
+                    "settle_s": { "type": "number", "minimum": 0.05, "maximum": 1 }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["preset", "trunk_height_m", "orientation"],
+                  "properties": {
+                    "preset": { "type": "string", "const": "airborne_drop" },
+                    "trunk_height_m": { "type": "number", "minimum": 0.15, "maximum": 0.5 },
+                    "orientation": { "type": "string", "enum": ["upright", "front", "back", "left", "right"] },
+                    "linear_velocity_mps": {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": { "type": "number", "minimum": -3, "maximum": 3 }
+                    }
+                  }
+                }
+              ]
+            },
+            "scenario": {
+              "type": "string",
+              "enum": ["velocity", "standing", "sitstand", "oneshot_phase", "oneshot_zero", "oneshot_trigger"]
+            },
+            "duration_s": { "type": "number", "minimum": 1, "maximum": 30 },
+            "checks": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "enum": ["no_fall", "ends_upright", "recover_upright", "velocity_tracking", "takeoff", "touchdown_after_takeoff"]
+              }
+            },
+            "trigger_s": { "type": "number", "minimum": 0, "maximum": 5 },
+            "period_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 30 },
+            "end_phase": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "hold_s": { "type": "number", "minimum": 0, "maximum": 30 },
+            "segments": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 12,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["duration_s", "vx", "vy", "wz"],
+                "properties": {
+                  "duration_s": { "type": "number", "exclusiveMinimum": 0, "maximum": 30 },
+                  "vx": { "type": "number" },
+                  "vy": { "type": "number" },
+                  "wz": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["runner", "reason"],
+          "properties": {
+            "runner": { "type": "string", "const": "external" },
+            "reason": {
+              "type": "string",
+              "enum": ["custom_environment", "custom_contract", "custom_assets", "publisher_only"]
+            },
+            "notes": { "$ref": "#/$defs/nonEmptyString" }
+          }
+        }
+      ]
+    },
     "sources": {
       "type": "object",
       "additionalProperties": false,

@@ -1,0 +1,4 @@
+mujoco>=3.3,<4
+onnxruntime>=1.20,<2
+numpy>=2.0,<3
+pillow>=11,<13

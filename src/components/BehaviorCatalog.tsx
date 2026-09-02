@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import { FilterBar } from "./FilterBar";
 import { BehaviorCard } from "./BehaviorCard";
-import type { Behavior } from "@registry/schema/behavior";
+import type { BehaviorWithSimulation } from "@/lib/simulation";
 import { DuckMark } from "./DuckMark";
 import { QuackButton } from "./QuackAction";
 import { formatRobotdSlot } from "@/lib/labels";
 
 interface BehaviorCatalogProps {
-  initialBehaviors: Behavior[];
+  initialBehaviors: BehaviorWithSimulation[];
 }
 
 export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {

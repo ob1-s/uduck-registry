@@ -21,6 +21,7 @@ const MediaUrlSchema = z.string().refine(isAllowedMediaUrl, {
 const SemverSchema = z
   .string()
   .regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/, "Must follow semver");
+const BoundedSimulationVelocitySchema = z.number().min(-3).max(3);
 
 /** Verification labels describe the evidence available for each behavior. */
 export const VerificationStatusSchema = z.enum([
@@ -63,6 +64,73 @@ export type RobotDSlot = z.infer<typeof RobotDSlotSchema>;
 
 export const TerrainSchema = z.enum(["flat", "rough", "slope", "any"]);
 export type Terrain = z.infer<typeof TerrainSchema>;
+
+export const SimulationCheckSchema = z.enum([
+  "no_fall",
+  "ends_upright",
+  "recover_upright",
+  "velocity_tracking",
+  "takeoff",
+  "touchdown_after_takeoff",
+]);
+
+const SimulationStartSchema = z.discriminatedUnion("preset", [
+  strict({
+    preset: z.literal("standing_pose"),
+  }),
+  strict({
+    preset: z.literal("settled_standing"),
+    settle_s: z.number().min(0.05).max(1).optional(),
+  }),
+  strict({
+    preset: z.literal("airborne_drop"),
+    trunk_height_m: z.number().min(0.15).max(0.5),
+    orientation: z.enum(["upright", "front", "back", "left", "right"]),
+    linear_velocity_mps: z.tuple([
+      BoundedSimulationVelocitySchema,
+      BoundedSimulationVelocitySchema,
+      BoundedSimulationVelocitySchema,
+    ]).optional(),
+  }),
+]);
+
+const RegistrySimulationSchema = strict({
+  runner: z.literal("microduck-standard-v1"),
+  model: z.enum(["microduck-standard", "microduck-rollers"]).optional(),
+  scene: z.literal("flat-v1"),
+  start: SimulationStartSchema,
+  scenario: z.enum([
+    "velocity",
+    "standing",
+    "sitstand",
+    "oneshot_phase",
+    "oneshot_zero",
+    "oneshot_trigger",
+  ]),
+  duration_s: z.number().min(1).max(30),
+  checks: z.array(SimulationCheckSchema).max(8).optional(),
+  trigger_s: z.number().min(0).max(5).optional(),
+  period_s: z.number().positive().max(30).optional(),
+  end_phase: z.number().positive().max(1).optional(),
+  hold_s: z.number().min(0).max(30).optional(),
+  segments: z.array(strict({
+    duration_s: z.number().positive().max(30),
+    vx: z.number(),
+    vy: z.number(),
+    wz: z.number(),
+  })).min(1).max(12).optional(),
+});
+
+const ExternalSimulationSchema = strict({
+  runner: z.literal("external"),
+  reason: z.enum([
+    "custom_environment",
+    "custom_contract",
+    "custom_assets",
+    "publisher_only",
+  ]),
+  notes: NonEmptyStringSchema.optional(),
+});
 
 const BehaviorInputSchema = strict({
   id: z.string().regex(ID_PATTERN, "Must be a lowercase kebab-case slug"),
@@ -153,6 +221,13 @@ const BehaviorInputSchema = strict({
   deployment: strict({
     robotd_toml: NonEmptyStringSchema,
   }),
+
+  // Optional registry-owned diagnostic render recipe. Compatibility and
+  // installation slots never select or imply this scenario.
+  simulation: z.discriminatedUnion("runner", [
+    RegistrySimulationSchema,
+    ExternalSimulationSchema,
+  ]).optional(),
 });
 
 export const BehaviorSchema = BehaviorInputSchema;

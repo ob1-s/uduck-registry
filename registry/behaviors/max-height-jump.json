@@ -57,6 +57,16 @@
     ],
     "robotd_slot": "custom"
   },
+  "simulation": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_trigger",
+    "duration_s": 4,
+    "trigger_s": 0.2
+  },
   "artifacts": {
     "onnx": {
       "filename": "max_height_jump.onnx",

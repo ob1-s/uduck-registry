@@ -55,6 +55,40 @@
     ],
     "robotd_slot": "walk"
   },
+  "simulation": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "velocity",
+    "duration_s": 6,
+    "checks": [
+      "no_fall",
+      "ends_upright",
+      "velocity_tracking"
+    ],
+    "segments": [
+      {
+        "duration_s": 1,
+        "vx": 0,
+        "vy": 0,
+        "wz": 0
+      },
+      {
+        "duration_s": 3,
+        "vx": 0.25,
+        "vy": 0,
+        "wz": 0
+      },
+      {
+        "duration_s": 2,
+        "vx": 0.25,
+        "vy": 0,
+        "wz": 0.5
+      }
+    ]
+  },
   "artifacts": {
     "onnx": {
       "filename": "BEST_alpha_walking.onnx",

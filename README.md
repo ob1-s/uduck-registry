@@ -59,6 +59,16 @@ The table below is generated from the descriptors in `registry/behaviors/`.
 
 <!-- END GENERATED BEHAVIOR TABLE -->
 
+## Simulation CI
+
+Pull requests touching `registry/behaviors/` are automatically run through a
+headless MuJoCo diagnostic (`Sim Check` workflow) when the descriptor declares
+an explicit registry simulation recipe. The runner records exactly what it
+observed and produces a standardized 512×512 review artifact; it does not claim
+hardware validation or reproduce arbitrary publisher environments.
+See [`simulation/README.md`](simulation/README.md) for the render standard,
+scenario model, CI isolation rules, and unsupported cases.
+
 ## Machine-readable access
 
 The generated catalog is available at:

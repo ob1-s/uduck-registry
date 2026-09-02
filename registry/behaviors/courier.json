@@ -54,6 +54,11 @@
     ],
     "robotd_slot": "custom"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_environment",
+    "notes": "Uses a publisher-specific apartment, objects, and task command semantics that the registry runner does not reproduce."
+  },
   "artifacts": {
     "onnx": {
       "filename": "courier-policy.onnx",

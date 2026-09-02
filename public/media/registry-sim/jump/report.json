@@ -1,0 +1,63 @@
+{
+  "execution": "rendered",
+  "checks_status": "passed",
+  "checks": [
+    {
+      "check": "finite_outputs",
+      "passed": true,
+      "detail": "max |action| = 3.4947"
+    },
+    {
+      "check": "bounded_drift",
+      "passed": true,
+      "detail": "displacement 0.38 m"
+    }
+  ],
+  "observations": {
+    "duration_s": 4.0,
+    "control_steps": 200,
+    "obs_dim": 61,
+    "command_dim": 13,
+    "min_trunk_height_m": 0.0939,
+    "max_trunk_height_m": 0.1677,
+    "final_trunk_height_m": 0.117,
+    "max_tilt_deg": 9.42,
+    "final_tilt_deg": 1.1,
+    "path_length_m": 0.583,
+    "displacement_m": 0.38,
+    "max_abs_action": 3.4947,
+    "all_finite": true,
+    "initial_foot_contact": true,
+    "initial_bilateral_contact": true,
+    "airborne_observed": true,
+    "takeoff_after_support": true,
+    "touchdown_after_takeoff": true
+  },
+  "behavior": "jump",
+  "recipe": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_trigger"
+  },
+  "duration_s": 4.0,
+  "policy": {
+    "url": "https://raw.githubusercontent.com/Liyucheng1997/318_lab-microduck-simulator/512d4bec6fc3ba321d29c93312be72856ad21268/app/public/policies/jump.onnx",
+    "sha256": "0b10d7f50f2225467771c1fd11e027490e775b762c2e50c9e25f82c0f488e5c4",
+    "baked_normalizer": true
+  },
+  "media": {
+    "loop_url": "/media/registry-sim/jump/loop.mp4",
+    "poster_url": "/media/registry-sim/jump/poster.png"
+  },
+  "generated_at": "2026-09-02T04:49:33.129618+00:00",
+  "runtime": {
+    "mjcf": "robot_allcollisions.xml (pollen-robotics/microduck-simulator, pinned)",
+    "timestep_s": 0.005,
+    "decimation": 4,
+    "control_hz": 50,
+    "renderer": "mujoco EGL offscreen"
+  }
+}

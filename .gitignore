@@ -32,3 +32,12 @@ pnpm-debug.log*
 vendor/
 *.ses
 session-*.md
+
+# CI simulation
+.simcache/
+sim-results/
+.research/
+
+# Python
+__pycache__/
+*.pyc

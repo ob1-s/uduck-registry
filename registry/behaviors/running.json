@@ -53,6 +53,11 @@
     ],
     "robotd_slot": "walk"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_environment",
+    "notes": "The published Mjlab-Running-Flat-MicroDuck task uses a 2.2 m/s command envelope and training/runtime details outside the registry standard-v1 diagnostic runner."
+  },
   "artifacts": {
     "onnx": {
       "filename": "policy.onnx",

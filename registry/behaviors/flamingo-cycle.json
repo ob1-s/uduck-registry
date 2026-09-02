@@ -54,6 +54,11 @@
     ],
     "robotd_slot": "walk"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_contract",
+    "notes": "Uses the publisher-defined twist = [flag, side, 0] balance command rather than the registry velocity schedule."
+  },
   "artifacts": {
     "onnx": {
       "filename": "policy.onnx",

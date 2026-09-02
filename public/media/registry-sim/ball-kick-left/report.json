@@ -1,0 +1,73 @@
+{
+  "execution": "rendered",
+  "checks_status": "passed",
+  "checks": [
+    {
+      "check": "finite_outputs",
+      "passed": true,
+      "detail": "max |action| = 1.8749"
+    },
+    {
+      "check": "bounded_drift",
+      "passed": true,
+      "detail": "displacement 0.023 m"
+    },
+    {
+      "check": "no_fall",
+      "passed": true,
+      "detail": "min trunk height 0.1092 m"
+    },
+    {
+      "check": "ends_upright",
+      "passed": true,
+      "detail": "final tilt 0.9 deg"
+    }
+  ],
+  "observations": {
+    "duration_s": 2.5,
+    "control_steps": 125,
+    "obs_dim": 61,
+    "command_dim": 13,
+    "min_trunk_height_m": 0.1092,
+    "max_trunk_height_m": 0.1186,
+    "final_trunk_height_m": 0.1143,
+    "max_tilt_deg": 5.52,
+    "final_tilt_deg": 0.9,
+    "path_length_m": 0.039,
+    "displacement_m": 0.023,
+    "max_abs_action": 1.8749,
+    "all_finite": true,
+    "initial_foot_contact": true,
+    "initial_bilateral_contact": true,
+    "airborne_observed": true,
+    "takeoff_after_support": true,
+    "touchdown_after_takeoff": true
+  },
+  "behavior": "ball-kick-left",
+  "recipe": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_zero"
+  },
+  "duration_s": 2.5,
+  "policy": {
+    "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/ball_kick_left.onnx",
+    "sha256": "d6928284dccd3dd61e08bf2f760effa74309fbefd97b2b31afb2a60f526d196a",
+    "baked_normalizer": true
+  },
+  "media": {
+    "loop_url": "/media/registry-sim/ball-kick-left/loop.mp4",
+    "poster_url": "/media/registry-sim/ball-kick-left/poster.png"
+  },
+  "generated_at": "2026-09-02T04:49:06.900744+00:00",
+  "runtime": {
+    "mjcf": "robot_allcollisions.xml (pollen-robotics/microduck-simulator, pinned)",
+    "timestep_s": 0.005,
+    "decimation": 4,
+    "control_hz": 50,
+    "renderer": "mujoco EGL offscreen"
+  }
+}

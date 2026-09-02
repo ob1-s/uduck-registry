@@ -74,6 +74,7 @@ describe("behavior schema", () => {
       jsonSchema.properties.artifacts,
       jsonSchema.properties.artifacts.properties.onnx,
       jsonSchema.properties.media,
+      ...jsonSchema.properties.simulation.oneOf,
       jsonSchema.properties.sources,
       jsonSchema.properties.deployment,
     ]) {
@@ -139,6 +140,68 @@ describe("behavior schema", () => {
     const badCompatibilityKey = fixture();
     badCompatibilityKey.compatibility.unexpected = "value";
     expect(BehaviorSchema.safeParse(badCompatibilityKey).success).toBe(false);
+  });
+
+  it("accepts the optional simulation block and rejects bad values", () => {
+    const withSim = fixture();
+    withSim.simulation = {
+      runner: "microduck-standard-v1",
+      scene: "flat-v1",
+      start: { preset: "settled_standing", settle_s: 0.2 },
+      scenario: "velocity",
+      duration_s: 8,
+      checks: ["no_fall", "velocity_tracking"],
+      segments: [
+        { duration_s: 2, vx: 0.2, vy: 0, wz: 0 },
+        { duration_s: 1.5, vx: 0.1, vy: 0, wz: 0.5 },
+      ],
+    };
+    expect(BehaviorSchema.safeParse(withSim).success).toBe(true);
+
+    const external = fixture();
+    external.simulation = {
+      runner: "external",
+      reason: "custom_environment",
+      notes: "Requires the publisher's obstacle scene.",
+    };
+    expect(BehaviorSchema.safeParse(external).success).toBe(true);
+
+    const airborne = fixture();
+    airborne.simulation = {
+      runner: "microduck-standard-v1",
+      scene: "flat-v1",
+      start: {
+        preset: "airborne_drop",
+        trunk_height_m: 0.2,
+        orientation: "side",
+      },
+      scenario: "standing",
+      duration_s: 4,
+    };
+    expect(BehaviorSchema.safeParse(airborne).success).toBe(false);
+    airborne.simulation.start.orientation = "left";
+    expect(BehaviorSchema.safeParse(airborne).success).toBe(true);
+    airborne.simulation.start.linear_velocity_mps = [0, 0, -4];
+    expect(BehaviorSchema.safeParse(airborne).success).toBe(false);
+
+    for (const sim of [
+      { ...withSim.simulation, scenario: "teleport" },
+      { ...withSim.simulation, duration_s: 0.5 },
+      { ...withSim.simulation, duration_s: 60 },
+      { ...withSim.simulation, end_phase: 1.5 },
+      { ...withSim.simulation, trigger_s: 5.5 },
+      { ...withSim.simulation, checks: ["jump_really_high"] },
+      { ...withSim.simulation, segments: [{ duration_s: 0, vx: 0, vy: 0, wz: 0 }] },
+      { ...withSim.simulation, segments: [{ duration_s: 1, vx: 0, vy: 0, wz: 0, boost: 1 }] },
+    ]) {
+      const bad = fixture();
+      bad.simulation = sim;
+      expect(BehaviorSchema.safeParse(bad).success, JSON.stringify(sim)).toBe(false);
+    }
+
+    const badKey = fixture();
+    badKey.simulation = { ...withSim.simulation, warp: true };
+    expect(BehaviorSchema.safeParse(badKey).success).toBe(false);
   });
 
 });

@@ -1,0 +1,73 @@
+{
+  "execution": "rendered",
+  "checks_status": "passed",
+  "checks": [
+    {
+      "check": "finite_outputs",
+      "passed": true,
+      "detail": "max |action| = 1.7106"
+    },
+    {
+      "check": "bounded_drift",
+      "passed": true,
+      "detail": "displacement 0.007 m"
+    },
+    {
+      "check": "no_fall",
+      "passed": true,
+      "detail": "min trunk height 0.0839 m"
+    },
+    {
+      "check": "ends_upright",
+      "passed": true,
+      "detail": "final tilt 2.12 deg"
+    }
+  ],
+  "observations": {
+    "duration_s": 2.5,
+    "control_steps": 125,
+    "obs_dim": 61,
+    "command_dim": 13,
+    "min_trunk_height_m": 0.0839,
+    "max_trunk_height_m": 0.1173,
+    "final_trunk_height_m": 0.1169,
+    "max_tilt_deg": 33.73,
+    "final_tilt_deg": 2.12,
+    "path_length_m": 0.105,
+    "displacement_m": 0.007,
+    "max_abs_action": 1.7106,
+    "all_finite": true,
+    "initial_foot_contact": true,
+    "initial_bilateral_contact": true,
+    "airborne_observed": false,
+    "takeoff_after_support": false,
+    "touchdown_after_takeoff": false
+  },
+  "behavior": "ground-pick",
+  "recipe": {
+    "runner": "microduck-standard-v1",
+    "scene": "flat-v1",
+    "start": {
+      "preset": "settled_standing"
+    },
+    "scenario": "oneshot_phase"
+  },
+  "duration_s": 2.5,
+  "policy": {
+    "url": "https://huggingface.co/spaces/pollen-robotics/microduck-simulator/resolve/main/app/public/policies/alpha_ground_pick.onnx",
+    "sha256": "ffbf5109982ff999b0ba53afe86b9ae731bbec679d67fb7f8ab4c52152c88872",
+    "baked_normalizer": true
+  },
+  "media": {
+    "loop_url": "/media/registry-sim/ground-pick/loop.mp4",
+    "poster_url": "/media/registry-sim/ground-pick/poster.png"
+  },
+  "generated_at": "2026-09-02T04:49:30.928931+00:00",
+  "runtime": {
+    "mjcf": "robot_allcollisions.xml (pollen-robotics/microduck-simulator, pinned)",
+    "timestep_s": 0.005,
+    "decimation": 4,
+    "control_hz": 50,
+    "renderer": "mujoco EGL offscreen"
+  }
+}

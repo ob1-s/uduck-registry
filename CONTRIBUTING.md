@@ -44,6 +44,30 @@ uDuck Registry is a directory of Microduck behavior policies. A contribution is 
 
 For a local media path such as `/media/my-move/loop.mp4`, include the matching file at `public/media/my-move/loop.mp4` in the pull request.
 
+### CI simulation check
+
+Every pull request that adds or edits a descriptor is automatically run
+through the registry's headless MuJoCo runner only when it declares an explicit
+`simulation` recipe. `compatibility.robotd_slot` never selects the simulation
+scenario. The workflow uploads `report.json`, `loop.mp4`, and `poster.png` for
+human review; it does not publish them automatically.
+
+The report distinguishes a completed render from its individual observations.
+Requested checks use a fixed registry vocabulary, and their results are
+measured by the runner—not authored in the descriptor. A render is not hardware
+verification or proof that a publisher's training environment was reproduced.
+The runner rejects recipes it cannot represent before downloading the policy;
+it does not silently clamp command values.
+
+If the policy requires custom environment code, objects, meshes, dependencies,
+or a different observation/action contract, use `"runner": "external"` with
+an honest reason and provide publisher-owned media instead. Do not give CI a
+convenient but inaccurate command schedule just so the policy can be rendered.
+Do not add per-policy executable code to this repository.
+
+See [`simulation/README.md`](simulation/README.md) for recipe examples, start
+states, supported scenarios, exact report semantics, and CI isolation rules.
+
 ## Descriptor shape
 
 ```json

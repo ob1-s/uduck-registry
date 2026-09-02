@@ -57,6 +57,11 @@
     ],
     "robotd_slot": "roller"
   },
+  "simulation": {
+    "runner": "external",
+    "reason": "custom_assets",
+    "notes": "Requires the publisher's roller-wheel model; the registry runner currently renders the standard-foot model only."
+  },
   "artifacts": {
     "onnx": {
       "filename": "BEST_roller.onnx",

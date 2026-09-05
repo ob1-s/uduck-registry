@@ -56,3 +56,8 @@ durable-evidence-index.json
 build-evidence-index.json
 evidence-plan.json
 ci-evidence/
+
+# Accidentally committed local dumps (narrowly scoped, not blanket rules)
+/1788162747759_6ax2r.json
+/uduck-registry.txt
+/registry-evidence.zip

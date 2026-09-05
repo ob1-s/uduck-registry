@@ -48,13 +48,18 @@ ROOT = Path(__file__).resolve().parents[1]
 SIMULATION_DIR = ROOT / "simulation"
 RESULT_FILE_NAMES = ("report.json", "loop.mp4", "poster.png")
 KEY_RE = re.compile(r"^[a-f0-9]{64}$")
+REV_RE = re.compile(r"^[a-f0-9]{40}$")
 ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MAX_ONNX_BYTES = 100 * 1024 * 1024
 MAX_EVIDENCE_BYTES = 300 * 1024 * 1024
 MAX_REPORT_BYTES = 4 * 1024 * 1024
 RELEASE_INDEX_NAME = "index.json"
 RELEASE_TAG = "registry-evidence"
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
+EVIDENCE_FORMAT = "uduck-evidence-v2"
+# Wall-clock fields are useful transiently but must not affect content
+# addressing: two runs with identical execution inputs archive identical bytes.
+VOLATILE_REPORT_FIELDS = ("generated_at", "observed_at")
 
 
 def canonical_json(value: Any) -> bytes:
@@ -73,10 +78,20 @@ def valid_key(value: Any) -> bool:
     return isinstance(value, str) and bool(KEY_RE.fullmatch(value))
 
 
+def valid_sha256(value: Any) -> bool:
+    """Validate a 64-hex SHA-256 digest (manifest/artifact/blob)."""
+    return isinstance(value, str) and bool(KEY_RE.fullmatch(value))
+
+
+def valid_git_revision(value: Any) -> bool:
+    """Validate a 40-hex Git commit SHA (immutable Hub revision)."""
+    return isinstance(value, str) and bool(REV_RE.fullmatch(value))
+
+
 def empty_index() -> dict[str, Any]:
     return {
         "version": FORMAT_VERSION,
-        "format": "uduck-evidence-v1",
+        "format": EVIDENCE_FORMAT,
         "entries": {},
         "current": {},
     }
@@ -110,7 +125,7 @@ def read_index(path: Path) -> dict[str, Any]:
     result = empty_index()
     result.update(value)
     result["version"] = FORMAT_VERSION
-    result["format"] = "uduck-evidence-v1"
+    result["format"] = EVIDENCE_FORMAT
     return result
 
 
@@ -302,12 +317,17 @@ def _artifact_url(descriptor: dict[str, Any]) -> str | None:
     if isinstance(onnx, dict) and isinstance(onnx.get("url"), str):
         return onnx["url"]
     source = descriptor.get("source")
-    if isinstance(source, dict) and isinstance(source.get("repo"), str) and valid_key(source.get("revision")):
+    if isinstance(source, dict) and isinstance(source.get("repo"), str) and valid_git_revision(source.get("revision")):
         return f"https://huggingface.co/{source['repo']}/resolve/{source['revision']}/policy.onnx"
     resolved = descriptor.get("resolved")
     if isinstance(resolved, dict):
         return _artifact_url(resolved)
     return None
+
+
+def normalize_report_for_archive(report: dict[str, Any]) -> dict[str, Any]:
+    """Return the immutable archived report without volatile timestamps."""
+    return {k: v for k, v in report.items() if k not in VOLATILE_REPORT_FIELDS}
 
 
 def _augment_report_identity(report: dict[str, Any]) -> dict[str, Any]:
@@ -349,6 +369,18 @@ def _augment_report_identity(report: dict[str, Any]) -> dict[str, Any]:
     return report
 
 
+def normalize_report_identity(report: dict[str, Any]) -> dict[str, Any]:
+    """Canonical identity path used by package, local discovery, and hydration.
+
+    Every evidence-key computation must go through here so a new unsupported
+    pointer on a PR produces the same key in its temporary index and in the
+    local-results map. Without this, hydrate cannot find the local result and
+    tries to download an unpublished Release asset.
+    """
+    validated = _validate_report(report, Path(f"report:{report.get('behavior', '?')}"))
+    return _augment_report_identity(validated)
+
+
 def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
     """Package every result report and emit a mergeable index fragment."""
     out.mkdir(parents=True, exist_ok=True)
@@ -359,11 +391,13 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
         report_path = result_dir / "report.json"
         if report_path.stat().st_size > MAX_REPORT_BYTES:
             raise ValueError(f"report exceeds {MAX_REPORT_BYTES} bytes: {report_path}")
-        report = _augment_report_identity(_validate_report(read_json(report_path), report_path))
+        report = normalize_report_identity(read_json(report_path))
         behavior_id = report["behavior"]
         key, identity_source = _report_key(report)
-        asset_name = f"{key}.tar.gz"
-        files: list[tuple[str, bytes]] = [(f"{behavior_id}/report.json", canonical_json(report) + b"\n")]
+        # Archive the normalized report so wall-clock timestamps do not break
+        # content addressing. Observation/upload time lives in index metadata.
+        normalized = normalize_report_for_archive(report)
+        files: list[tuple[str, bytes]] = [(f"{behavior_id}/report.json", canonical_json(normalized) + b"\n")]
         present: list[str] = []
         for filename in ("loop.mp4", "poster.png"):
             source = result_dir / filename
@@ -376,11 +410,19 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
 
         if report["execution"] == "rendered" and set(present) != {"loop.mp4", "poster.png"}:
             raise ValueError(f"rendered report is missing loop.mp4 or poster.png: {result_dir}")
+        if report["execution"] in ("unsupported", "rejected", "failed") and present not in ([], ["loop.mp4", "poster.png"]):
+            # Report-only evidence is legitimate; partial media is not.
+            if present:
+                raise ValueError(f"non-rendered report must not carry partial media: {result_dir}")
 
         archive = _archive_bytes(files)
+        blob_sha = sha256_bytes(archive)
+        asset_name = f"{blob_sha}.tar.gz"
         destination = out / asset_name
         if destination.exists() and destination.read_bytes() != archive:
-            raise ValueError(f"two reports produced different contents for evidence key {key}")
+            # Same blob name must mean same bytes; different bytes under the
+            # same blob name would be a store corruption.
+            raise ValueError(f"immutable blob {asset_name} already exists with different bytes")
         destination.write_bytes(archive)
 
         artifact_sha = _policy_sha(report)
@@ -388,7 +430,8 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
             "behavior": behavior_id,
             "key": key,
             "asset": asset_name,
-            "asset_sha256": sha256_bytes(archive),
+            "asset_sha256": blob_sha,
+            "blob_sha256": blob_sha,
             "asset_bytes": len(archive),
             "execution": report["execution"],
             "identity_source": identity_source,
@@ -396,17 +439,25 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
             "artifact_sha256": artifact_sha,
             "checks_status": report.get("checks_status"),
             "reason": report.get("reason"),
-            "generated_at": report.get("generated_at"),
+            "observed_at": report.get("generated_at"),
         }
         previous = entries.get(key)
-        if previous is not None and previous != entry:
-            raise ValueError(f"evidence key {key} maps to conflicting reports")
+        if previous is not None:
+            if previous.get("blob_sha256") != blob_sha or previous.get("asset") != asset_name:
+                raise ValueError(
+                    f"evidence key {key} maps to conflicting immutable content: "
+                    f"{previous.get('asset')} vs {asset_name}. Same semantic inputs produced different bytes; "
+                    "this is expected media nondeterminism or a broken identity boundary, not a silent overwrite."
+                )
+            # Same semantic key and same normalized blob is idempotent: keep
+            # the first observation time, ignore wall-clock reruns.
+            continue
         entries[key] = entry
         current[behavior_id] = key
 
     fragment_value = {
         "version": FORMAT_VERSION,
-        "format": "uduck-evidence-v1",
+        "format": EVIDENCE_FORMAT,
         "entries": entries,
         "current": current,
     }
@@ -421,14 +472,27 @@ def merge(existing: Path, fragment: Path, out: Path) -> dict[str, Any]:
     entries = base.setdefault("entries", {})
     current = base.setdefault("current", {})
     for key, entry in addition["entries"].items():
-        if key in entries and entries[key] != entry:
-            # A content key is immutable. The generated timestamp is part of
-            # the report metadata, so differing reports with the same key are
-            # evidence of a broken identity implementation rather than an
-            # upload conflict to hide with --clobber.
-            raise ValueError(f"existing evidence key has different metadata: {key}")
+        if key in entries:
+            prev = entries[key]
+            # Immutable semantic key: same key must map to same blob bytes.
+            # observed_at is index metadata and is allowed to differ; any
+            # other difference is a broken identity boundary.
+            prev_cmp = {k: v for k, v in prev.items() if k not in ("observed_at", "generated_at", "updated_at")}
+            new_cmp = {k: v for k, v in entry.items() if k not in ("observed_at", "generated_at", "updated_at")}
+            if prev_cmp != new_cmp:
+                raise ValueError(f"existing evidence key has different immutable content: {key}")
+            # Idempotent rerun: keep the earliest observation.
+            continue
         entries[key] = entry
     current.update(addition["current"])
+    # Prune deleted IDs from current while retaining historical blobs in
+    # entries for audit. The evidence plan knows the entire desired catalog.
+    try:
+        authored_ids = set(_authored_descriptors())
+    except Exception:
+        authored_ids = set(current)
+    for stale_id in [bid for bid in current if bid not in authored_ids]:
+        del current[stale_id]
     base["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(base, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -550,7 +614,7 @@ def _local_results(local: Path | None) -> dict[str, Path]:
         return {}
     result: dict[str, Path] = {}
     for report_path in sorted(local.rglob("report.json")):
-        report = _validate_report(read_json(report_path), report_path)
+        report = normalize_report_identity(read_json(report_path))
         key, _ = _report_key(report)
         if key in result:
             raise ValueError(f"duplicate local evidence key {key}")
@@ -585,19 +649,53 @@ def _extract_archive(data: bytes, behavior_id: str, out: Path) -> dict[str, byte
     return files
 
 
-def _write_result(files: dict[str, bytes], behavior_id: str, out: Path, expected_key: str) -> None:
-    report = _validate_report(json.loads(files["report.json"]), Path("release/report.json"))
+def _write_result(
+    files: dict[str, bytes],
+    behavior_id: str,
+    out: Path,
+    expected_key: str,
+    expected_inputs: str | None = None,
+    expected_artifact: str | None = None,
+) -> None:
+    report = normalize_report_identity(json.loads(files["report.json"]))
     actual_key, _ = _report_key(report)
     if report.get("evidence_key") != expected_key and actual_key != expected_key:
         raise ValueError(f"evidence report key mismatch for {behavior_id}")
     if report.get("behavior") != behavior_id:
         raise ValueError(f"evidence report behavior mismatch for {behavior_id}")
+    if expected_inputs is not None and report.get("inputs_sha256") != expected_inputs:
+        raise ValueError(f"stale evidence identity for {behavior_id}")
+    if expected_artifact is not None:
+        actual_artifact = _policy_sha(report)
+        if actual_artifact is not None and actual_artifact != expected_artifact:
+            raise ValueError(f"evidence artifact mismatch for {behavior_id}")
+    execution = report.get("execution")
+    if execution == "rendered":
+        if "loop.mp4" not in files or "poster.png" not in files:
+            raise ValueError(f"rendered result is missing loop/poster for {behavior_id}")
+    elif execution in ("unsupported", "rejected", "failed"):
+        # Report-only evidence is legitimate; partial media is not.
+        if ("loop.mp4" in files) != ("poster.png" in files):
+            raise ValueError(f"non-rendered result has partial media for {behavior_id}")
+    else:
+        raise ValueError(f"unsupported execution status for {behavior_id}: {execution!r}")
     destination = out / behavior_id
+    # No stale generated files survive from a previous hydration.
+    if destination.exists():
+        for stale in sorted(destination.iterdir()):
+            if stale.is_file() or stale.is_symlink():
+                stale.unlink()
+            elif stale.is_dir():
+                import shutil
+                shutil.rmtree(stale)
     destination.mkdir(parents=True, exist_ok=True)
     for filename, content in files.items():
+        if filename not in RESULT_FILE_NAMES:
+            raise ValueError(f"unexpected result file for {behavior_id}: {filename}")
         (destination / filename).write_bytes(content)
     # The report's paths are generated in a disposable runner workspace. The
-    # site consumes stable build paths instead.
+    # site consumes stable build paths instead. Reattach the index observation
+    # time in a controlled way; the archived report itself has no wall clock.
     report["evidence_key"] = expected_key
     if "loop.mp4" in files and "poster.png" in files:
         report["media"] = {
@@ -621,6 +719,8 @@ def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, b
     if unknown:
         raise ValueError("evidence index has no current entries for: " + ", ".join(sorted(unknown)))
     hydrated: list[dict[str, str]] = []
+    # Clear the generated target before hydration so stale files cannot survive.
+    out.mkdir(parents=True, exist_ok=True)
     for behavior_id in sorted(requested):
         if not valid_id(behavior_id):
             raise ValueError(f"invalid requested behavior id: {behavior_id!r}")
@@ -631,25 +731,48 @@ def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, b
         expected_inputs = _descriptor_identity(authored[behavior_id], behavior_id)
         if entry.get("inputs_sha256") != expected_inputs:
             raise ValueError(f"stale evidence identity for {behavior_id}")
+        expected_artifact = entry.get("artifact_sha256")
+        if expected_artifact is not None and not valid_sha256(expected_artifact):
+            raise ValueError(f"invalid artifact hash in index for {behavior_id}")
+        # Authored pointer identity must still match where explicitly known.
+        try:
+            authored_doc = read_json(authored[behavior_id])
+            if isinstance(authored_doc, dict):
+                explicit = _explicit_artifact_sha(authored_doc)
+                if explicit is not None and expected_artifact is not None and explicit != expected_artifact:
+                    raise ValueError(f"index artifact does not match authored pointer for {behavior_id}")
+        except ValueError:
+            raise
+        except Exception:
+            pass
         source = local_map.get(key)
         if source is not None:
             files: dict[str, bytes] = {}
             for filename in RESULT_FILE_NAMES:
                 path = source / filename
                 if path.is_file():
+                    if path.stat().st_size > MAX_EVIDENCE_BYTES:
+                        raise ValueError(f"local result exceeds size limit: {path}")
                     files[filename] = path.read_bytes()
-            _write_result(files, behavior_id, out, key)
+            if "report.json" not in files:
+                raise ValueError(f"local result has no report for {behavior_id}")
+            _write_result(files, behavior_id, out, key, expected_inputs, expected_artifact)
             hydrated.append({"behavior": behavior_id, "key": key, "source": "local"})
             continue
         asset = entry.get("asset")
-        if not isinstance(asset, str) or asset != f"{key}.tar.gz":
+        blob_sha = entry.get("blob_sha256") or entry.get("asset_sha256")
+        # Prefer blob-identity filenames; accept legacy key-named assets when
+        # the blob hash matches, so a partially migrated Release still hydrates.
+        if not isinstance(asset, str) or not asset.endswith(".tar.gz"):
             raise ValueError(f"invalid release asset name for {behavior_id}")
+        if blob_sha is not None and asset != f"{blob_sha}.tar.gz" and asset != f"{key}.tar.gz":
+            raise ValueError(f"invalid release asset name for {behavior_id}: {asset}")
         data = _download(f"{base}/{asset}", MAX_EVIDENCE_BYTES)
-        expected_asset_sha = entry.get("asset_sha256")
-        if not valid_key(expected_asset_sha) or sha256_bytes(data) != expected_asset_sha:
+        expected_asset_sha = entry.get("asset_sha256") or blob_sha
+        if not valid_sha256(expected_asset_sha) or sha256_bytes(data) != expected_asset_sha:
             raise ValueError(f"evidence asset hash mismatch for {behavior_id}")
         files = _extract_archive(data, behavior_id, out)
-        _write_result(files, behavior_id, out, key)
+        _write_result(files, behavior_id, out, key, expected_inputs, expected_artifact)
         hydrated.append({"behavior": behavior_id, "key": key, "source": "release"})
     return {"version": FORMAT_VERSION, "hydrated": hydrated}
 

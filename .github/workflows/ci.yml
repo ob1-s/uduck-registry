@@ -23,7 +23,7 @@ env:
 jobs:
   resolve-policies:
     name: Resolve pinned Hub packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -35,27 +35,28 @@ jobs:
       - run: pip install -r scripts/policy/requirements.txt
       - run: python -m unittest discover -s tests -p 'test_*.py'
       - run: python scripts/policy/resolve.py prepare
+      - run: mkdir -p .generated/policies
       - uses: actions/upload-artifact@v4
         with:
           name: resolved-policies
           path: .generated/policies/
           include-hidden-files: true
-          if-no-files-found: ignore
+          if-no-files-found: warn
 
   evidence:
     name: Render current registry evidence
     needs: resolve-policies
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+      - run: mkdir -p .generated/policies
       - uses: actions/download-artifact@v4
         with:
           name: resolved-policies
           path: .generated/policies
-          if-no-artifact: warn
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -115,7 +116,7 @@ jobs:
     name: Publish trusted evidence release
     needs: evidence
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
@@ -179,7 +180,7 @@ jobs:
     name: Validate Registry & Build
     needs: [evidence, resolve-policies, publish-evidence]
     if: always() && needs.evidence.result == 'success' && needs['resolve-policies'].result == 'success' && (needs['publish-evidence'].result == 'success' || needs['publish-evidence'].result == 'skipped')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

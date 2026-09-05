@@ -34,8 +34,7 @@ export function BehaviorCatalog({ entries }: BehaviorCatalogProps) {
       if (slot !== "all" && entry.runtime.slot !== slot) return false;
 
       const accessories = entry.runtime.compatibility.accessories_required;
-      if (accessory === "none" && accessories == null) return false;
-      if (accessory === "none" && accessories.length > 0) return false;
+      if (accessory === "none" && (accessories == null || accessories.length > 0)) return false;
       if (accessory !== "all" && accessory !== "none" && (accessories == null || !accessories.includes(accessory))) return false;
 
       return !query || catalogSearchText(entry).includes(query);

@@ -46,7 +46,7 @@ function SocialDuck({ entry }: { entry: CatalogEntry }) {
   const baseAngle = poseAngles[entry.id] ?? 0;
   const pose = duckVariants[stableIndex(entry.id, duckVariants.length)];
   return (
-    <div style={{ position: "relative", width: 270, height: 220, transform: `rotate(${baseAngle + pose.tilt}deg)` }} aria-hidden="true">
+    <div style={{ display: "flex", position: "relative", width: 270, height: 220, transform: `rotate(${baseAngle + pose.tilt}deg)` }} aria-hidden="true">
       <div style={{ position: "absolute", left: 74, top: 53, width: 126, height: 122, borderRadius: "48% 52% 44% 47%", background: pose.body, border: `4px solid ${colors.ink}`, boxShadow: `8px 9px 0 ${colors.ink}` }} />
       <div style={{ position: "absolute", left: 93, top: 26, width: 104, height: 82, borderRadius: "54% 46% 48% 45%", background: pose.body, border: `4px solid ${colors.ink}` }} />
       <div style={{ position: "absolute", left: 176, top: 56, width: 55, height: 37, borderRadius: "50% 45% 42% 55%", background: colors.orange, border: `4px solid ${colors.ink}` }} />
@@ -64,12 +64,12 @@ export function BehaviorSocialCard({ entry, variant }: BehaviorSocialCardProps) 
   const copy = getSocialCopy(entry);
   return (
     <div style={{ width: 1200, height: 630, background: colors.paper, color: colors.ink, padding: 56, display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "Arial, sans-serif" }}>
-      <div style={{ width: 680 }}>
-        <div style={{ color: colors.purple, fontSize: 22, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>uDuck Registry</div>
-        <div style={{ marginTop: 24, color: colors.soft, fontSize: 22, textTransform: "uppercase", letterSpacing: 1 }}>{formatCategory(entry.category)} · {runtimeLabel(entry.runtime)}</div>
-        <div style={{ marginTop: 20, fontSize: 62, lineHeight: 1.02, fontWeight: 800 }}>{copy.title}</div>
-        <div style={{ marginTop: 20, color: colors.soft, fontSize: 25, lineHeight: 1.25 }}>{copy.description}</div>
-        <div style={{ marginTop: 30, color: colors.ink, fontSize: 20 }}>{hardwareLabel(entry.hardware.status)} · {entry.authors.map((author) => author.name).join(", ")}</div>
+      <div style={{ width: 680, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", color: colors.purple, fontSize: 22, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>uDuck Registry</div>
+        <div style={{ display: "flex", marginTop: 24, color: colors.soft, fontSize: 22, textTransform: "uppercase", letterSpacing: 1 }}>{`${formatCategory(entry.category)} · ${runtimeLabel(entry.runtime)}`}</div>
+        <div style={{ display: "flex", marginTop: 20, fontSize: 62, lineHeight: 1.02, fontWeight: 800 }}>{copy.title}</div>
+        <div style={{ display: "flex", marginTop: 20, color: colors.soft, fontSize: 25, lineHeight: 1.25 }}>{copy.description}</div>
+        <div style={{ display: "flex", marginTop: 30, color: colors.ink, fontSize: 20 }}>{`${hardwareLabel(entry.hardware.status)} · ${entry.authors.map((author) => author.name).join(", ")}`}</div>
       </div>
       <div style={{ width: 300, height: 300, borderRadius: "50%", background: colors.yellow, border: `5px solid ${colors.ink}`, display: "flex", alignItems: "center", justifyContent: "center" }}><SocialDuck entry={entry} /></div>
       <div style={{ position: "absolute", right: 60, bottom: 30, color: colors.soft, fontSize: 18 }}>{variant === "twitter" ? "uduckmoves.com" : "uduckmoves.com/behaviors"}</div>

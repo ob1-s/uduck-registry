@@ -22,7 +22,7 @@ const robotdSlotLabels: Record<RobotDSlot, string> = {
 };
 
 export function formatCategory(category: BehaviorCategory | string) {
-  return categoryLabels[category] ?? category;
+  return (categoryLabels as Record<string, string>)[category] ?? category;
 }
 
 export function formatAccessory(accessory: string) {

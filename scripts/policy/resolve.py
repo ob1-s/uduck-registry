@@ -36,13 +36,36 @@ class HubRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 def fetch(url, limit=2 * 1024 * 1024):
-    with urllib.request.build_opener(HubRedirect()).open(
-        urllib.request.Request(url, headers={'User-Agent': 'uduck-registry'}), timeout=60
-    ) as response:
-        data = response.read(limit + 1)
-    if len(data) > limit:
-        raise ValueError(f'Download exceeds {limit} bytes')
-    return data
+    """Fetch Hub bytes with bounded retries for transient upstream failures.
+
+    Retries 429/502/503/504 with exponential backoff, honoring a sane
+    Retry-After (capped at 60s). Permanent failures (e.g. 404) raise at once.
+    """
+    import time
+    last = None
+    for attempt in range(5):
+        try:
+            with urllib.request.build_opener(HubRedirect()).open(
+                urllib.request.Request(url, headers={'User-Agent': 'uduck-registry'}), timeout=60
+            ) as response:
+                data = response.read(limit + 1)
+            if len(data) > limit:
+                raise ValueError(f'Download exceeds {limit} bytes')
+            return data
+        except urllib.error.HTTPError as exc:
+            last = exc
+            if exc.code not in (429, 502, 503, 504) or attempt == 4:
+                raise
+            retry_after = exc.headers.get('Retry-After', '')
+            delay = min(int(retry_after), 60) if retry_after.isdigit() else 2 ** (attempt + 1)
+            time.sleep(max(1, delay))
+        except (urllib.error.URLError, TimeoutError) as exc:
+            last = exc
+            if attempt == 4:
+                raise
+            time.sleep(2 ** (attempt + 1))
+    assert last is not None
+    raise last
 
 def parse_url(value):
     u = urllib.parse.urlsplit(value)

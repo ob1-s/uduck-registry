@@ -34,7 +34,21 @@ FLAMINGO_SOURCE = {
 }
 FLAMINGO_HOLD_S = 5.0
 FLAMINGO_COMMAND = (1.0, 1.0, 0.0)
-UPSTREAM_SOURCE_URL = "https://github.com/pollen-robotics/microduck"
+# Pinned upstream revision reviewed for command semantics (2026-09-05).
+# policy-manifest.md: only constant-command episodic policies are generic
+# one-shots; phase/posture_flag belong in daemon-driven slots. Single-policy
+# repos carry exactly one policy.onnx; robotctl reads duration_s/chain/
+# action_scale/command.idle/unwind_s and refuses on obs_len/action_len/
+# model_api/robot.model/non-constant encoding. Flamingo is a published
+# perpetual example with no duration_s, so --hold is required.
+# cheatsheet.md: `sudo robotctl policy add flamingo
+# RemiFabre/microduck-flamingo-cycle --hold 5 --command 1,1,0`; "--command is
+# what the network is fed while it runs. Most skills need none: they are
+# trained on an all-zero command and being selected *is* the trigger."
+UPSTREAM_PIN = "bc41fb5c9a9b39894669c1e022e375cf83800382"
+UPSTREAM_MANIFEST_URL = f"https://github.com/pollen-robotics/microduck/blob/{UPSTREAM_PIN}/docs/policy-manifest.md"
+UPSTREAM_CHEATSHEET_URL = f"https://github.com/pollen-robotics/microduck/blob/{UPSTREAM_PIN}/docs/robot/cheatsheet.md"
+UPSTREAM_SOURCE_URL = UPSTREAM_CHEATSHEET_URL
 
 
 def _duration(value: Any) -> float | None:
@@ -49,10 +63,11 @@ def _duration(value: Any) -> float | None:
 def _generic_zero_recipe(manifest: dict[str, Any]) -> dict[str, Any] | None:
     """Return the documented default recipe for a simple episodic policy.
 
-    Pollen's policy-channel cheatsheet specifies that a plain episodic skill
-    runs on the all-zero command.  If a manifest describes a non-zero twist in
-    prose, this function declines coverage: prose is not a safe executable
-    command encoding.
+    Pollen's cheatsheet (pinned in UPSTREAM_CHEATSHEET_URL) specifies that a
+    plain episodic skill runs on the all-zero command ("Most skills need
+    none: they are trained on an all-zero command and being selected *is*
+    the trigger"). This is a privilege, not a default: every precondition
+    below must hold, otherwise the pointer stays not-covered.
     """
 
     if manifest.get("kind") != "episodic":
@@ -61,17 +76,50 @@ def _generic_zero_recipe(manifest: dict[str, Any]) -> dict[str, Any] | None:
     if command is not None and not isinstance(command, dict):
         return None
     command = command or {}
+    # Absent encoding is treated as constant per upstream manifest docs
+    # ("absent or `constant`: a fixed twist for the window"). Any other
+    # encoding is daemon-driven and has no generic recipe.
     encoding = command.get("encoding", "constant")
-    if encoding != "constant":
+    if encoding not in (None, "constant"):
         return None
-    # A prose twist description is deliberately not interpreted here.  A
-    # maintainer can add a named recipe when upstream documents its numeric
-    # activation command; the generic default applies only when no twist claim
-    # is present at all.
-    if "twist" in command:
-        return None
+    if encoding is None:
+        encoding = "constant"
+    # Do not interpret prose. Any twist/head/body claim — even "unused
+    # (zeros)" — requires a named maintainer recipe with a documented numeric
+    # command. The generic default applies only when no such claim exists.
+    for key in ("twist", "head", "body"):
+        if key in command:
+            return None
+    # Non-constant custom command semantics must be absent.
+    for key in ("sit", "stand", "slot", "period_s", "end_phase"):
+        if key in command:
+            return None
     duration = _duration(manifest.get("duration_s"))
     if duration is None:
+        return None
+    # The runner contract must be fully known: compatible I/O widths,
+    # control frequency, robot model, and an explicit action scale. Missing
+    # values stay missing; they never default to a convenient 1.0 here.
+    if manifest.get("obs_len") != 61 or manifest.get("action_len") != 14:
+        return None
+    if manifest.get("model_api") not in (None, 1):
+        return None
+    robot = manifest.get("robot")
+    if not isinstance(robot, dict):
+        return None
+    if robot.get("model") != "microduck" or robot.get("control_hz") != 50:
+        return None
+    action_scale = manifest.get("action_scale")
+    if isinstance(action_scale, bool) or not isinstance(action_scale, (int, float)):
+        return None
+    action_scale_f = float(action_scale)
+    if not isfinite(action_scale_f):
+        return None
+    # Entry-pose uncertainty would make pass/fail misleading. Accept only a
+    # documented standing start or an absent claim explicitly accepted as a
+    # registry diagnostic assumption.
+    entry_pose = manifest.get("entry_pose")
+    if entry_pose is not None and entry_pose != "standing":
         return None
     return {
         "runner": RUNNER,
@@ -83,11 +131,14 @@ def _generic_zero_recipe(manifest: dict[str, Any]) -> dict[str, Any] | None:
         "checks": ["no_fall", "ends_upright"],
         "provenance": {
             "owner": "uduck-registry-maintainers",
-            "source": "Pollen policy-channel cheatsheet: plain episodic skills use the all-zero command",
-            "source_url": UPSTREAM_SOURCE_URL,
+            "source": "Pollen robot cheatsheet: plain episodic skills use the all-zero command",
+            "source_url": UPSTREAM_CHEATSHEET_URL,
+            "upstream_pin": UPSTREAM_PIN,
             "command": [0.0, 0.0, 0.0],
-            "command_semantics": "upstream documented default for a constant episodic skill",
-            "scope": "Registry diagnostic rollout under flat-v1; this does not establish intended-task success or hardware evidence.",
+            "command_semantics": "upstream documented default for a constant episodic skill with no custom command prose",
+            "action_scale": action_scale_f,
+            "entry_pose_assumption": "settled_standing registry start; manifest entry_pose is standing or absent",
+            "scope": "Registry diagnostic rollout under flat-v1 settled_standing; this does not establish intended-task success or hardware evidence.",
         },
     }
 
@@ -108,14 +159,21 @@ def _flamingo_recipe() -> dict[str, Any]:
         "checks": ["no_fall"],
         "provenance": {
             "owner": "uduck-registry-maintainers",
-            "source": "Pollen robotctl cheatsheet: policy add flamingo ... --hold 5 --command 1,1,0",
-            "source_url": UPSTREAM_SOURCE_URL,
+            "source": "Pollen robot cheatsheet: sudo robotctl policy add flamingo RemiFabre/microduck-flamingo-cycle --hold 5 --command 1,1,0",
+            "source_url": UPSTREAM_CHEATSHEET_URL,
+            "upstream_pin": UPSTREAM_PIN,
+            "manifest_url": UPSTREAM_MANIFEST_URL,
             "source_fixture": "simulation/tests/fixtures/flamingo-manifest.json",
             "command": list(FLAMINGO_COMMAND),
             "command_semantics": "[flag, side, 0]; flag=1 requests one-foot mode and side=+1 keeps the right foot down",
             "hold_s": FLAMINGO_HOLD_S,
+            "duration_s": FLAMINGO_HOLD_S,
+            "runner": RUNNER,
+            "scene": SCENE,
+            "start": deepcopy(START),
             "manifest_idle_command": [0.0, 0.0, 0.0],
-            "scope": "Five second active-command diagnostic under flat-v1. The manifest is perpetual and has no unwind_s, so no unwind or handoff is simulated.",
+            "scope": "Five second active-command uDuck diagnostic under flat-v1 settled_standing with the documented [1,1,0] hold. The manifest is perpetual and has no unwind_s, so no unwind or handoff is simulated. This is not publisher eval reproduction and establishes no hardware verification.",
+            "limitations": "Stability under the documented command only; not one-foot-task success. See manifest eval object for publisher claims.",
         },
     }
 

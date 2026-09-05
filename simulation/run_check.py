@@ -236,8 +236,14 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
         model = load_model(mjcf)
 
         print(f"[sim] loading runtime for {behavior_id}...", flush=True)
+        raw_scale = contract.get("action_scale")
+        if isinstance(raw_scale, bool) or not isinstance(raw_scale, (int, float)):
+            raise ValueError("runner contract requires an explicit finite action_scale; no silent default is applied")
+        import math as _math
+        if not _math.isfinite(float(raw_scale)):
+            raise ValueError("runner contract requires an explicit finite action_scale")
         runtime = DuckRuntime(model, onnx_path,
-                              action_scale=float(contract.get("action_scale", 1.0)))
+                              action_scale=float(raw_scale))
         runtime.prepare_start(sim_block["start"])
         command_fn = make_command_fn(spec, runtime.use_13d)
         print(f"[sim] obs_dim={runtime.obs_dim} scenario={spec.name or spec.kind} "
@@ -256,7 +262,9 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
 
         media = None
         if keep_media:
-            caption = f"{descriptor['name']} - registry sim (flat-v1, 50 Hz)"
+            # Caption by stable entry ID, not mutable display name, so curation
+            # edits do not invalidate diagnostic media by design.
+            caption = f"registry sim {behavior_id} (flat-v1, 50 Hz)"
             media = renderer.finalize(out_dir / behavior_id, caption)
 
         identity = inputs_digest(behavior_id)

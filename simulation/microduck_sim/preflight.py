@@ -227,7 +227,7 @@ def preflight_descriptor(descriptor: dict) -> PreflightResult:
                     f"simulation.duration_s={duration_value:g}s; the schedule must cover the rollout exactly"
                 )
     elif "segments" in simulation:
-        errors.append("simulation.segments is only valid with the velocity scenario")
+        errors.append("simulation.segments is only valid with the velocity and command_schedule scenarios")
 
     if contract.get("observation_dim") != OBSERVATION_DIM:
         errors.append(

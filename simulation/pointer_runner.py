@@ -44,9 +44,15 @@ def simulation_descriptor(
 ) -> dict[str, Any] | None:
     """Build the runner descriptor for a covered pointer.
 
-    ``None`` means no maintainer-owned recipe exists.  The caller should emit a
-    visible unsupported/not-covered result rather than synthesize a command.
+    ``None`` means no maintainer-owned recipe exists *or* the manifest does
+    not supply every runner input explicitly. The caller must emit a visible
+    unsupported/not-covered result rather than synthesize a command or fail
+    the whole registration. In particular there is no silent
+    ``action_scale = 1.0`` default: Flamingo declares 1.0 explicitly, and any
+    other policy without an explicit finite action_scale stays not-covered.
     """
+
+    from math import isfinite
 
     source = pointer["source"]
     recipe = recipe_for_policy(source["repo"], manifest, source)
@@ -54,7 +60,20 @@ def simulation_descriptor(
         return None
     robot = manifest.get("robot")
     if not isinstance(robot, dict):
-        raise ValueError("resolved policy manifest has no robot object")
+        return None
+    # All runner inputs must be known explicitly. Missing or incompatible
+    # values yield not-covered, never a guessed descriptor that would fail
+    # preflight and kill package registration.
+    if manifest.get("obs_len") != 61 or manifest.get("action_len") != 14:
+        return None
+    if robot.get("model") != "microduck" or robot.get("control_hz") != 50:
+        return None
+    action_scale = manifest.get("action_scale")
+    if isinstance(action_scale, bool) or not isinstance(action_scale, (int, float)):
+        return None
+    action_scale_f = float(action_scale)
+    if not isfinite(action_scale_f):
+        return None
     return {
         "id": pointer["id"],
         "name": manifest.get("name") or pointer["id"],
@@ -64,7 +83,7 @@ def simulation_descriptor(
             "control_frequency_hz": robot.get("control_hz"),
             "decimation": 4,
             "actuator_model": "Registry deterministic position-control diagnostic runtime",
-            "action_scale": manifest.get("action_scale", 1.0),
+            "action_scale": action_scale_f,
         },
         "compatibility": {"robot_model": "microduck-standard"},
         "simulation": recipe,

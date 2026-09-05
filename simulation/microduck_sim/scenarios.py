@@ -116,7 +116,7 @@ def scenario_from_descriptor(sim_block: dict) -> ScenarioSpec:
                 )
             spec.command_segments.append((float(duration), tuple(values)))
     elif "segments" in sim_block:
-        raise ValueError("simulation.segments is only valid with the velocity scenario")
+        raise ValueError("simulation.segments is only valid with the velocity and command_schedule scenarios")
     return spec
 
 

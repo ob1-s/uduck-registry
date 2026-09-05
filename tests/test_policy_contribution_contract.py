@@ -10,7 +10,7 @@ class PolicyContributionContractTests(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/register-policy.yml').read_text()
         self.assertIn('policy-submission', template)
         self.assertNotIn('title: "[policy] "', template)
-        self.assertIn('types: [opened, edited, reopened, labeled]', workflow)
+        self.assertIn('types: [opened, edited, reopened]', workflow)
         self.assertIn("contains(github.event.issue.labels.*.name, 'policy-submission')", workflow)
         self.assertNotIn('github.event.issue.title', workflow)
 

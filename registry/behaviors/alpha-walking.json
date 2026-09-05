@@ -23,10 +23,10 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_hardware",
-    "summary": "Verified on physical Microduck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
+    "status": "claimed_hardware",
+    "summary": "Upstream-provided behavior; not independently hardware-verified by uDuck. Verified on physical Microduck hardware with Rockchip RK3566 and 14 Dynamixel XL330 servos. Shipped as default walking policy.",
     "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
-    "notes": "Operates at 50 Hz control loop. Velocity envelope: -0.2 to +0.25 m/s forward/back, ±1.0 rad/s angular yaw rate."
+    "notes": "Operates at 50 Hz control loop. Velocity envelope: -0.2 to +0.25 m/s forward/back, \u00b11.0 rad/s angular yaw rate."
   },
   "contract": {
     "observation_dim": 61,

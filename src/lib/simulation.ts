@@ -8,6 +8,8 @@ export interface RegistrySimulationCheck {
 
 export interface RegistrySimulationResult {
   behavior: string;
+  evidence_key?: string;
+  policy?: { url: string; sha256: string };
   execution: "rendered";
   checks_status: "passed" | "failed";
   checks: RegistrySimulationCheck[];

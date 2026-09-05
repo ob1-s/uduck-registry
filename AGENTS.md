@@ -7,3 +7,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Registry contribution work
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Prefer a Pollen Hub package URL through the issue form or `pnpm uduck register <URL>`.
+
+- `registry/policies/*.json` is authored pointer + curation state. `registry/behaviors/` is the legacy/manual path.
+- Do not guess normalizers, action scales, runtime slots, hardware evidence, or command values.
+- `.generated/`, public indexes, and registry renders are build outputs. Do not commit them.
+- ONNX inspection is not a behavior simulation. Upstream `eval` and author media are publisher claims.
+- Run `pnpm validate`, resolver tests, and relevant TypeScript/Python tests for tooling changes.

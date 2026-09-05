@@ -1,6 +1,6 @@
 {
   "id": "sit-stand",
-  "name": "Smooth Sit ↔ Stand",
+  "name": "Smooth Sit \u2194 Stand",
   "version": "1.0.0",
   "description": "Controlled bi-directional transition between upright standing and rested sitting posture with continuous head commandability.",
   "details": "A unified policy trained in MuJoCo to handle both gentle sitting down and standing back up. Softens motor gains during transition to ensure the duck does not slam into the ground. While sitting, head orientation remains commandable through the 4-dim head pose observation slot.",
@@ -23,8 +23,8 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_hardware",
-    "summary": "Verified on physical Microduck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
+    "status": "claimed_hardware",
+    "summary": "Upstream-provided behavior; not independently hardware-verified by uDuck. Verified on physical Microduck hardware with gamepad Y button toggle. Robot smoothly sits down and stands back up.",
     "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)",
     "notes": "Transition utilizes posture flags in twist magnitude; rise runs with softened standing gains."
   },

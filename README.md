@@ -1,90 +1,42 @@
 # 🦆 uDuck Registry
 
-> A community directory of downloadable behavior policies for [Microduck](https://github.com/pollen-robotics/microduck).
+An independent community library of [Microduck](https://github.com/pollen-robotics/microduck) policies.
 
-[![CI](https://github.com/ob1-s/uduck-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/ob1-s/uduck-registry/actions)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[Browse the library](https://uduckmoves.com) · [Submit a policy URL](https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml) · [Contributing](CONTRIBUTING.md)
 
-## What is it?
+Pollen owns the policy package, publisher, installation commands, and robot runtime. Hugging Face hosts the artifacts. uDuck adds discovery, curation, pinned source identity, and independent diagnostic evidence.
 
-uDuck Registry is a searchable catalog of community and official Microduck behavior policies. Each entry links to its canonical ONNX artifact and source, describes the robot and accessories it needs, and includes the relevant `robotd` configuration.
+## Contribute
 
-Microduck is a small biped robot from [Pollen Robotics](https://pollen-robotics.com). Policies in this catalog use the shared 61-observation, 14-action, 50 Hz runtime contract.
+Publish with Pollen, submit your Hugging Face repository URL, and the bot prepares a pinned pointer PR. It reads the manifest and inspects the ONNX without asking you to restate runtime metadata. Maintainers review the result. Custom and legacy sources have a manual review path.
 
-## Behavior status
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the form, agent command, and local workflow.
 
-| Status | Meaning |
-| --- | --- |
-| **Hardware verified** | Shipped by the upstream project or supported by physical-run evidence. |
-| **Hardware claimed** | The author reports a physical run; the registry has not independently reproduced it. |
-| **Experimental** | Community work that has not established physical deployment evidence. |
+## Read the evidence
 
-## Runtime contract
+- **Publisher media and eval:** the author's demonstration or claim, including bespoke environments.
+- **Package inspection:** pinned manifest and artifact hashes, ONNX interface, finite-output smoke check.
+- **Registry simulation:** measured checks in our stated diagnostic runner, with exact inputs. A completed video is not necessarily a passed check.
+- **Hardware:** a separate evidence axis. Upstream origin alone does not establish independent registry verification.
 
-- **Observation:** 61 values — 48 proprioception values, 3 command values, 4 head-pose values, and 6 body-pose values.
-- **Action:** 14 joint targets — 5 left-leg, 4 neck/head, and 5 right-leg outputs.
-- **Rate:** 50 Hz with the policy's declared decimation and action scale.
-- **Actuator:** Dynamixel XL330 motors using the declared Microduck actuator model.
-- The beak actuator is outside the fixed 14-action policy interface.
+The existing catalog retains legacy publisher/curator descriptors. New Pollen packages use small pointers in `registry/policies/`; resolved facts are generated from upstream. Missing facts remain unknown.
 
-The descriptor schema is [`registry/schema/behavior.schema.json`](registry/schema/behavior.schema.json).
+## Develop
 
-## Catalog
-
-The table below is generated from the descriptors in `registry/behaviors/`.
-
-<!-- BEGIN GENERATED BEHAVIOR TABLE -->
-
-| Behavior | ID | Category | Status | Publisher | Setup | Preview |
-| --- | --- | --- | --- | --- | --- | --- |
-| [Acrobatic Roulade (Forward Roll)](https://uduckmoves.com/behaviors/roulade) | `roulade` | agility tricks | Hardware verified | Pollen Robotics | none | — |
-| [Alpha Dynamic Walk](https://uduckmoves.com/behaviors/alpha-walking) | `alpha-walking` | locomotion | Hardware verified | Pollen Robotics | none | video + poster |
-| [Autonomous Ground Pick](https://uduckmoves.com/behaviors/ground-pick) | `ground-pick` | manipulation | Hardware verified | Pollen Robotics | none | video + poster |
-| [Dynamic Fall Recovery](https://uduckmoves.com/behaviors/fall-recovery) | `fall-recovery` | recovery | Hardware verified | Pollen Robotics | none | video + poster |
-| [Impulse Ball Kick (Left Foot)](https://uduckmoves.com/behaviors/ball-kick-left) | `ball-kick-left` | manipulation | Hardware verified | Pollen Robotics | 70mm practice ball | video + poster |
-| [Impulse Ball Kick (Right Foot)](https://uduckmoves.com/behaviors/ball-kick-right) | `ball-kick-right` | manipulation | Hardware verified | Pollen Robotics | 70mm practice ball | — |
-| [Roller Blade Crouch Glide](https://uduckmoves.com/behaviors/roller-crouch) | `roller-crouch` | roller skate | Hardware verified | Pollen Robotics | roller skate blades | — |
-| [Roller Skate Velocity Drive](https://uduckmoves.com/behaviors/roller-drive) | `roller-drive` | roller skate | Hardware verified | Pollen Robotics | roller skate blades | video + poster |
-| [Smooth Sit ↔ Stand](https://uduckmoves.com/behaviors/sit-stand) | `sit-stand` | locomotion | Hardware verified | Pollen Robotics | none | video + poster |
-| [Flamingo Cycle](https://uduckmoves.com/behaviors/flamingo-cycle) | `flamingo-cycle` | agility tricks | Experimental | RemiFabre | none | video |
-| [Genesis Backlash Walk](https://uduckmoves.com/behaviors/genesis-backlash) | `genesis-backlash` | locomotion | Experimental | Macmachi | none | — |
-| [Genesis Flat Walk](https://uduckmoves.com/behaviors/genesis-velocity) | `genesis-velocity` | locomotion | Experimental | Macmachi | none | — |
-| [Genesis Rough-Terrain Walk](https://uduckmoves.com/behaviors/genesis-rough) | `genesis-rough` | locomotion | Experimental | Macmachi | none | — |
-| [Maximum-Height Jump](https://uduckmoves.com/behaviors/max-height-jump) | `max-height-jump` | agility tricks | Experimental | Thomas Burgess | none | loop + video |
-| [Microduck Courier](https://uduckmoves.com/behaviors/courier) | `courier` | manipulation | Experimental | selinayfilizp | none | video + poster |
-| [Microduck Running](https://uduckmoves.com/behaviors/running) | `running` | locomotion | Experimental | HannesVonEssen | none | video |
-| [Rough Walk E](https://uduckmoves.com/behaviors/rough-walk-e) | `rough-walk-e` | locomotion | Experimental | RemiFabre | none | video |
-| [Rough Walk G](https://uduckmoves.com/behaviors/rough-walk-g) | `rough-walk-g` | locomotion | Experimental | RemiFabre | none | video |
-| [Vertical Jump](https://uduckmoves.com/behaviors/jump) | `jump` | agility tricks | Experimental | Liyucheng1997 | none | — |
-
-<!-- END GENERATED BEHAVIOR TABLE -->
-
-## Simulation CI
-
-Pull requests touching `registry/behaviors/` are automatically run through a
-headless MuJoCo diagnostic (`Sim Check` workflow) when the descriptor declares
-an explicit registry simulation recipe. The runner records exactly what it
-observed and produces a standardized 512×512 review artifact; it does not claim
-hardware validation or reproduce arbitrary publisher environments.
-See [`simulation/README.md`](simulation/README.md) for the render standard,
-scenario model, CI isolation rules, and unsupported cases.
-
-## Machine-readable access
-
-The generated catalog is available at:
-
-```bash
-curl -s https://uduckmoves.com/registry.json | jq .
+```sh
+pnpm install
+# If the catalog contains Pollen pointers, first set up Python as in CONTRIBUTING.md.
+pnpm policies:prepare
+pnpm check
+pnpm dev
 ```
 
-The same snapshot is in [`public/registry.json`](public/registry.json). The static site also exposes one JSON endpoint per behavior at `/api/behaviors/<id>`.
+`pnpm validate` checks authored state offline. `pnpm policies:prepare` fetches pinned upstream facts and checks ONNX. `pnpm build` compiles the indexes and exports the site. Generated indexes and simulation media are not committed.
 
-## Contributing
+CI reruns diagnostics for the static deployment and archives main-branch evidence in GitHub Releases. See [simulation/README.md](simulation/README.md) and [registry direction](research/registry-direction.md).
 
-Generate a starting descriptor with `pnpm --silent new-behavior id=my-move name="My Move" category=locomotion author="Your Name"`, run `pnpm check`, include the refreshed `README.md` and `public/registry.json`, then open a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the descriptor shape and review expectations.
+The v2 registry index keeps legacy `behaviors` and new `policies` pointers in separate arrays; `count` covers both. Resolved package facts are available from `/policies.json`.
 
-## Attribution and license
+Machine interfaces: [`/policies.json`](https://uduckmoves.com/policies.json), [`/registry.json`](https://uduckmoves.com/registry.json), [`/llms.txt`](https://uduckmoves.com/llms.txt).
 
-uDuck Registry is an independent community project and is not affiliated with Pollen Robotics or Hugging Face.
-
-Registry code and site content are Apache-2.0; see [LICENSE](LICENSE). Third-party policies, media, and upstream model assets remain under their respective licenses. See [NOTICE](NOTICE) for attribution details.
+Apache-2.0; policy licenses remain those declared by their publishers.

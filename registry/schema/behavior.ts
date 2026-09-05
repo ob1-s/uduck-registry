@@ -25,7 +25,7 @@ const BoundedSimulationVelocitySchema = z.number().min(-3).max(3);
 
 /** Verification labels describe the evidence available for each behavior. */
 export const VerificationStatusSchema = z.enum([
-  "verified_hardware",      // Verified on physical Microduck hardware or shipped upstream
+  "verified_hardware",      // Independent physical-run verification; upstream origin is not sufficient
   "claimed_hardware",       // Author claims physical hardware deployment
   "community_experimental", // Community work-in-progress or conceptual entry
 ]);
@@ -239,4 +239,5 @@ export interface RegistryIndex {
   updated_at: string;
   count: number;
   behaviors: Behavior[];
+  policies?: import("./policy").PolicyPointer[];
 }

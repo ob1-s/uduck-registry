@@ -1,0 +1,18 @@
+# uDuck Registry
+Independent Microduck policy discovery, curation, and diagnostic evidence.
+Pollen owns package format, publisher, robotctl install, and robot runtime.
+
+Submit: https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml
+Instructions: https://github.com/ob1-s/uduck-registry/blob/main/CONTRIBUTING.md
+Pollen manifest: https://github.com/pollen-robotics/microduck/blob/main/docs/policy-manifest.md
+
+Local: pnpm uduck resolve <HF model repo URL>; pnpm uduck register <URL>
+Authored pointers: registry/policies/*.json
+Legacy custom descriptors: registry/behaviors/*.json
+Generated Pollen index: /policies.json
+Legacy index: /registry.json
+
+Never guess runtime fields or activation commands from prose.
+Never treat author eval/media, shape checks, and registry simulation as equivalent.
+Never infer hardware verification from publisher identity.
+Do not commit generated indexes or simulation media.

@@ -1,6 +1,7 @@
 name: uDuck CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master]
   pull_request:
@@ -10,8 +11,80 @@ permissions:
   contents: read
 
 jobs:
+  evidence:
+    name: Render current registry evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 ffmpeg
+      - run: pip install -r simulation/requirements.txt
+      - name: Test runner
+        run: PYTHONPATH=simulation python -m unittest discover -s simulation/tests
+      - name: Render diagnostics (failed checks remain visible)
+        env:
+          MUJOCO_GL: egl
+        run: |
+          python - <<'PYRUN'
+          import subprocess, sys
+          from pathlib import Path
+          for file in sorted(Path('registry/behaviors').glob('*.json')):
+              result = subprocess.run([sys.executable, 'simulation/run_check.py', '--behavior', file.stem, '--out', 'sim-results', '--keep-media'])
+              if result.returncode not in (0, 1):
+                  raise SystemExit(result.returncode)
+          PYRUN
+      - uses: actions/upload-artifact@v4
+        with:
+          name: registry-evidence
+          path: sim-results/
+          retention-days: 14
+  resolve-policies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/policy/requirements.txt
+      - run: python -m unittest discover -s tests -p 'test_*.py'
+      - run: python scripts/policy/resolve.py prepare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resolved-policies
+          path: .generated/policies/
+          include-hidden-files: true
+          if-no-files-found: ignore
+  archive-evidence:
+    needs: evidence
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: registry-evidence
+          path: evidence
+      - name: Archive diagnostics outside source history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          zip -r registry-evidence.zip evidence
+          gh release view "evidence-$COMMIT_SHA" >/dev/null 2>&1 || gh release create "evidence-$COMMIT_SHA" --target "$COMMIT_SHA" --title "Registry evidence $COMMIT_SHA" --notes "Diagnostics from trusted main code. Individual reports state measured checks and exact policy hashes." --latest=false
+          gh release upload "evidence-$COMMIT_SHA" registry-evidence.zip --clobber
   validate:
     name: Validate Registry & Build
+    needs: [evidence, resolve-policies]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -40,12 +113,19 @@ jobs:
       - name: Compile Public Registry Index
         run: pnpm compile
 
-      - name: Snapshot-diff generated catalog
-        run: |
-          if ! git diff --exit-code -- public/registry.json README.md; then
-            echo "::error::Generated catalog is stale — run 'pnpm compile' and commit the result."
-            exit 1
-          fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: registry-evidence
+          path: sim-results
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: resolved-policies
+          path: .generated/policies
+          merge-multiple: true
+
+      - name: Publish matching diagnostics into this build
+        run: python3 scripts/policy/collect_evidence.py sim-results
 
       - name: Build Web Application
         run: pnpm build

@@ -1,3 +1,5 @@
+import PolicyPage from "../../policies/[id]/page";
+import { getPolicies, policyName, policySummary } from "@/lib/policies";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,13 +20,16 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  return getAllBehaviors().map((behavior) => ({ id: behavior.id }));
+  return [...getAllBehaviors(), ...getPolicies()].map((behavior) => ({ id: behavior.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const behavior = getBehaviorById(id);
-  if (!behavior) return { title: "Behavior not found — uDuck Registry" };
+  if (!behavior) {
+    const policy = getPolicies().find(p => p.id === id);
+    return policy ? { title: `${policyName(policy)} — uDuck Registry`, description: policySummary(policy), alternates: { canonical: `/policies/${id}` } } : { title: "Behavior not found — uDuck Registry" };
+  }
 
   const canonicalPath = `/behaviors/${behavior.id}`;
   const socialCopy = getSocialCopy(behavior);
@@ -54,7 +59,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BehaviorDetailPage({ params }: Props) {
   const { id } = await params;
   const behavior = getBehaviorById(id);
-  if (!behavior) notFound();
+  if (!behavior) {
+    if (getPolicies().some(p => p.id === id)) return <PolicyPage params={params} />;
+    notFound();
+  }
 
   const author = behavior.authors[0];
   const authorUrl = author?.url ?? (author?.github ? `https://github.com/${author.github}` : undefined);
@@ -74,7 +82,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <div className="detail-meta">
             <VerificationBadge status={behavior.verification.status} summary={behavior.verification.summary} />
             <span className="detail-chip">{formatCategory(behavior.category)}</span>
-            <span className="detail-chip">v{behavior.version}</span>
+            <span className="detail-chip">Legacy / manually reviewed entry</span>
             <span className="detail-chip">{behavior.license}</span>
           </div>
           <h1>{behavior.name}</h1>
@@ -93,7 +101,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <div className={`media-frame${!publisherHasMedia && registrySimulation ? " registry-simulation-frame" : ""}`}>
             <MediaPreview media={heroMedia} title={behavior.name} variant="detail" />
           </div>
-          {heroMedia.caption && <figcaption className="media-caption">{heroMedia.caption}</figcaption>}
+          {publisherHasMedia && <figcaption className="media-caption">Author-provided media{heroMedia.caption ? ` · ${heroMedia.caption}` : ""}</figcaption>}
         </figure>
 
         <div className="detail-stack">
@@ -104,6 +112,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
               hasPublisherMedia={publisherHasMedia}
             />
           )}
+          {!registrySimulation && <section className="surface detail-card"><h2>Registry simulation</h2><p>{behavior.simulation?.runner === 'external' ? `Not covered: ${behavior.simulation.notes ?? behavior.simulation.reason}.` : 'No current diagnostic evidence is available for this entry.'}</p></section>}
           {behavior.details && (
             <section className="surface detail-card">
               <h2><Layers size={17} aria-hidden="true" /> About this behavior</h2>

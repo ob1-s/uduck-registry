@@ -1,3 +1,4 @@
+import { getPolicies } from "./policies";
 import fs from "node:fs";
 import path from "node:path";
 import { BehaviorSchema, type Behavior } from "@registry/schema/behavior";
@@ -48,11 +49,11 @@ export function getBehaviorById(id: string): Behavior | null {
 
 export function getRegistryStats() {
   const all = getAllBehaviors();
-  const hardware = all.filter((b) => b.verification.status === "verified_hardware").length;
-  const community = all.filter((b) => b.verification.status === "community_experimental").length;
+  const hardware = all.filter((b) => b.verification.status === "claimed_hardware").length;
+  const community = all.filter((b) => b.verification.status === "community_experimental").length + getPolicies().length;
 
   return {
-    total: all.length,
+    total: all.length + getPolicies().length,
     hardware,
     community,
   };

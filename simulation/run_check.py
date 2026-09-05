@@ -37,6 +37,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 import mujoco  # noqa: E402
 
+from evidence import inputs_digest, evidence_key
 from microduck_sim import checks, render  # noqa: E402
 from microduck_sim.preflight import SimulationPreflightError, require_valid  # noqa: E402
 from microduck_sim.scenarios import make_command_fn, scenario_from_descriptor  # noqa: E402
@@ -48,6 +49,8 @@ MAX_ONNX_BYTES = 100 * 1024 * 1024
 
 
 def load_descriptor(behavior_id: str) -> dict:
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", behavior_id):
+        raise ValueError("Invalid behavior id")
     path = REPO_ROOT / "registry" / "behaviors" / f"{behavior_id}.json"
     if not path.exists():
         raise SystemExit(f"no descriptor at {path}")
@@ -164,7 +167,10 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
             caption = f"{descriptor['name']} - registry sim (flat-v1, 50 Hz)"
             media = renderer.finalize(out_dir / behavior_id, caption)
 
+        identity = inputs_digest(behavior_id)
         report.update({
+            "inputs_sha256": identity,
+            "evidence_key": evidence_key(identity, onnx_sha),
             "behavior": behavior_id,
             "recipe": {
                 "runner": sim_block["runner"],

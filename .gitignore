@@ -41,3 +41,10 @@ sim-results/
 # Python
 __pycache__/
 *.pyc
+
+# Generated catalog and resolved upstream facts
+.generated/
+public/registry.json
+public/media/registry-sim/
+.venv/
+registry-evidence.zip

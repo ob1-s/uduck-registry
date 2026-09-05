@@ -1,4 +1,5 @@
 import "server-only";
+import { evidenceInputsDigest } from "../../scripts/evidence-identity";
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
@@ -13,6 +14,9 @@ const CheckResultSchema = z.object({
 
 const RegistrySimulationResultSchema = z.object({
   behavior: z.string(),
+  inputs_sha256: z.string(),
+  evidence_key: z.string().regex(/^[a-f0-9]{64}$/),
+  policy: z.object({ url: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/) }),
   execution: z.literal("rendered"),
   checks_status: z.enum(["passed", "failed"]),
   checks: z.array(CheckResultSchema),
@@ -49,7 +53,7 @@ export function getRegistrySimulationResult(behavior: Behavior): RegistrySimulat
     const parsed = RegistrySimulationResultSchema.safeParse(
       JSON.parse(fs.readFileSync(reportPath, "utf8")),
     );
-    if (!parsed.success || parsed.data.behavior !== id) return null;
+    if (!parsed.success || parsed.data.behavior !== id || parsed.data.inputs_sha256 !== evidenceInputsDigest(id)) return null;
     return {
       ...parsed.data,
       media: {

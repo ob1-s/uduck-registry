@@ -23,8 +23,8 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_hardware",
-    "summary": "Verified on physical Microduck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
+    "status": "claimed_hardware",
+    "summary": "Upstream-provided behavior; not independently hardware-verified by uDuck. Verified on physical Microduck hardware with fall detection triggers enabled. Robot self-rights after tip-over.",
     "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, 2S LiPo)",
     "notes": "Requires full-body contact handling."
   },

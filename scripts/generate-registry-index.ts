@@ -1,3 +1,4 @@
+import { PolicyPointerSchema } from "../registry/schema/policy";
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
@@ -124,11 +125,14 @@ export function generateRegistryIndex(): RegistryIndex {
     return a.id < b.id ? -1 : 1;
   });
 
+  const policyDir = path.resolve("registry/policies");
+  const policies = fs.existsSync(policyDir) ? fs.readdirSync(policyDir).filter(f => f.endsWith('.json')).sort().map(file => PolicyPointerSchema.parse(JSON.parse(fs.readFileSync(path.join(policyDir, file), 'utf8')))) : [];
   const index: RegistryIndex = {
-    version: "1.0.0",
+    version: "2.0.0",
     updated_at: getDeterministicUpdatedAt(),
-    count: behaviors.length,
+    count: behaviors.length + policies.length,
     behaviors,
+    policies,
   };
 
   if (!fs.existsSync(PUBLIC_DIR)) {
@@ -136,8 +140,8 @@ export function generateRegistryIndex(): RegistryIndex {
   }
 
   fs.writeFileSync(REGISTRY_OUT, JSON.stringify(index, null, 2), "utf-8");
-  updateReadmeCatalog(behaviors);
-  console.log(`\x1b[32mSuccessfully compiled ${behaviors.length} behaviors and refreshed README.md\x1b[0m`);
+
+  console.log(`\x1b[32mSuccessfully compiled ${behaviors.length} behaviors\x1b[0m`);
   return index;
 }
 

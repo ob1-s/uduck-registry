@@ -4,13 +4,16 @@
   "description": "Community behavior registry for Microduck.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "pnpm compile && next build --webpack",
     "start": "python3 -m http.server 3000 --directory out",
     "test": "vitest run",
-    "check": "pnpm validate && pnpm test && pnpm compile && pnpm build",
+    "check": "pnpm validate && pnpm test && pnpm build",
     "new-behavior": "tsx scripts/new-behavior.ts",
     "validate": "tsx scripts/validate-registry.ts",
-    "compile": "tsx scripts/generate-registry-index.ts"
+    "preflight": "tsx scripts/preflight.ts",
+    "compile": "tsx scripts/generate-registry-index.ts",
+    "uduck": "tsx scripts/uduck.ts",
+    "policies:prepare": "tsx scripts/uduck.ts prepare"
   },
   "keywords": [],
   "author": "",

@@ -1,9 +1,8 @@
 # Remote media cache
 
-Mirrored copies of community-contributed media, cached here so the catalog's
-media loads reliably everywhere (raw.githubusercontent.com and
-huggingface.co are unreachable or unstable from some regions, and HF media
-is served via signed redirects that slow first load).
+Existing mirrored author media retained for continuity. New submissions link to
+publisher-hosted media. Serving a local cache does not guarantee reachability
+in any particular country.
 
 Files are byte-identical copies of the upstream artifacts. Upstream links and
 licensing live in each behavior descriptor under `registry/behaviors/`

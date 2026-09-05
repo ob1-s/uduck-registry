@@ -28,7 +28,7 @@ export function Navbar() {
             <Compass size={15} aria-hidden="true" />
             <span>Explore</span>
           </Link>
-          <a href="https://github.com/ob1-s/uduck-registry" className="nav-link" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml" className="nav-link" target="_blank" rel="noopener noreferrer">
             <GitFork size={15} aria-hidden="true" />
             <span>Contribute</span>
           </a>

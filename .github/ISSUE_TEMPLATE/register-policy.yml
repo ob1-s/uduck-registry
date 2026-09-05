@@ -1,0 +1,32 @@
+name: Register a Microduck policy
+description: Submit a Hugging Face package URL; the bot resolves it and prepares a pull request.
+title: "[policy] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Publish with Pollen's publisher, then paste the Hugging Face model repository URL below.
+        Custom sources and official multi-policy sets need maintainer review. Do not guess runtime fields.
+  - type: input
+    id: url
+    attributes:
+      label: Policy URL
+      placeholder: https://huggingface.co/your-name/microduck-your-move
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - experimental
+        - locomotion
+        - agility-tricks
+        - manipulation
+        - recovery
+        - roller-skate
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Optional context or author media links for the reviewer.

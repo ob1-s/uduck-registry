@@ -1,0 +1,83 @@
+name: Register policy URL
+on:
+  issues:
+    types: [opened, reopened]
+permissions:
+  contents: read
+concurrency:
+  group: register-policy-${{ github.event.issue.number }}
+  cancel-in-progress: false
+jobs:
+  resolve:
+    if: startsWith(github.event.issue.title, '[policy]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/policy/requirements.txt
+      - name: Resolve untrusted package without write credentials
+        run: python scripts/policy/ingest_issue.py
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: policy-submission-error
+          path: submission-error.txt
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: policy-submission
+          path: |
+            registry/policies/*.json
+            submission.json
+          retention-days: 7
+  propose:
+    needs: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: policy-submission
+          path: candidate
+      - name: Validate pointer data and open a review PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_REPO: ${{ github.repository }}
+        run: python scripts/policy/propose.py
+  feedback:
+    needs: resolve
+    if: always() && needs.resolve.result == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: policy-submission-error
+          path: feedback
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: python3 scripts/policy/submission_feedback.py

@@ -27,6 +27,9 @@ function SimulationFacts({ result }: { result: RegistrySimulationResult }) {
   return (
     <div className="registry-simulation-grid">
       <dl className="detail-list">
+        <div><dt>Measured checks</dt><dd>{result.checks_status}</dd></div>
+        {result.policy && <div><dt>Tested artifact SHA256</dt><dd className="mono-value" style={{ overflowWrap: 'anywhere' }}>{result.policy.sha256}</dd></div>}
+        <div><dt>Full report</dt><dd><a href={`/media/registry-sim/${result.behavior}/report.json`}>Read evidence and runtime provenance ↗</a></dd></div>
         {observations.map(([label, value]) => (
           <div key={String(label)}><dt>{label}</dt><dd className="mono-value">{observationLabel(value)}</dd></div>
         ))}
@@ -55,7 +58,7 @@ export function RegistrySimulation({ result, title, hasPublisherMedia }: Registr
           <summary className="registry-simulation-summary">
             <span className="registry-simulation-summary-copy">
               <span className="registry-simulation-summary-title"><Activity size={16} aria-hidden="true" /> Registry simulation</span>
-              <span className="registry-simulation-summary-note">Optional diagnostic render · {result.recipe.scene}</span>
+              <span className="registry-simulation-summary-note">Checks {result.checks_status} · {result.recipe.scene}</span>
             </span>
             <span className="registry-simulation-summary-action"><span>Show render</span><ChevronDown size={14} aria-hidden="true" /></span>
           </summary>
@@ -79,7 +82,7 @@ export function RegistrySimulation({ result, title, hasPublisherMedia }: Registr
       <div className="registry-simulation-head">
         <div>
           <h2><Activity size={17} aria-hidden="true" /> Registry simulation</h2>
-          <p>Registry diagnostic preview · not hardware validation or publisher-environment reproduction.</p>
+          <p>Checks {result.checks_status} · diagnostic preview, not hardware verification.</p>
         </div>
         <span className="detail-chip">shown above</span>
       </div>

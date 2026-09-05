@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 import { ID_PATTERN } from "../registry/schema/allowlist";
-import { BehaviorCategorySchema, type Behavior, type BehaviorCategory } from "../registry/schema/behavior";
+import { BehaviorCategorySchema, type BehaviorCategory } from "../registry/schema/behavior";
 
 const SUPPORTED_KEYS = new Set(["id", "name", "category", "author", "description", "license"]);
 
@@ -24,8 +24,8 @@ function usage(): string {
   return [
     "Usage: pnpm --silent new-behavior id=<id> [name=<name>] [category=<category>] [author=<name>] [description=<text>] [license=<value>]",
     "",
-    "Writes a descriptor scaffold to stdout. Redirect it to registry/behaviors/<id>.json,",
-    "then replace the TODO values before running pnpm check.",
+    "Writes an incomplete custom/legacy draft to stdout. Save it outside registry/behaviors/,",
+    "then resolve null/TODO values from sources and use pnpm preflight <draft.json>. Prefer pnpm uduck register <HF URL>.",
   ].join("\n");
 }
 
@@ -68,7 +68,7 @@ export function parseScaffoldArgs(values: string[]): ScaffoldOptions {
   };
 }
 
-export function createBehaviorScaffold(options: ScaffoldOptions): Behavior {
+export function createBehaviorScaffold(options: ScaffoldOptions) {
   return {
     id: options.id,
     name: options.name,
@@ -81,50 +81,19 @@ export function createBehaviorScaffold(options: ScaffoldOptions): Behavior {
     verification: {
       status: "community_experimental",
       summary: "Community behavior; physical deployment evidence has not been reviewed by the registry.",
-      hardware_target: "Microduck standard setup",
+      hardware_target: "TODO: confirm target hardware from upstream evidence",
       notes: "TODO: describe evidence, limitations, and simulation or hardware status.",
     },
-    contract: {
-      observation_dim: 61,
-      observation_breakdown: {
-        proprioception: 48,
-        twist: 3,
-        head_pose: 4,
-        body_pose: 6,
-      },
-      action_dim: 14,
-      action_breakdown: {
-        left_leg: 5,
-        neck_head: 4,
-        right_leg: 5,
-      },
-      control_frequency_hz: 50,
-      decimation: 4,
-      actuator_model: "Dynamixel XL330 (BAM M6 actuator physics)",
-      action_scale: 1,
-    },
-    compatibility: {
-      robot_model: "microduck-standard",
-      accessories_required: [],
-      terrain: ["flat"],
-      robotd_slot: "walk",
-    },
-    artifacts: {
-      onnx: {
-        filename: `${options.id}.onnx`,
-        url: `https://huggingface.co/your-org/your-policy/resolve/main/${options.id}.onnx`,
-        baked_normalizer: false,
-      },
-    },
+    contract: null,
+    compatibility: null,
+    artifacts: null,
     media: {
       hero_type: "badge",
     },
     sources: {
       upstream_repo: "https://github.com/your-org/your-policy",
     },
-    deployment: {
-      robotd_toml: `[policy]\nwalk = "/opt/robot/policies/${options.id}.onnx"`,
-    },
+    deployment: null,
   };
 }
 

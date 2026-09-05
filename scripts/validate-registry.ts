@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { PolicyPointerSchema } from "../registry/schema/policy";
 import path from "node:path";
 import { BehaviorSchema, type Behavior } from "../registry/schema/behavior";
 
@@ -53,6 +54,17 @@ export function validateAllBehaviors(): {
     }
   }
 
+  const policiesDir = path.resolve("registry/policies");
+  const repos = new Set<string>();
+  for (const file of fs.existsSync(policiesDir) ? fs.readdirSync(policiesDir).filter(f => f.endsWith('.json')) : []) {
+    try {
+      const policy = PolicyPointerSchema.parse(JSON.parse(fs.readFileSync(path.join(policiesDir, file), 'utf8')));
+      if (file !== `${policy.id}.json` || idSet.has(policy.id)) throw new Error('Duplicate or mismatched policy ID');
+      if (repos.has(policy.source.repo.toLowerCase())) throw new Error('Duplicate Hub repository');
+      repos.add(policy.source.repo.toLowerCase());
+      idSet.add(policy.id);
+    } catch (error) { errors.push(`Invalid policy ${file}: ${error}`); }
+  }
   return {
     valid: errors.length === 0,
     behaviors,

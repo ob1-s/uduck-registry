@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { QuackButton } from "./QuackAction";
 
-const REGISTRY_PROMPT = "Please look up https://github.com/ob1-s/uduck-registry and add my Microduck policy to the registry, then open a PR.";
+const REGISTRY_PROMPT = "Please submit my Hugging Face Microduck policy URL using https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml. Read CONTRIBUTING.md for the noninteractive gh command. Do not guess runtime metadata or simulation commands.";
 
 export function CopyPromptButton() {
   const [copied, setCopied] = useState(false);

@@ -1,3 +1,4 @@
+import { getPolicies } from "@/lib/policies";
 import { NextResponse } from "next/server";
 import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
 
@@ -5,7 +6,7 @@ import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
 export const dynamic = "force-static";
 
 export function generateStaticParams() {
-  return getAllBehaviors().map((behavior) => ({ id: behavior.id }));
+  return [...getAllBehaviors(), ...getPolicies()].map((behavior) => ({ id: behavior.id }));
 }
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 
 export async function GET(_request: Request, { params }: Props) {
   const { id } = await params;
-  const behavior = getBehaviorById(id);
+  const behavior = getBehaviorById(id) ?? getPolicies().find(p => p.id === id);
 
   if (!behavior) {
     return NextResponse.json({ error: `Behavior '${id}' not found` }, { status: 404 });

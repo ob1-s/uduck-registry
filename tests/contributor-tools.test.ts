@@ -11,7 +11,7 @@ const README_TABLE_START = "<!-- BEGIN GENERATED BEHAVIOR TABLE -->";
 const README_TABLE_END = "<!-- END GENERATED BEHAVIOR TABLE -->";
 
 describe("contributor tooling", () => {
-  it("creates a schema-valid scaffold from semantic arguments", () => {
+  it("creates an intentionally incomplete draft without invented runtime facts", () => {
     const options = parseScaffoldArgs([
       "id=moon-walk",
       "category=locomotion",
@@ -28,13 +28,12 @@ describe("contributor tooling", () => {
       category: "locomotion",
       authors: [{ name: "Ada Lovelace" }],
       license: "Apache-2.0",
-      contract: {
-        observation_dim: 61,
-        action_dim: 14,
-        control_frequency_hz: 50,
-      },
+      contract: null,
+      compatibility: null,
+      artifacts: null,
+      deployment: null,
     });
-    expect(BehaviorSchema.safeParse(scaffold).success).toBe(true);
+    expect(BehaviorSchema.safeParse(scaffold).success).toBe(false);
   });
 
   it("rejects malformed scaffold arguments", () => {

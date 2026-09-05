@@ -1,6 +1,7 @@
 name: Register a Microduck policy
 description: Submit a Hugging Face package URL; the bot resolves it and prepares a pull request.
-title: "[policy] "
+labels:
+  - policy-submission
 body:
   - type: markdown
     attributes:
@@ -29,4 +30,4 @@ body:
     id: notes
     attributes:
       label: Notes
-      description: Optional context or author media links for the reviewer.
+      description: Optional context or author media links for the reviewer. This is copied into the bot PR as reviewer context; it does not become runtime evidence.

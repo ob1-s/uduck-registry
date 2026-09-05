@@ -5,18 +5,22 @@ Submit the **Hugging Face model repository URL** through [Register a policy](htt
 For an agent using `gh`, the equivalent is:
 
 ```sh
-gh issue create --repo ob1-s/uduck-registry --title '[policy] My move' --body '### Policy URL
+gh issue create --repo ob1-s/uduck-registry --title 'Register my move' --label policy-submission --body '### Policy URL
 
 https://huggingface.co/your-name/microduck-your-move
 
 ### Category
 
-experimental'
+experimental
+
+### Notes
+
+Optional reviewer context'
 ```
 
-The bot pins the Hub commit, reads Pollen's schema-2 manifest, hashes the manifest and `policy.onnx`, checks the ONNX interface and finite outputs, and opens a review PR. It explicitly starts CI for that branch. Maintainers review the license, commands, and curation before merging. Failed ingestion is reported back on the issue; correct the URL and reopen the issue to retry.
+The bot pins the Hub commit, reads Pollen's schema-2 manifest, hashes the manifest and `policy.onnx`, checks the ONNX interface and finite outputs, and opens a review PR. It explicitly starts CI for that branch. Maintainers review the license, commands, and curation before merging. Failed ingestion is reported back on the issue; correct the form and save the edit to retry automatically. Reopening also retries. Notes are bounded reviewer context and are not executed or treated as runtime evidence.
 
-Publish a package with [Pollen's publisher](https://github.com/pollen-robotics/microduck_rl#publishing-a-policy) first if you only have a raw ONNX file. Official multi-policy sets, custom runtimes, and legacy sources remain possible through a normal issue and maintainer review.
+Publish a package with [Pollen's publisher](https://github.com/pollen-robotics/microduck_rl#publishing-a-policy) first if you only have a raw ONNX file. If registry simulation reports a missing `action_scale`, republish with the policy's trained scale (`uv run publish ... --action-scale <trained-scale>`); uDuck deliberately does not guess one. If a Hub repository is already registered and you are publishing a new revision, use a normal PR to update its existing `registry/policies/<id>.json` pointer for now. Official multi-policy sets, custom runtimes, and legacy sources remain possible through a normal issue and maintainer review.
 
 ## Local contribution
 
@@ -51,6 +55,6 @@ CI runs registry diagnostics when their execution identity is not already repres
 
 ## Repository setup
 
-The URL bot requires Actions to be allowed to create pull requests (repository Settings → Actions → General). It uses `GITHUB_TOKEN`; no PAT or external storage credentials are needed. The existing Cloudflare deployment secrets remain the deployment mechanism. New workflows take effect after this change reaches the default branch.
+The URL bot requires the repository label `policy-submission` and Actions to be allowed to create pull requests (repository Settings → Actions → General). Create the label once with `gh label create policy-submission --repo ob1-s/uduck-registry --color 0E8A16 --description 'Policy URL submissions processed by the registry bot'`. It uses `GITHUB_TOKEN`; no PAT or external storage credentials are needed. The existing Cloudflare deployment secrets remain the deployment mechanism. New workflows take effect after this change reaches the default branch.
 
 See [research/registry-direction.md](research/registry-direction.md) for responsibilities, upstream findings, and the branch reconciliation.

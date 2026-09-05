@@ -25,6 +25,7 @@ class ResolverTests(unittest.TestCase):
         result = classify(MANIFEST)
         self.assertEqual(result['install_route'], 'skill')
         self.assertEqual(result['simulation']['status'], 'not-covered')
+        self.assertIn('--action-scale', result['simulation']['reason'])
         m = copy.deepcopy(MANIFEST)
         m.update(kind='perpetual', duration_s=None)
         m['command'] = {'twist': ['flag', 'side', 'unused'], 'idle': [0, 0, 0]}
@@ -64,8 +65,11 @@ class ResolverTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'hash mismatch'):
                 resolve('https://huggingface.co/o/r', {'artifact_sha256': '0' * 64, 'manifest_sha256': digest(raw)})
     def test_issue_input_is_data(self):
-        self.assertEqual(parse_issue('### Policy URL\n\nhttps://huggingface.co/a/b\n\n### Category\n\nexperimental\n'), ('https://huggingface.co/a/b', 'experimental'))
+        self.assertEqual(parse_issue('### Policy URL\n\nhttps://huggingface.co/a/b\n\n### Category\n\nexperimental\n\n### Notes\n\nhello @maintainer\n'), ('https://huggingface.co/a/b', 'experimental', 'hello @maintainer'))
+        self.assertEqual(parse_issue('### Policy URL\n\nhttps://huggingface.co/a/b\n\n### Category\n\nexperimental\n'), ('https://huggingface.co/a/b', 'experimental', ''))
         with self.assertRaises(ValueError): parse_issue('### Policy URL\n\na\nb')
+        with self.assertRaisesRegex(ValueError, 'Notes exceed'):
+            parse_issue('### Policy URL\n\nhttps://huggingface.co/a/b\n\n### Category\n\nexperimental\n\n### Notes\n\n' + 'x' * 4001)
     def test_pointer_rejects_runtime_claims_and_unsafe_paths(self):
         p = {'id': 'test', 'source': {'repo': 'o/r', 'revision': 'a'*40, 'artifact_sha256': 'b'*64, 'manifest_sha256': 'c'*64}, 'curation': {'category': 'experimental'}}
         self.assertEqual(validate_pointer(p), p)

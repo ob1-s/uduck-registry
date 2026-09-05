@@ -251,8 +251,13 @@ def main():
     if (ROOT / 'registry/behaviors' / f'{policy_id}.json').exists():
         raise ValueError('ID already belongs to a legacy behavior; migration requires review')
     for file in (ROOT / 'registry/policies').glob('*.json'):
-        if json.loads(file.read_text())['source']['repo'].lower() == p['source']['repo'].lower():
-            raise ValueError('Repository already registered; update its existing pointer')
+        existing = json.loads(file.read_text())
+        if existing['source']['repo'].lower() == p['source']['repo'].lower():
+            raise ValueError(
+                f"Repository already registered as {existing['id']}. To publish a new revision, "
+                f"open a normal PR updating registry/policies/{existing['id']}.json; "
+                "the URL bot does not create update PRs yet."
+            )
     destination = ROOT / 'registry/policies' / f'{policy_id}.json'
     with destination.open('x') as output:
         output.write(json.dumps(p, indent=2) + '\n')

@@ -126,6 +126,61 @@ class EvidenceStoreTests(unittest.TestCase):
             # Historical blob retained for audit.
             self.assertIn("a" * 64, merged["entries"])
 
+
+    def test_plan_time_base_preserves_cached_entries_when_only_changed_entry_reruns(self) -> None:
+        # The exact index used to decide cached-vs-run must also be the publish
+        # merge base. If only "changed" reruns, the already-cached entry must
+        # survive even though it has no local result in this workflow run.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cached_key = "a" * 64
+            changed_key = "b" * 64
+            base = {
+                "version": 2,
+                "format": "uduck-evidence-v2",
+                "entries": {
+                    cached_key: {
+                        "behavior": "cached",
+                        "key": cached_key,
+                        "asset": f"{'c' * 64}.tar.gz",
+                        "asset_sha256": "c" * 64,
+                        "blob_sha256": "c" * 64,
+                        "inputs_sha256": "d" * 64,
+                    },
+                },
+                "current": {"cached": cached_key},
+            }
+            fragment = {
+                "version": 2,
+                "format": "uduck-evidence-v2",
+                "entries": {
+                    changed_key: {
+                        "behavior": "changed",
+                        "key": changed_key,
+                        "asset": f"{'e' * 64}.tar.gz",
+                        "asset_sha256": "e" * 64,
+                        "blob_sha256": "e" * 64,
+                        "inputs_sha256": "f" * 64,
+                    },
+                },
+                "current": {"changed": changed_key},
+            }
+            (root / "plan-time-index.json").write_text(json.dumps(base))
+            (root / "local-fragment.json").write_text(json.dumps(fragment))
+            with patch.object(
+                evidence_store,
+                "_authored_descriptors",
+                return_value={"cached": Path("cached.json"), "changed": Path("changed.json")},
+            ):
+                merged = evidence_store.merge(
+                    root / "plan-time-index.json",
+                    root / "local-fragment.json",
+                    root / "published-index.json",
+                )
+            self.assertEqual(merged["current"], {"cached": cached_key, "changed": changed_key})
+            self.assertIn(cached_key, merged["entries"])
+            self.assertIn(changed_key, merged["entries"])
+
     def test_revision_validation_distinguishes_git_sha_from_sha256(self) -> None:
         self.assertTrue(evidence_store.valid_git_revision("a" * 40))
         self.assertFalse(evidence_store.valid_git_revision("a" * 64))
@@ -186,17 +241,26 @@ class EvidenceStoreTests(unittest.TestCase):
         item = next(i for i in plan["items"] if i["behavior"] == "test")
         self.assertEqual(item["status"], "cached")
 
-    def test_publish_job_uploads_canonical_index_name(self) -> None:
-        # The durable Release must contain exactly RELEASE_INDEX_NAME, because
-        # that is the only asset fetch-index ever downloads. A drift here
-        # (e.g. uploading evidence-index.json) silently disables the cache.
+    def test_workflow_carries_plan_time_index_through_publish_and_validate(self) -> None:
+        # The plan-time index is a workflow artifact and is the single merge
+        # base for publish and validate. Neither downstream job re-downloads
+        # the mutable Release index after the cache decision was made.
         repo_root = Path(__file__).resolve().parents[2]
         workflow = (repo_root / ".github/workflows/ci.yml").read_text()
-        publish = workflow.split("publish-evidence:")[1].split("\n  validate:")[0]
+        evidence = workflow.split("\n  evidence:", 1)[1].split("\n  publish-evidence:", 1)[0]
+        publish = workflow.split("\n  publish-evidence:", 1)[1].split("\n  validate:", 1)[0]
+        validate = workflow.split("\n  validate:", 1)[1]
+
+        self.assertIn("evidence-index.json", evidence)
+        self.assertIn("--existing ci-evidence/evidence-index.json", publish)
+        self.assertNotIn("gh release download", publish)
+        self.assertNotIn("release-index/index.json", publish)
         self.assertIn("--out index.json", publish)
         self.assertIn('index.json --repo "$GH_REPO" --clobber', publish)
-        self.assertNotIn("evidence-index.json", publish)
-        self.assertIn("--pattern index.json", publish)
+
+        self.assertIn("--existing ci-evidence/evidence-index.json", validate)
+        self.assertNotIn("fetch-index", validate)
+        self.assertNotIn("durable-evidence-index.json", validate)
 
     def test_archive_rejects_path_traversal_and_links(self) -> None:
         archive = evidence_store._archive_bytes([("test/report.json", b'{"behavior":"test","execution":"unsupported"}')])

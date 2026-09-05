@@ -109,6 +109,7 @@ jobs:
           path: |
             sim-results/
             evidence-plan.json
+            evidence-index.json
           retention-days: 14
           if-no-files-found: warn
 
@@ -130,19 +131,8 @@ jobs:
           path: ci-evidence
       - name: Package content-addressed evidence
         run: python3 scripts/evidence_store.py package --results ci-evidence/sim-results --out evidence-assets --fragment evidence-fragment.json
-      - name: Read the existing release index
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          mkdir -p release-index
-          if gh release download "$EVIDENCE_TAG" --repo "$GH_REPO" --pattern index.json --dir release-index; then
-            echo 'Using existing evidence index.'
-          else
-            echo 'No prior evidence index; starting a new content-addressed store.'
-          fi
       - name: Merge current results with evidence history
-        run: python3 scripts/evidence_store.py merge --existing release-index/index.json --fragment evidence-fragment.json --out index.json
+        run: python3 scripts/evidence_store.py merge --existing ci-evidence/evidence-index.json --fragment evidence-fragment.json --out index.json
       - name: Create the durable evidence release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -218,12 +208,10 @@ jobs:
       - name: Compile Public Registry Index
         run: pnpm compile
 
-      - name: Read durable evidence index
-        run: python3 scripts/evidence_store.py fetch-index --release-url "$EVIDENCE_RELEASE_URL" --out durable-evidence-index.json --allow-missing
       - name: Add this run's temporary diagnostics to the build view
         run: |
           python3 scripts/evidence_store.py package --results ci-evidence/sim-results --out ci-evidence/local-assets --fragment ci-evidence/local-fragment.json
-          python3 scripts/evidence_store.py merge --existing durable-evidence-index.json --fragment ci-evidence/local-fragment.json --out build-evidence-index.json
+          python3 scripts/evidence_store.py merge --existing ci-evidence/evidence-index.json --fragment ci-evidence/local-fragment.json --out build-evidence-index.json
       - name: Hydrate matching evidence into this build
         run: python3 scripts/evidence_store.py hydrate --index build-evidence-index.json --release-url "$EVIDENCE_RELEASE_URL" --local ci-evidence/sim-results --out public/media/registry-sim
 

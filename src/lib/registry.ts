@@ -43,11 +43,24 @@ function readEvidence(id: string): CatalogSimulationEvidence | null {
   try {
     const report = JSON.parse(fs.readFileSync(reportPath, "utf-8")) as Record<string, unknown>;
     const execution = report.execution;
-    const status: CatalogSimulationEvidence["status"] = execution === "rendered"
-      ? report.checks_status === "failed" ? "failed" : "passed"
-      : execution === "unsupported" ? "not-covered"
-        : execution === "rejected" || execution === "failed" ? "failed"
-          : "not-run";
+    // Fail closed: a rendered report without an explicit checks_status,
+    // identity, and checks never becomes "passed".
+    let status: CatalogSimulationEvidence["status"];
+    if (execution === "rendered") {
+      if (report.checks_status !== "passed" && report.checks_status !== "failed") return null;
+      status = report.checks_status;
+      if (typeof report.evidence_key !== "string" || !/^[a-f0-9]{64}$/.test(report.evidence_key)) return null;
+      if (typeof report.inputs_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(report.inputs_sha256)) return null;
+      const recipe = report.recipe as Record<string, unknown> | undefined;
+      if (!recipe || typeof recipe.runner !== "string" || typeof recipe.scenario !== "string") return null;
+      if (!Array.isArray(report.checks) || report.checks.length === 0) return null;
+    } else if (execution === "unsupported") {
+      status = "not-covered";
+    } else if (execution === "rejected" || execution === "failed") {
+      status = "failed";
+    } else {
+      return null;
+    }
     const recipe = report.recipe && typeof report.recipe === "object" && !Array.isArray(report.recipe)
       ? report.recipe as Record<string, unknown>
       : {};
@@ -62,6 +75,8 @@ function readEvidence(id: string): CatalogSimulationEvidence | null {
         && typeof (check as Record<string, unknown>).detail === "string"
       ))
       : [];
+    // Rendered evidence requires checks; report-only (unsupported) may have none.
+    if (execution === "rendered" && checks.length === 0) return null;
     const localLoop = path.join(directory, "loop.mp4");
     const localPoster = path.join(directory, "poster.png");
     return {

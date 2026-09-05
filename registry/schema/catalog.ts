@@ -275,25 +275,48 @@ function registryMedia(evidence?: CatalogSimulationEvidence | null): CatalogMedi
   return { loop_url: loop, poster_url: poster, report_url: report };
 }
 
+function coverageReportUrl(evidence?: CatalogSimulationEvidence | null): string | null {
+  // Coverage report availability is independent from registry media: an
+  // unsupported/rejected/failed-before-render report legitimately has a
+  // report with no loop/poster. Do not hide it behind the media gate.
+  return mediaOrNull(evidence?.report_url);
+}
+
 function coverage(
   packageInspection: CatalogCoverage["package_inspection"],
   evidence?: CatalogSimulationEvidence | null,
 ): CatalogCoverage {
   const media = registryMedia(evidence);
-  const status = evidence?.status ?? (media ? "passed" : "not-run");
+  // Fail closed: only explicit passed/failed/not-covered/not-run become
+  // evidence. Missing status never infers "passed".
+  const rawStatus = evidence?.status;
+  const status: CatalogCoverage["registry_simulation"]["status"] =
+    rawStatus === "passed" || rawStatus === "failed" || rawStatus === "not-covered" || rawStatus === "not-run"
+      ? rawStatus
+      : media
+        ? "failed"
+        : "not-run";
+  // Malformed rendered evidence (missing key/inputs/checks) must not become
+  // positive evidence. Require the identity fields for a passed claim.
+  let finalStatus = status;
+  if (finalStatus === "passed") {
+    const hasIdentity = nullableSha(evidence?.evidence_key) && nullableSha(evidence?.inputs_sha256);
+    const hasChecks = Array.isArray(evidence?.checks) && (evidence?.checks?.length ?? 0) > 0;
+    if (!hasIdentity || !hasChecks) finalStatus = "failed";
+  }
   return {
     package_inspection: packageInspection,
     registry_simulation: {
-      status,
+      status: finalStatus,
       evidence_key: nullableSha(evidence?.evidence_key),
       inputs_sha256: nullableSha(evidence?.inputs_sha256),
       runner: nullableString(evidence?.runner),
       scene: nullableString(evidence?.scene),
       scenario: nullableString(evidence?.scenario),
-      report_url: media?.report_url ?? null,
+      report_url: coverageReportUrl(evidence),
       loop_url: media?.loop_url ?? null,
       poster_url: media?.poster_url ?? null,
-      checks: evidence?.checks ?? [],
+      checks: Array.isArray(evidence?.checks) ? (evidence?.checks as CatalogCoverage["registry_simulation"]["checks"]) : [],
       reason: nullableString(evidence?.reason),
     },
   };
@@ -375,6 +398,29 @@ export function catalogEntryFromBehavior(
 ): CatalogEntry {
   const authorMedia = authorMediaFromBehavior(behavior);
   const registry = registryMedia(evidence);
+  // Hardware migration: never strengthen a claim. claimed_hardware with an
+  // attributable upstream publisher source becomes author-claimed (not
+  // uDuck-verified). verified_hardware without independent registry evidence
+  // is downgraded. community_experimental carries no hardware claim.
+  // Audited 2026-09-05: 9 claimed_hardware entries all cite
+  // pollen-robotics/microduck as upstream with explicit "Verified on physical
+  // Microduck hardware" summaries and, in most cases, upstream hardware clips.
+  // They are preserved as publisher claims, never as maintainer-verified.
+  let hardwareStatus: "none" | "author-claimed" | "maintainer-verified" = "none";
+  let hardwareNote: string | null;
+  if (behavior.verification.status === "claimed_hardware") {
+    hardwareStatus = "author-claimed";
+    hardwareNote =
+      `Publisher claim from ${behavior.sources.upstream_repo}: ${behavior.verification.summary} ` +
+      `Not independently verified by uDuck.`;
+  } else if (behavior.verification.status === "verified_hardware") {
+    hardwareStatus = "none";
+    hardwareNote =
+      `Descriptor claims independent verification, but no attributable registry evidence is recorded; ` +
+      `downgraded to none pending maintainer review. Original summary: ${behavior.verification.summary}`;
+  } else {
+    hardwareNote = "No independently attributable registry hardware evidence is recorded.";
+  }
   return CatalogEntrySchema.parse({
     id: behavior.id,
     name: behavior.name,
@@ -398,12 +444,9 @@ export function catalogEntryFromBehavior(
       scope: null,
     }, evidence ?? behaviorSimulationEvidence(behavior)),
     hardware: {
-      // Historical verification fields were authored by an earlier registry
-      // workflow without attributable physical evidence. Keep them out of the
-      // public claim surface until a maintainer records a real verification.
-      status: "none",
+      status: hardwareStatus,
       target: nullableString(behavior.verification.hardware_target),
-      note: "No independently attributable registry hardware evidence is recorded.",
+      note: hardwareNote,
     },
     media: {
       author: authorMedia,
@@ -430,6 +473,23 @@ function manifestRobot(manifest: Record<string, unknown>): Record<string, unknow
   return robot && typeof robot === "object" && !Array.isArray(robot)
     ? robot as Record<string, unknown>
     : {};
+}
+
+function manifestTraining(manifest: Record<string, unknown>): Record<string, unknown> {
+  const training = manifest.training;
+  return training && typeof training === "object" && !Array.isArray(training)
+    ? (training as Record<string, unknown>)
+    : {};
+}
+
+function trainingRepoUrl(training: Record<string, unknown>): string | null {
+  const repo = training.repo;
+  if (typeof repo !== "string") return null;
+  // Only link a clean owner/repo slug; never parse prose into a fake URL.
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo)) return null;
+  if (repo.startsWith("datasets/") || repo.startsWith("spaces/") || repo.startsWith("models/")) return null;
+  const url = `https://github.com/${repo}`;
+  return httpsOrNull(url);
 }
 
 function manifestCommandEncoding(manifest: Record<string, unknown>): CatalogRuntime["command_encoding"] {
@@ -482,6 +542,13 @@ export function catalogEntryFromPolicy(
   const contractAction = manifestNumber(manifest, "action_len");
   const robotControlHz = nullableNumber(robot.control_hz);
   const robotModel = nullableString(robot.model);
+  const training = manifestTraining(manifest);
+  const trainingUrl =
+    httpsOrNull(manifestString(manifest, "training_code_url")) ?? trainingRepoUrl(training);
+  const taskId =
+    manifestString(manifest, "task_id") ??
+    manifestString(manifest, "task") ??
+    nullableString(training.task_id);
   return CatalogEntrySchema.parse({
     id: policy.id,
     name: manifestString(manifest, "name") ?? policy.id,
@@ -509,9 +576,9 @@ export function catalogEntryFromPolicy(
       },
       upstream: {
         runtime_url: null,
-        training_url: httpsOrNull(manifestString(manifest, "training_code_url")),
+        training_url: trainingUrl,
         simulator_url: null,
-        task_id: manifestString(manifest, "task_id") ?? manifestString(manifest, "task"),
+        task_id: taskId,
       },
     },
     runtime: {

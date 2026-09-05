@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal, XCircle } from "lucide-react";
 import { getCatalogEntries, getCatalogEntryById } from "@/lib/registry";
 import { coverageLabel, hardwareLabel, primaryMedia, runtimeLabel, runtimeKindLabel } from "@/lib/catalog";
 import { formatAccessory, formatCategory } from "@/lib/labels";
@@ -63,9 +63,11 @@ function EvidenceBlock({ entry }: { entry: import("@registry/schema/catalog").Ca
       {simulation.checks.length > 0 && (
         <div className="registry-checks" aria-label="Registry simulation checks">
           {simulation.checks.map((check) => (
-            <div className="registry-check" key={check.check}>
-              <CheckCircle2 size={14} aria-hidden="true" />
-              <span><strong>{check.check.replaceAll("_", " ")}</strong><small>{check.detail}</small></span>
+            <div className={`registry-check ${check.passed ? "is-pass" : "is-fail"}`} key={check.check}>
+              {check.passed
+                ? <CheckCircle2 size={14} aria-hidden="true" />
+                : <XCircle size={14} aria-hidden="true" />}
+              <span><strong>{check.passed ? "PASS" : "FAIL"} · {check.check.replaceAll("_", " ")}</strong><small>{check.detail}</small></span>
             </div>
           ))}
         </div>
@@ -104,7 +106,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
           <h1>{entry.name}</h1>
           <p className="detail-description">{entry.description}</p>
           <div className="author-strip">
-            <span>By <strong>{entry.authors.map((item) => item.name).join(", ")}</strong></span>
+            <span>Publisher <strong>{entry.authors.map((item) => item.name).join(", ")}</strong></span>
             {authorUrl && <a href={authorUrl} target="_blank" rel="noopener noreferrer"><GitFork size={13} aria-hidden="true" /> Open publisher profile <ArrowUpRight size={12} aria-hidden="true" /></a>}
           </div>
         </header>

@@ -41,3 +41,23 @@ sim-results/
 # Python
 __pycache__/
 *.pyc
+
+# Generated catalog and resolved upstream facts
+.generated/
+public/registry.json
+public/media/registry-sim/
+.venv/
+
+# Local evidence release staging
+evidence-assets/
+evidence-index.json
+evidence-fragment.json
+durable-evidence-index.json
+build-evidence-index.json
+evidence-plan.json
+ci-evidence/
+
+# Accidentally committed local dumps (narrowly scoped, not blanket rules)
+/1788162747759_6ax2r.json
+/uduck-registry.txt
+/registry-evidence.zip

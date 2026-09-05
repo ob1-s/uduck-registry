@@ -27,6 +27,7 @@ SUPPORTED_MODELS = {"microduck-standard", "microduck-rollers"}
 SUPPORTED_SCENE = "flat-v1"
 SUPPORTED_SCENARIOS = {
     "velocity",
+    "command_schedule",
     "standing",
     "sitstand",
     "oneshot_phase",
@@ -192,8 +193,41 @@ def preflight_descriptor(descriptor: dict) -> PreflightResult:
                     f"simulation.segments cover {total_duration:g}s but "
                     f"simulation.duration_s={duration_value:g}s; the schedule must cover the rollout exactly"
                 )
+    elif scenario == "command_schedule":
+        segments = simulation.get("segments")
+        if not isinstance(segments, list) or not segments:
+            errors.append("simulation.segments is required for the command_schedule scenario")
+        else:
+            total_duration = 0.0
+            for index, segment in enumerate(segments):
+                prefix = f"simulation.segments[{index}]"
+                if not isinstance(segment, dict):
+                    errors.append(f"{prefix} must be an object")
+                    continue
+                segment_duration = segment.get("duration_s")
+                if _is_finite_number(segment_duration) and segment_duration > 0:
+                    total_duration += float(segment_duration)
+                else:
+                    errors.append(f"{prefix}.duration_s must be a positive finite number")
+                command = segment.get("command")
+                if not isinstance(command, (list, tuple)) or len(command) != 3:
+                    errors.append(f"{prefix}.command must have exactly three finite values")
+                else:
+                    for axis, value in enumerate(command):
+                        if not _is_finite_number(value):
+                            errors.append(f"{prefix}.command[{axis}] must be a finite number")
+                        elif value < -3 or value > 3:
+                            errors.append(
+                                f"{prefix}.command[{axis}]={value:g} exceeds "
+                                "the command range [-3, 3]"
+                            )
+            if duration_value is not None and abs(total_duration - duration_value) > 1e-9:
+                errors.append(
+                    f"simulation.segments cover {total_duration:g}s but "
+                    f"simulation.duration_s={duration_value:g}s; the schedule must cover the rollout exactly"
+                )
     elif "segments" in simulation:
-        errors.append("simulation.segments is only valid with the velocity scenario")
+        errors.append("simulation.segments is only valid with the velocity and command_schedule scenarios")
 
     if contract.get("observation_dim") != OBSERVATION_DIM:
         errors.append(

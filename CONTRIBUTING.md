@@ -1,126 +1,56 @@
-# Contributing to uDuck Registry
+# Add a Microduck policy
 
-uDuck Registry is a directory of Microduck behavior policies. A contribution is one JSON descriptor that points to the policy artifact and its source.
+Submit the **Hugging Face model repository URL** through [Register a policy](https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml). No fork, JSON, or local simulator required.
 
-## Add a behavior
+For an agent using `gh`, the equivalent is:
 
-1. Fork and clone the repository.
+```sh
+gh issue create --repo ob1-s/uduck-registry --title '[policy] My move' --body '### Policy URL
 
-   ```bash
-   git clone https://github.com/<your-username>/uduck-registry.git
-   cd uduck-registry
-   pnpm install
-   ```
+https://huggingface.co/your-name/microduck-your-move
 
-   First-time fork contributions may show a pending workflow until a maintainer approves it.
+### Category
 
-2. Generate a descriptor scaffold so the fixed Microduck contract does not need to be written by hand:
-
-   ```bash
-   pnpm --silent new-behavior id=my-cool-trick name="My Cool Duck Trick" category=agility-tricks author="Your Name" > registry/behaviors/my-cool-trick.json
-   ```
-
-   Replace the TODO values and update the source, artifact, compatibility, deployment, and media fields. The command only writes JSON to stdout; it does not contact GitHub or open a pull request.
-
-3. The filename must match the lowercase kebab-case `id`. Use `community_experimental` unless the upstream project or a pull request provides physical-run evidence. Use `claimed_hardware` when the author reports a physical run that the registry has not reproduced. Use `verified_hardware` only for an upstream-supported behavior or a submission with physical evidence.
-
-4. Point `artifacts.onnx.url` at the canonical ONNX file. Use `https://huggingface.co/...` or `https://raw.githubusercontent.com/...`; these are the artifact hosts accepted by registry validation. The registry links to that file and does not copy policy weights into the repository.
-
-5. Run the checks and rebuild the catalog:
-
-   ```bash
-   pnpm check
-   ```
-
-   This refreshes `README.md` and `public/registry.json`; include both generated files in your pull request.
-
-6. Open a pull request with the upstream source, license, hardware requirements, and any evidence supporting the verification label.
-
-### Preview media
-
-- `video_url` is the main demonstration for the behavior page. It can show the full context of a move and has player controls.
-- `loop_url` is the muted, autoplaying preview used on explorer cards. Keep it short and focused on the movement. If it is omitted, cards fall back to `video_url`.
-- `thumbnail_url` is an optional static poster or fallback image.
-
-For a local media path such as `/media/my-move/loop.mp4`, include the matching file at `public/media/my-move/loop.mp4` in the pull request.
-
-### CI simulation check
-
-Every pull request that adds or edits a descriptor is automatically run
-through the registry's headless MuJoCo runner only when it declares an explicit
-`simulation` recipe. `compatibility.robotd_slot` never selects the simulation
-scenario. The workflow uploads `report.json`, `loop.mp4`, and `poster.png` for
-human review; it does not publish them automatically.
-
-The report distinguishes a completed render from its individual observations.
-Requested checks use a fixed registry vocabulary, and their results are
-measured by the runner—not authored in the descriptor. A render is not hardware
-verification or proof that a publisher's training environment was reproduced.
-The runner rejects recipes it cannot represent before downloading the policy;
-it does not silently clamp command values.
-
-If the policy requires custom environment code, objects, meshes, dependencies,
-or a different observation/action contract, use `"runner": "external"` with
-an honest reason and provide publisher-owned media instead. Do not give CI a
-convenient but inaccurate command schedule just so the policy can be rendered.
-Do not add per-policy executable code to this repository.
-
-See [`simulation/README.md`](simulation/README.md) for recipe examples, start
-states, supported scenarios, exact report semantics, and CI isolation rules.
-
-## Descriptor shape
-
-```json
-{
-  "id": "my-cool-trick",
-  "name": "My Cool Duck Trick",
-  "version": "1.0.0",
-  "description": "A short explanation of the behavior.",
-  "category": "agility-tricks",
-  "tags": ["community", "trick"],
-  "authors": [{ "name": "Your Name", "github": "yourgithub" }],
-  "license": "Apache-2.0",
-  "verification": {
-    "status": "community_experimental",
-    "summary": "Community policy with no physical deployment evidence yet.",
-    "hardware_target": "Microduck v1"
-  },
-  "contract": {
-    "observation_dim": 61,
-    "observation_breakdown": {
-      "proprioception": 48,
-      "twist": 3,
-      "head_pose": 4,
-      "body_pose": 6
-    },
-    "action_dim": 14,
-    "action_breakdown": {
-      "left_leg": 5,
-      "neck_head": 4,
-      "right_leg": 5
-    },
-    "control_frequency_hz": 50,
-    "decimation": 4,
-    "actuator_model": "Dynamixel XL330 (BAM M6 actuator physics)",
-    "action_scale": 1
-  },
-  "compatibility": {
-    "robot_model": "microduck-standard",
-    "accessories_required": [],
-    "terrain": ["flat"],
-    "robotd_slot": "walk"
-  },
-  "artifacts": {
-    "onnx": {
-      "filename": "my_cool_trick.onnx",
-      "url": "https://huggingface.co/your-org/my-cool-trick/resolve/main/my_cool_trick.onnx",
-      "baked_normalizer": true
-    }
-  },
-  "media": { "hero_type": "badge" },
-  "sources": { "upstream_repo": "https://github.com/yourgithub/my-duck-repo" },
-  "deployment": { "robotd_toml": "[policy]\nwalk = \"/opt/robot/policies/my_cool_trick.onnx\"" }
-}
+experimental'
 ```
 
-The complete field definitions are in [`registry/schema/behavior.schema.json`](registry/schema/behavior.schema.json).
+The bot pins the Hub commit, reads Pollen's schema-2 manifest, hashes the manifest and `policy.onnx`, checks the ONNX interface and finite outputs, and opens a review PR. It explicitly starts CI for that branch. Maintainers review the license, commands, and curation before merging. Failed ingestion is reported back on the issue; correct the URL and reopen the issue to retry.
+
+Publish a package with [Pollen's publisher](https://github.com/pollen-robotics/microduck_rl#publishing-a-policy) first if you only have a raw ONNX file. Official multi-policy sets, custom runtimes, and legacy sources remain possible through a normal issue and maintainer review.
+
+## Local contribution
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/policy/requirements.txt
+export UDUCK_PYTHON="$PWD/.venv/bin/python"
+pnpm install
+pnpm uduck resolve https://huggingface.co/your-name/microduck-your-move
+pnpm uduck register https://huggingface.co/your-name/microduck-your-move --category agility-tricks
+pnpm policies:prepare
+pnpm check
+```
+
+Commit only `registry/policies/<id>.json`. You may edit its category, tags, summary, notes, and author media URLs. Runtime facts come from the pinned upstream manifest; hashes come from downloaded bytes. Do not invent missing values, translate prose into simulation commands, or label an ONNX smoke check a successful behavior test.
+
+`pnpm validate` is an offline schema/identity check. `pnpm policies:prepare` performs network resolution and ONNX inspection. `pnpm build` produces the public indexes and static site from prepared facts. CI does all three. Generated indexes, resolved facts, and simulation videos are build outputs and do not belong in contributions.
+
+## Custom and existing entries
+
+`registry/behaviors/` contains the existing, manually reviewed descriptor format. Its fields are historical publisher/curator claims, not a second package standard. Keep existing URLs stable. Prefer migrating a published Pollen package to a pointer; do not mechanically infer missing metadata from an older descriptor.
+
+`pnpm new-behavior id=my-move` emits an intentionally incomplete draft with unknown runtime sections set to `null`. Save it outside `registry/behaviors/`. `pnpm preflight <draft.json>` reports missing/invalid values. Resolve them from source evidence before proposing a custom entry. A default walk slot, action scale, normalizer flag, or simulated terrain is never evidence.
+
+An explicit legacy simulation recipe remains a maintainer-owned diagnostic. Unsupported objects, scenes, command encodings, or actuator physics must be described honestly. See [simulation/README.md](simulation/README.md).
+
+## Evidence and media
+
+Author media is welcome, including bespoke scenes and hardware clips; link to the publisher's HTTPS media. It remains separate from registry evidence. Existing cached author media is retained for continuity.
+
+CI runs registry diagnostics when their execution identity is not already represented by trusted durable evidence, publishes matching reports and renders into the static build, and archives main-branch outputs in a content-addressed GitHub Release. Contributors never commit generated videos. Reports bind the policy hash to execution-relevant inputs only (source revision, manifest/artifact hashes, maintainer recipe, simulator code, asset lock, dependency pins, environment contract). Curation-only edits such as tags or summaries do not rerun simulation. Changing execution inputs invalidates earlier display evidence. A failed measured check remains visible as failed. Package inspection (ONNX shape/smoke), registry simulation (pinned runner + recipe), publisher facts, and hardware claims are independent axes. No diagnostic establishes hardware verification.
+
+## Repository setup
+
+The URL bot requires Actions to be allowed to create pull requests (repository Settings → Actions → General). It uses `GITHUB_TOKEN`; no PAT or external storage credentials are needed. The existing Cloudflare deployment secrets remain the deployment mechanism. New workflows take effect after this change reaches the default branch.
+
+See [research/registry-direction.md](research/registry-direction.md) for responsibilities, upstream findings, and the branch reconciliation.

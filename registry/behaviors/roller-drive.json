@@ -23,8 +23,8 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_hardware",
-    "summary": "Verified on physical Microduck equipped with official Pollen 3D-printed roller skate foot accessories.",
+    "status": "claimed_hardware",
+    "summary": "Upstream-provided behavior; not independently hardware-verified by uDuck. Verified on physical Microduck equipped with official Pollen 3D-printed roller skate foot accessories.",
     "hardware_target": "Microduck v1 + Roller Skate Accessories (passive bearings/wheels)",
     "notes": "Requires passive roller foot frames and 22x16x4 bearings. Robot model is robot_allcollisions_rollers.xml."
   },

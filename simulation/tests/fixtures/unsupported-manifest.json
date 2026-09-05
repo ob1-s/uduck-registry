@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "name": "mystery-spin",
+  "kind": "perpetual",
+  "obs_len": 61,
+  "action_len": 14,
+  "action_scale": 1.0,
+  "entry_pose": "standing",
+  "duration_s": null,
+  "description": "Spins on command with a daemon-driven twist the registry cannot derive.",
+  "command": {
+    "encoding": "constant",
+    "twist": ["spin rate follows a custom head-tracked target"],
+    "head": "tracks a moving target",
+    "body": "leans into the spin",
+    "idle": [0, 0, 0]
+  },
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "training": {
+    "task_id": "Mjlab-MysterySpin-Flat-MicroDuck",
+    "repo": "pollen-robotics/microduck_rl"
+  }
+}

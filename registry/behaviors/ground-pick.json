@@ -24,8 +24,8 @@
   ],
   "license": "Apache-2.0",
   "verification": {
-    "status": "verified_hardware",
-    "summary": "Verified on physical Microduck hardware picking up objects from carpet and hard flooring with the beak gripper.",
+    "status": "claimed_hardware",
+    "summary": "Upstream-provided behavior; not independently hardware-verified by uDuck. Verified on physical Microduck hardware picking up objects from carpet and hard flooring with the beak gripper.",
     "hardware_target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)",
     "notes": "Executes on 3.5s phase clock (phase advances 1/5.0 per sec, ends at 0.7 phase)."
   },

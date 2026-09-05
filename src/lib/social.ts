@@ -1,14 +1,8 @@
-import type { Behavior, VerificationStatus } from "@registry/schema/behavior";
+import type { CatalogEntry } from "@registry/schema/catalog";
 import { formatCategory } from "./labels";
 import { SOCIAL_IMAGE_PATHS } from "./site";
 
 export type SocialImageVariant = "openGraph" | "twitter";
-
-const verificationLabels: Record<VerificationStatus, string> = {
-  verified_hardware: "Hardware verified",
-  claimed_hardware: "Hardware claimed",
-  community_experimental: "Experimental",
-};
 
 const motionLabels: Record<string, string> = {
   "alpha-walking": "WALK",
@@ -32,20 +26,14 @@ export function shorten(text: string, limit: number) {
   return `${text.slice(0, limit - 1).replace(/\s+\S*$/, "")}…`;
 }
 
-export function getMotionLabel(behavior: Behavior) {
+export function getMotionLabel(behavior: CatalogEntry) {
   return motionLabels[behavior.id] ?? formatCategory(behavior.category).toUpperCase();
 }
 
-export function getVerificationLabel(behavior: Behavior) {
-  return verificationLabels[behavior.verification.status];
-}
-
-export function getSocialCopy(behavior: Behavior) {
-  const status = getVerificationLabel(behavior);
-
+export function getSocialCopy(behavior: CatalogEntry) {
   return {
     title: behavior.name,
-    description: shorten(`${status} Microduck move. ${behavior.description}`, 120),
+    description: shorten(`Microduck move. ${behavior.description}`, 120),
   };
 }
 

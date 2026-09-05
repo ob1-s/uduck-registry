@@ -41,8 +41,8 @@ describe("uDuck Registry Integrity", () => {
     }
   });
 
-  it("should include real hardware verified behaviors from Pollen", () => {
-    const hwBehaviors = behaviors.filter((b) => b.verification.status === "verified_hardware");
+  it("keeps upstream origin separate from independent hardware verification", () => {
+    const hwBehaviors = behaviors.filter((b) => b.verification.status === "claimed_hardware");
     expect(hwBehaviors.length).toBeGreaterThanOrEqual(5);
     const ids = hwBehaviors.map((b) => b.id);
     expect(ids).toContain("alpha-walking");

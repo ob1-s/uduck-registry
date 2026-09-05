@@ -1,56 +1,50 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { CatalogEntry } from "@registry/schema/catalog";
 import { FilterBar } from "./FilterBar";
 import { BehaviorCard } from "./BehaviorCard";
-import type { BehaviorWithSimulation } from "@/lib/simulation";
 import { DuckMark } from "./DuckMark";
 import { QuackButton } from "./QuackAction";
+import { catalogSearchText } from "@/lib/catalog";
 import { formatRobotdSlot } from "@/lib/labels";
 
 interface BehaviorCatalogProps {
-  initialBehaviors: BehaviorWithSimulation[];
+  entries: CatalogEntry[];
 }
 
-export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
+export function BehaviorCatalog({ entries }: BehaviorCatalogProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [verification, setVerification] = useState("all");
+  const [hardware, setHardware] = useState("all");
   const [accessory, setAccessory] = useState("all");
   const [slot, setSlot] = useState("all");
 
-  const slots = useMemo(() => Array.from(new Set(initialBehaviors.map((behavior) => behavior.compatibility.robotd_slot)))
+  const slots = useMemo(() => Array.from(new Set(
+    entries.map((entry) => entry.runtime.slot).filter((value): value is string => value != null),
+  ))
     .sort((a, b) => formatRobotdSlot(a).localeCompare(formatRobotdSlot(b)))
-    .map((id) => ({ id, label: formatRobotdSlot(id) })), [initialBehaviors]);
+    .map((id) => ({ id, label: formatRobotdSlot(id) })), [entries]);
 
-  const filteredBehaviors = useMemo(() => initialBehaviors.filter((behavior) => {
-    if (category !== "all" && behavior.category !== category) return false;
-    if (verification !== "all" && behavior.verification.status !== verification) return false;
-    if (slot !== "all" && behavior.compatibility.robotd_slot !== slot) return false;
-
-    if (accessory === "none" && behavior.compatibility.accessories_required.length > 0) return false;
-    if (accessory !== "all" && accessory !== "none" && !behavior.compatibility.accessories_required.includes(accessory)) return false;
-
+  const filteredEntries = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return true;
-    return [
-      behavior.name,
-      behavior.id,
-      behavior.description,
-      ...behavior.tags,
-      ...behavior.authors.map((author) => author.name),
-      behavior.sources.task_id || "",
-      behavior.category,
-      behavior.verification.status,
-      behavior.compatibility.robotd_slot,
-      ...behavior.compatibility.accessories_required,
-    ].some((value) => value.toLowerCase().includes(query));
-  }), [accessory, category, initialBehaviors, search, slot, verification]);
+    return entries.filter((entry) => {
+      if (category !== "all" && entry.category !== category) return false;
+      if (hardware !== "all" && entry.hardware.status !== hardware) return false;
+      if (slot !== "all" && entry.runtime.slot !== slot) return false;
+
+      const accessories = entry.runtime.compatibility.accessories_required;
+      if (accessory === "none" && (accessories == null || accessories.length > 0)) return false;
+      if (accessory !== "all" && accessory !== "none" && (accessories == null || !accessories.includes(accessory))) return false;
+
+      return !query || catalogSearchText(entry).includes(query);
+    });
+  }, [accessory, category, entries, hardware, search, slot]);
 
   const resetFilters = () => {
     setSearch("");
     setCategory("all");
-    setVerification("all");
+    setHardware("all");
     setAccessory("all");
     setSlot("all");
   };
@@ -63,28 +57,28 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
           setSearch={setSearch}
           selectedCategory={category}
           setSelectedCategory={setCategory}
-          selectedVerification={verification}
-          setSelectedVerification={setVerification}
+          selectedHardware={hardware}
+          setSelectedHardware={setHardware}
           selectedAccessory={accessory}
           setSelectedAccessory={setAccessory}
           selectedSlot={slot}
           setSelectedSlot={setSlot}
           slots={slots}
-          totalCount={initialBehaviors.length}
-          filteredCount={filteredBehaviors.length}
+          totalCount={entries.length}
+          filteredCount={filteredEntries.length}
         />
       </div>
 
       <div id="behavior-results">
-        {initialBehaviors.length === 0 ? (
+        {entries.length === 0 ? (
           <div className="empty-state" role="status">
             <div className="empty-state-mark"><DuckMark size={42} /></div>
             <h3>No moves yet</h3>
             <p>Add the first behavior record to the registry.</p>
           </div>
-        ) : filteredBehaviors.length > 0 ? (
+        ) : filteredEntries.length > 0 ? (
           <div className="behavior-grid">
-            {filteredBehaviors.map((behavior) => <BehaviorCard key={behavior.id} behavior={behavior} />)}
+            {filteredEntries.map((entry) => <BehaviorCard key={entry.id} entry={entry} />)}
           </div>
         ) : (
           <div className="empty-state" role="status">
@@ -98,3 +92,4 @@ export function BehaviorCatalog({ initialBehaviors }: BehaviorCatalogProps) {
     </div>
   );
 }
+

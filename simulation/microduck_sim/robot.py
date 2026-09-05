@@ -140,6 +140,19 @@ class RolloutResult:
         touchdown_after_takeoff = False
         if takeoff_index is not None:
             touchdown_after_takeoff = bool(np.any(both_supported[takeoff_index + 1:]))
+        # Unilateral support is reported as an observation for one-foot
+        # diagnostics (e.g. Flamingo). It is not a pass/fail task-success
+        # claim: contact chatter in MuJoCo makes short intervals noisy, and no
+        # threshold here certifies that the commanded leg actually lifted.
+        unilateral = np.array([
+            bool(s.left_foot_contact) != bool(s.right_foot_contact) for s in self.samples
+        ], dtype=bool)
+        dt = float(self.duration_s / max(1, len(self.samples)))
+        max_unilateral_s = 0.0
+        run = 0.0
+        for flag in unilateral:
+            run = run + dt if flag else 0.0
+            max_unilateral_s = max(max_unilateral_s, run)
         return {
             "duration_s": round(self.duration_s, 3),
             "control_steps": self.control_steps,
@@ -161,6 +174,9 @@ class RolloutResult:
             "airborne_observed": bool(np.any(~supported)),
             "takeoff_after_support": airborne_after_support,
             "touchdown_after_takeoff": touchdown_after_takeoff,
+            "unilateral_supported": bool(np.any(unilateral)),
+            "unilateral_fraction": round(float(unilateral.mean()) if len(unilateral) else 0.0, 4),
+            "max_unilateral_interval_s": round(float(max_unilateral_s), 3),
         }
 
 

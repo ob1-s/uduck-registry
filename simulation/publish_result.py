@@ -8,6 +8,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from evidence import inputs_digest, evidence_key
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -33,6 +34,12 @@ def publish(source: Path) -> Path:
     if not descriptor.is_file():
         raise ValueError(f"no registry descriptor for {behavior_id}")
 
+    identity = inputs_digest(behavior_id)
+    if report.get("inputs_sha256") != identity:
+        raise ValueError("Evidence does not match the current descriptor and runner")
+    key = evidence_key(identity, report.get("policy", {}).get("sha256", ""))
+    if report.get("evidence_key") != key:
+        raise ValueError("Invalid evidence identity")
     target = REPO_ROOT / "public" / "media" / "registry-sim" / behavior_id
     target.mkdir(parents=True, exist_ok=True)
     shutil.copy2(loop_path, target / "loop.mp4")

@@ -105,8 +105,7 @@ Exit code 0 means rendered checks passed or the recipe is explicitly
 unsupported; 1 means a requested check failed; 2 means preflight rejected the
 recipe or execution failed.
 
-After human review, a maintainer may deliberately publish one result to the
-site:
+To preview a result matching the current descriptor and executable runner in a local build:
 
 ```bash
 python simulation/publish_result.py sim-results/alpha-walking
@@ -118,11 +117,12 @@ separate **Registry simulation** section on the behavior page.
 
 ## CI isolation
 
-- A changed descriptor runs only that behavior.
-- Shared runner/schema/workflow changes run the fixed golden set:
-  `alpha-walking`, `jump`, `max-height-jump`, and `roulade`.
-- A full-catalog run is manual through `workflow_dispatch`.
-- Artifacts are retained for 14 days and are not automatically published.
+- `Sim Check` is a manual utility; `uDuck CI` owns PR and main evidence. This avoids duplicate concurrent downloads.
+- Pinned assets use the existing hash-checked Actions cache; transient download failures have bounded backoff.
+- The main CI workflow reruns the full legacy catalog before each build. Failed measured checks remain failed in the display; execution errors stop publication.
+- Main builds publish matching reports/media into the static site and archive the run in a GitHub Release. PR artifacts remain temporary diagnostics.
+- Generated media is ignored by git. No contributor or post-merge media commit is needed.
+- Report identity includes descriptor bytes, runner source, requirements, asset lock, and downloaded policy SHA256. The website rejects stale input identities.
 
 Fork PRs use read-only permissions, no secrets, and the `pull_request` event.
 The runner does not execute contributor Python, install per-policy dependencies,

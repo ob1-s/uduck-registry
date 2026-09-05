@@ -16,6 +16,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+from http_download import open_download
 
 LOCK = Path(__file__).resolve().parent / "assets.lock.json"
 
@@ -59,7 +60,7 @@ def fetch(cache_dir: Path | None = None, variant: str = "standard") -> Path:
 
     def get(url: str, dest: Path) -> None:
         req = urllib.request.Request(url, headers={"User-Agent": "uduck-registry-ci"})
-        with urllib.request.urlopen(req, timeout=120) as resp, dest.open("wb") as out:
+        with open_download(req, timeout=120) as resp, dest.open("wb") as out:
             while True:
                 chunk = resp.read(1 << 20)
                 if not chunk:

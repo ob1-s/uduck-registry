@@ -1,169 +1,79 @@
-import type { Behavior } from "@registry/schema/behavior";
-import { DuckGeometry, type DuckColorway, type DuckMouth, type DuckStance } from "../DuckMark";
+import type { CatalogEntry } from "@registry/schema/catalog";
 import { formatCategory } from "@/lib/labels";
-import { getMotionLabel, getSocialCopy, getVerificationLabel, type SocialImageVariant } from "@/lib/social";
+import { hardwareLabel, runtimeLabel } from "@/lib/catalog";
+import { getSocialCopy } from "@/lib/social";
 
 interface BehaviorSocialCardProps {
-  behavior: Behavior;
-  variant: SocialImageVariant;
+  entry: CatalogEntry;
+  variant: "openGraph" | "twitter";
 }
 
 const colors = {
-  background: "#08080c",
-  panel: "#101018",
-  cream: "#f2ecdd",
-  muted: "#aaa6a0",
-  orange: "#ff7a2f",
-  yellow: "#ffd23f",
-  cyan: "#2ff0e6",
-  magenta: "#ff2fa8",
-  purple: "#9d87e8",
+  ink: "#242126",
+  paper: "#f8f5ef",
+  yellow: "#f4c746",
+  orange: "#e76f35",
+  purple: "#7063b7",
+  soft: "#665e68",
 };
 
-const decorativeDots = Array.from({ length: 42 }, (_, index) => ({
-  left: `${18 + (index % 7) * 12}%`,
-  top: `${12 + Math.floor(index / 7) * 14}%`,
-}));
-
-function statusColor(behavior: Behavior) {
-  if (behavior.verification.status === "verified_hardware") return colors.orange;
-  if (behavior.verification.status === "claimed_hardware") return colors.yellow;
-  return colors.magenta;
-}
-
-const poseAngles: Record<string, number> = {
-  "ball-kick-left": -10,
-  "ball-kick-right": 10,
-  courier: -3,
-  "fall-recovery": 8,
-  jump: -8,
-  "roller-crouch": -4,
-  roulade: -26,
-};
-
-const duckVariants: Array<{ angle: number; y: number; stance: DuckStance; mouth: DuckMouth; colorway: DuckColorway }> = [
-  { angle: -5, y: 2, stance: "neutral", mouth: "closed", colorway: "cream" },
-  { angle: -2, y: 0, stance: "left-balance", mouth: "slightly-open", colorway: "sky" },
-  { angle: 4, y: 0, stance: "right-balance", mouth: "closed", colorway: "graphite" },
-  { angle: -5, y: -1, stance: "ready", mouth: "open", colorway: "lavender" },
-  { angle: 8, y: 1, stance: "tiny-hop", mouth: "slightly-open", colorway: "cream" },
-  { angle: -4, y: -1, stance: "left-balance", mouth: "open", colorway: "graphite" },
-  { angle: 5, y: -1, stance: "right-balance", mouth: "slightly-open", colorway: "sky" },
-  { angle: -3, y: 1, stance: "ready", mouth: "closed", colorway: "lavender" },
+const duckVariants = [
+  { body: colors.yellow, wing: colors.orange, tilt: -4 },
+  { body: colors.orange, wing: colors.yellow, tilt: 3 },
+  { body: colors.purple, wing: colors.yellow, tilt: -2 },
 ];
 
-function stableIndex(value: string, length: number) {
+const poseAngles: Record<string, number> = {
+  "alpha-walking": -2,
+  "ball-kick-left": -8,
+  "ball-kick-right": 8,
+  courier: 4,
+  jump: -4,
+  "max-height-jump": 5,
+  roulade: -13,
+  "roller-crouch": 9,
+  "roller-drive": -3,
+  "sit-stand": 4,
+};
+
+function stableIndex(value: string, count: number) {
   let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
-  }
-  return hash % length;
+  for (const char of value) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return Math.abs(hash) % count;
 }
 
-function SocialDuck({ behavior }: { behavior: Behavior }) {
-  const baseAngle = poseAngles[behavior.id] ?? 0;
-  const pose = duckVariants[stableIndex(behavior.id, duckVariants.length)];
-
+function SocialDuck({ entry }: { entry: CatalogEntry }) {
+  const baseAngle = poseAngles[entry.id] ?? 0;
+  const pose = duckVariants[stableIndex(entry.id, duckVariants.length)];
   return (
-    <div
-      style={{
-        display: "flex",
-        position: "relative",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 330,
-        height: 330,
-        transform: `translateY(${pose.y}px) rotate(${baseAngle + pose.angle}deg)`,
-      }}
-    >
-      <DuckGeometry size={270} stance={pose.stance} mouth={pose.mouth} colorway={pose.colorway} />
+    <div style={{ display: "flex", position: "relative", width: 270, height: 220, transform: `rotate(${baseAngle + pose.tilt}deg)` }} aria-hidden="true">
+      <div style={{ position: "absolute", left: 74, top: 53, width: 126, height: 122, borderRadius: "48% 52% 44% 47%", background: pose.body, border: `4px solid ${colors.ink}`, boxShadow: `8px 9px 0 ${colors.ink}` }} />
+      <div style={{ position: "absolute", left: 93, top: 26, width: 104, height: 82, borderRadius: "54% 46% 48% 45%", background: pose.body, border: `4px solid ${colors.ink}` }} />
+      <div style={{ position: "absolute", left: 176, top: 56, width: 55, height: 37, borderRadius: "50% 45% 42% 55%", background: colors.orange, border: `4px solid ${colors.ink}` }} />
+      <div style={{ position: "absolute", left: 181, top: 71, width: 32, height: 5, borderRadius: 9, background: colors.ink }} />
+      <div style={{ position: "absolute", left: 124, top: 57, width: 10, height: 14, borderRadius: "50%", background: colors.ink }} />
+      <div style={{ position: "absolute", left: 162, top: 57, width: 10, height: 14, borderRadius: "50%", background: colors.ink }} />
+      <div style={{ position: "absolute", left: 72, top: 91, width: 45, height: 64, borderRadius: "48% 52% 50% 44%", background: pose.wing, border: `4px solid ${colors.ink}`, transform: "rotate(23deg)" }} />
+      <div style={{ position: "absolute", left: 91, top: 170, width: 26, height: 27, borderRadius: 14, background: colors.orange, border: `4px solid ${colors.ink}` }} />
+      <div style={{ position: "absolute", left: 155, top: 170, width: 26, height: 27, borderRadius: 14, background: colors.orange, border: `4px solid ${colors.ink}` }} />
     </div>
   );
 }
 
-export function BehaviorSocialCard({ behavior, variant }: BehaviorSocialCardProps) {
-  const copy = getSocialCopy(behavior);
-  const status = getVerificationLabel(behavior).toUpperCase();
-  const category = formatCategory(behavior.category).toUpperCase();
-  const motion = getMotionLabel(behavior);
-  const author = behavior.authors.map((item) => item.name).join(", ").toUpperCase();
-  const accent = statusColor(behavior);
-  const isTwitter = variant === "twitter";
-
+export function BehaviorSocialCard({ entry, variant }: BehaviorSocialCardProps) {
+  const copy = getSocialCopy(entry);
   return (
-    <div
-      style={{
-        display: "flex",
-        position: "relative",
-        width: 1200,
-        height: 630,
-        overflow: "hidden",
-        color: colors.cream,
-        background: colors.background,
-        fontFamily: "Arial",
-      }}
-    >
-      <div style={{ position: "absolute", top: 0, left: 0, width: 10, height: "100%", background: colors.orange }} />
-      <div style={{ position: "absolute", top: -120, right: 100, width: 330, height: 330, border: `20px solid ${colors.purple}55`, borderRadius: "50%" }} />
-      <div style={{ position: "absolute", bottom: -120, left: 570, width: 250, height: 250, border: `18px solid ${colors.cyan}55`, borderRadius: "50%" }} />
-      {decorativeDots.map((dot, index) => (
-        <div key={index} style={{ position: "absolute", left: dot.left, top: dot.top, width: 3, height: 3, borderRadius: "50%", background: "#faf8f21a" }} />
-      ))}
-
-      <div style={{ display: "flex", flexDirection: "column", width: 690, padding: "54px 0 45px 70px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, color: colors.orange, fontFamily: "monospace", fontSize: 18, fontWeight: 700, letterSpacing: 3 }}>
-          <span style={{ display: "flex", width: 13, height: 13, border: `3px solid ${colors.orange}`, borderRadius: "50%" }} />
-          <span>uDuck</span>
-          <span style={{ color: colors.cream, fontSize: 15 }}>/ REGISTRY</span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 34, fontFamily: "monospace", fontSize: 15, fontWeight: 700, letterSpacing: 1.5 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 8, border: `1px solid ${accent}99`, borderRadius: 999, padding: "8px 13px", color: accent }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: accent }} />
-            {status}
-          </span>
-          <span style={{ color: colors.muted, letterSpacing: 2 }}>{category}</span>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 28, maxWidth: 640, color: colors.cream, fontSize: isTwitter ? 64 : 57, fontWeight: 800, lineHeight: 1.02, letterSpacing: -1.5, textTransform: "uppercase" }}>
-          {copy.title}
-        </div>
-
-        <div style={{ display: "flex", marginTop: 20, color: colors.orange, fontFamily: "monospace", fontSize: 21, fontWeight: 700, letterSpacing: 2.5 }}>
-          {motion}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 11, marginTop: "auto", color: colors.muted, fontFamily: "monospace", fontSize: 14, letterSpacing: 1.3 }}>
-          <span style={{ color: colors.orange }}>BY</span>
-          <span>{author}</span>
-          <span style={{ color: colors.orange }}>·</span>
-          <span>uduckmoves.com</span>
-        </div>
+    <div style={{ width: 1200, height: 630, background: colors.paper, color: colors.ink, padding: 56, display: "flex", alignItems: "center", justifyContent: "space-between", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ width: 680, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", color: colors.purple, fontSize: 22, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>uDuck Registry</div>
+        <div style={{ display: "flex", marginTop: 24, color: colors.soft, fontSize: 22, textTransform: "uppercase", letterSpacing: 1 }}>{`${formatCategory(entry.category)} · ${runtimeLabel(entry.runtime)}`}</div>
+        <div style={{ display: "flex", marginTop: 20, fontSize: 62, lineHeight: 1.02, fontWeight: 800 }}>{copy.title}</div>
+        <div style={{ display: "flex", marginTop: 20, color: colors.soft, fontSize: 25, lineHeight: 1.25 }}>{copy.description}</div>
+        <div style={{ display: "flex", marginTop: 30, color: colors.ink, fontSize: 20 }}>{`${hardwareLabel(entry.hardware.status)} · ${entry.authors.map((author) => author.name).join(", ")}`}</div>
       </div>
-
-      <div
-        style={{
-          display: "flex",
-          position: "absolute",
-          top: 54,
-          right: 58,
-          alignItems: "center",
-          justifyContent: "center",
-          width: 405,
-          height: 522,
-          overflow: "hidden",
-          border: `1px solid ${colors.cream}22`,
-          borderRadius: "36px 36px 36px 12px",
-          background: colors.panel,
-          boxShadow: `10px 10px 0 ${colors.orange}26`,
-        }}
-      >
-        <SocialDuck behavior={behavior} />
-        <div style={{ display: "flex", position: "absolute", right: 18, bottom: 18, borderRadius: 8, padding: "9px 12px", color: colors.background, background: isTwitter ? colors.magenta : colors.cyan, fontFamily: "monospace", fontSize: 14, fontWeight: 800, letterSpacing: 1.3 }}>
-          {isTwitter ? "VIEW THE MOVE" : "MICRODUCK MOVE"}
-        </div>
-      </div>
-
+      <div style={{ width: 300, height: 300, borderRadius: "50%", background: colors.yellow, border: `5px solid ${colors.ink}`, display: "flex", alignItems: "center", justifyContent: "center" }}><SocialDuck entry={entry} /></div>
+      <div style={{ position: "absolute", right: 60, bottom: 30, color: colors.soft, fontSize: 18 }}>{variant === "twitter" ? "uduckmoves.com" : "uduckmoves.com/behaviors"}</div>
     </div>
   );
 }
+

@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "name": "polite-bow",
+  "kind": "episodic",
+  "obs_len": 61,
+  "action_len": 14,
+  "action_scale": 0.8,
+  "entry_pose": "standing",
+  "duration_s": 4.0,
+  "description": "Bows from a two-foot stand and comes back up.",
+  "command": {
+    "encoding": "constant",
+    "idle": [0, 0, 0]
+  },
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "training": {
+    "task_id": "Mjlab-PoliteBow-Flat-MicroDuck",
+    "repo": "pollen-robotics/microduck_rl"
+  }
+}

@@ -1,13 +1,12 @@
 import { ArrowRight } from "lucide-react";
-import { getAllBehaviors, getRegistryStats } from "@/lib/registry";
+import { getCatalogEntries, getRegistryStats } from "@/lib/registry";
 import { BehaviorCatalog } from "@/components/BehaviorCatalog";
 import { CopyPromptButton } from "@/components/CopyPromptButton";
 import { InteractiveDuck } from "@/components/InteractiveDuck";
 import { QuackAnchor } from "@/components/QuackAction";
-import { withRegistrySimulation } from "@/lib/simulation-results";
 
 export default function HomePage() {
-  const behaviors = getAllBehaviors().map(withRegistrySimulation);
+  const entries = getCatalogEntries();
   const stats = getRegistryStats();
 
   return (
@@ -23,7 +22,7 @@ export default function HomePage() {
             <div className="button-row">
               <QuackAnchor href="#catalog" className="button-primary">Choose a behavior <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
             </div>
-            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} marked hardware-verified</p>
+            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} maintainer-verified on hardware</p>
           </div>
 
           <div className="hero-art">
@@ -34,7 +33,7 @@ export default function HomePage() {
               <span className="hero-figure-label">learn · move · share</span>
             </div>
             <span className="hero-sticker hero-sticker-left" aria-hidden="true">quack!</span>
-            <span className="hero-sticker hero-sticker-right" aria-hidden="true">{stats.hardware} verified</span>
+            <span className="hero-sticker hero-sticker-right" aria-hidden="true">{stats.total} moves</span>
           </div>
         </div>
       </section>
@@ -44,7 +43,7 @@ export default function HomePage() {
           {[0, 1].map((copy) => (
             <div className="ticker-group" key={copy}>
               <span>{stats.total} moves in the shelf</span><i>◆</i>
-              <span>{stats.hardware} marked hardware-verified</span><i>◆</i>
+              <span>{stats.hardware} maintainer-verified on hardware</span><i>◆</i>
               <span>{stats.community} experimental</span><i>◆</i>
               <span>open weights</span><i>◆</i>
               <span>your policy here</span><i>◆</i>
@@ -64,7 +63,7 @@ export default function HomePage() {
             </div>
             <span className="section-note">{stats.total} moves</span>
           </div>
-          <BehaviorCatalog initialBehaviors={behaviors} />
+          <BehaviorCatalog entries={entries} />
         </div>
       </section>
 
@@ -73,7 +72,7 @@ export default function HomePage() {
           <div><span className="eyebrow">Have a new move?</span><h2>Add it to the shelf.</h2></div>
           <div className="share-strip-actions">
             <CopyPromptButton />
-            <QuackAnchor href="https://github.com/ob1-s/uduck-registry" target="_blank" rel="noopener noreferrer" className="button-secondary">Read the contributor guide <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
+            <QuackAnchor href="https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml" target="_blank" rel="noopener noreferrer" className="button-secondary">Submit a policy URL <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
           </div>
         </div>
       </section>

@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Play } from "lucide-react";
-import type { Behavior } from "@registry/schema/behavior";
+import type { CatalogPreviewMedia } from "@/lib/catalog";
 import { DuckMark } from "./DuckMark";
 
 interface MediaPreviewProps {
-  media: Behavior["media"];
+  media: CatalogPreviewMedia;
   title: string;
   variant: "card" | "detail";
 }

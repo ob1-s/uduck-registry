@@ -33,6 +33,8 @@ export interface ResolvedPolicy extends PolicyPointer {
     install_route: 'skill' | 'slot' | 'review';
     unresolved: string[];
     onnx: { input: unknown[]; output: unknown[]; smoke: string; scope: string };
-    simulation: { status: 'not-covered'; reason: string };
+    simulation:
+      | { status: 'covered'; runner: string; recipe: Record<string, unknown>; scope: string }
+      | { status: 'not-covered'; reason: string };
   };
 }

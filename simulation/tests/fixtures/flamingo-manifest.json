@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "model_api": 1,
+  "name": "flamingo-cycle",
+  "kind": "perpetual",
+  "obs_len": 61,
+  "action_len": 14,
+  "action_scale": 1.0,
+  "entry_pose": "standing",
+  "duration_s": null,
+  "description": "Stand on one foot, either side, on command, and come back to a two-foot stand: twist = [flag, side, 0].",
+  "command": {
+    "twist": [
+      "flag: 0 = stand on two feet (HOME), 1 = stand on one foot",
+      "side: +1 = right foot down / left leg lifted, -1 = left foot down / right leg lifted; 0 allowed while flag = 0",
+      "unused (0)"
+    ],
+    "head": "unused (zeros)",
+    "body": "unused (zeros)",
+    "idle": [0, 0, 0]
+  },
+  "robot": {
+    "model": "microduck",
+    "hw_rev": 1,
+    "servos": "xl330",
+    "control_hz": 50
+  },
+  "training": {
+    "task_id": "Mjlab-FlamingoCycleHard-Flat-MicroDuck",
+    "repo": "pollen-robotics/microduck_rl",
+    "commit": "0bf9897 on branch flamingo (https://github.com/pollen-robotics/microduck_rl/commit/0bf9897), not merged yet",
+    "run": "pollen-robotics/flamingo-cycle-r2-hard-20260829-0245"
+  },
+  "eval": {
+    "sim_proxy": "CPU MuJoCo with the BAM XL330 servo model, allcollisions model",
+    "battery": "10/10: right and left cycles, 0.1 m/s pushes toward either side, 0.15 m/s forward, a 0.3 m/s push toward the lifted side (brief touch-down, re-lift), lowering from a static hold, 10 s hold",
+    "stress_24_random_trials": {
+      "held": 20,
+      "recovered_stepped_down": 2,
+      "fell": 2,
+      "push_range_m_s": [0.05, 0.25]
+    },
+    "known_limits": "falls on backward pushes >= 0.18 m/s; pushes toward the standing-foot side above ~0.15 m/s end in a step-down; never tested on hardware",
+    "transition_time_s": 1.5,
+    "lifted_foot_height_m": 0.09
+  }
+}

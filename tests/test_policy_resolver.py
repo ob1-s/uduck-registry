@@ -11,6 +11,7 @@ from ingest_issue import parse_issue
 MANIFEST = {'schema_version': 2, 'model_api': 1, 'obs_len': 61, 'action_len': 14,
             'robot': {'model': 'microduck', 'hw_rev': 1, 'servos': 'xl330', 'control_hz': 50},
             'kind': 'episodic', 'duration_s': 4, 'command': {'encoding': 'constant'}}
+FLAMINGO = json.loads((Path(__file__).resolve().parents[1] / 'simulation/tests/fixtures/flamingo-manifest.json').read_text())
 class ResolverTests(unittest.TestCase):
     def test_url_boundary(self):
         self.assertEqual(parse_url('https://huggingface.co/owner/repo/tree/v2'), ('owner/repo', 'v2'))
@@ -28,6 +29,19 @@ class ResolverTests(unittest.TestCase):
         m.update(kind='perpetual', duration_s=None)
         m['command'] = {'twist': ['flag', 'side', 'unused'], 'idle': [0, 0, 0]}
         self.assertEqual(classify(m)['install_route'], 'review')
+
+    def test_named_recipe_marks_flamingo_simulation_covered(self):
+        result = classify(FLAMINGO, 'RemiFabre/microduck-flamingo-cycle', {
+            'revision': '6646428394c6997106d2dc07c1588f20f6fea026',
+            'manifest_sha256': 'ac9b9ae16b4f21733990710275bd934c97558c6028e060bd2b34ec1f5341d302',
+            'artifact_sha256': 'df77929c39d7695092bdaf810c2075e20a9ba91abd8192b4073d3de593d56904',
+        })
+        self.assertEqual(result['simulation']['status'], 'covered')
+        self.assertEqual(result['simulation']['runner'], 'microduck-standard-v1')
+        recipe = result['simulation']['recipe']
+        self.assertEqual(recipe['segments'][0]['command'], [1.0, 1.0, 0.0])
+        self.assertEqual(recipe['duration_s'], 5.0)
+        self.assertNotIn('unwind_s', recipe)
     def test_daemon_encodings_not_generic_skill(self):
         for encoding in ('phase', 'posture_flag'):
             m = copy.deepcopy(MANIFEST); m['command']['encoding'] = encoding

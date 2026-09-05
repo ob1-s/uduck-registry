@@ -1,8 +1,8 @@
-import { PolicyPointerSchema } from "../registry/schema/policy";
 import fs from "node:fs";
 import path from "node:path";
 import { validateAllBehaviors } from "./validate-registry";
-import { type Behavior, type RegistryIndex } from "../registry/schema/behavior";
+import { type CatalogEntry, type RegistryIndex } from "../registry/schema/catalog";
+import { getCatalogEntries } from "../src/lib/registry";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
@@ -10,12 +10,6 @@ const README_PATH = path.resolve(process.cwd(), "README.md");
 const FALLBACK_UPDATED_AT = "1970-01-01T00:00:00.000Z";
 const README_TABLE_START = "<!-- BEGIN GENERATED BEHAVIOR TABLE -->";
 const README_TABLE_END = "<!-- END GENERATED BEHAVIOR TABLE -->";
-
-const verificationLabels: Record<Behavior["verification"]["status"], string> = {
-  verified_hardware: "Hardware verified",
-  claimed_hardware: "Hardware claimed",
-  community_experimental: "Experimental",
-};
 
 function escapeTableCell(value: string): string {
   return value.replaceAll("|", "\\|").replace(/\r?\n/g, " ");
@@ -25,23 +19,25 @@ function formatLabel(value: string): string {
   return value.replaceAll("_", " ").replaceAll("-", " ");
 }
 
-function mediaLabel(behavior: Behavior): string {
+function mediaLabel(behavior: CatalogEntry): string {
   const labels = [
-    behavior.media.loop_url && "loop",
-    behavior.media.video_url && "video",
-    behavior.media.thumbnail_url && "poster",
+    behavior.media.registry?.loop_url && "registry loop",
+    behavior.media.author.some((item) => item.type === "video") && "author video",
+    behavior.media.author.some((item) => item.type === "image") && "author image",
   ].filter(Boolean);
   return labels.length > 0 ? labels.join(" + ") : "—";
 }
 
-export function renderReadmeCatalog(behaviors: Behavior[]): string {
+export function renderReadmeCatalog(behaviors: CatalogEntry[]): string {
   const rows = behaviors.map((behavior) => {
     const authors = behavior.authors.map((author) => author.name).join(", ");
-    const accessories = behavior.compatibility.accessories_required.length > 0
-      ? behavior.compatibility.accessories_required.map(formatLabel).join(", ")
-      : "none";
+    const accessories = behavior.runtime.compatibility.accessories_required == null
+      ? "unknown"
+      : behavior.runtime.compatibility.accessories_required.length > 0
+        ? behavior.runtime.compatibility.accessories_required.map(formatLabel).join(", ")
+        : "none";
 
-    return `| [${escapeTableCell(behavior.name)}](https://uduckmoves.com/behaviors/${behavior.id}) | \`${behavior.id}\` | ${escapeTableCell(formatLabel(behavior.category))} | ${verificationLabels[behavior.verification.status]} | ${escapeTableCell(authors)} | ${escapeTableCell(accessories)} | ${mediaLabel(behavior)} |`;
+    return `| [${escapeTableCell(behavior.name)}](https://uduckmoves.com/behaviors/${behavior.id}) | \`${behavior.id}\` | ${escapeTableCell(formatLabel(behavior.category))} | ${formatLabel(behavior.hardware.status)} | ${escapeTableCell(authors)} | ${escapeTableCell(accessories)} | ${mediaLabel(behavior)} |`;
   });
 
   return [
@@ -55,7 +51,7 @@ export function renderReadmeCatalog(behaviors: Behavior[]): string {
   ].join("\n");
 }
 
-export function updateReadmeCatalog(behaviors: Behavior[], readmePath = README_PATH): void {
+export function updateReadmeCatalog(behaviors: CatalogEntry[], readmePath = README_PATH): void {
   const readme = fs.readFileSync(readmePath, "utf-8");
   const start = readme.indexOf(README_TABLE_START);
   const end = readme.indexOf(README_TABLE_END);
@@ -102,37 +98,21 @@ export function getDeterministicUpdatedAt(
 }
 
 export function generateRegistryIndex(): RegistryIndex {
-  const { valid, behaviors: allBehaviors, errors } = validateAllBehaviors();
+  const { valid, errors } = validateAllBehaviors();
   if (!valid) {
     throw new Error(`Cannot compile registry due to validation errors:\n${errors.join("\n")}`);
   }
 
-  const behaviors = allBehaviors;
-
-  // Keep the public catalog stable by trust tier, then display name and ID.
-  const priorityMap: Record<string, number> = {
-    verified_hardware: 1,
-    claimed_hardware: 2,
-    community_experimental: 3,
-  };
-
-  behaviors.sort((a, b) => {
-    const pA = priorityMap[a.verification.status] ?? 99;
-    const pB = priorityMap[b.verification.status] ?? 99;
-    if (pA !== pB) return pA - pB;
-    if (a.name !== b.name) return a.name < b.name ? -1 : 1;
-    if (a.id === b.id) return 0;
-    return a.id < b.id ? -1 : 1;
-  });
-
-  const policyDir = path.resolve("registry/policies");
-  const policies = fs.existsSync(policyDir) ? fs.readdirSync(policyDir).filter(f => f.endsWith('.json')).sort().map(file => PolicyPointerSchema.parse(JSON.parse(fs.readFileSync(path.join(policyDir, file), 'utf8')))) : [];
+  // The app loader and this compiler intentionally share the same boundary so
+  // the API/site/index cannot drift into separate behavior and policy shapes.
+  // It also attaches any trusted build evidence already present in the static
+  // media directory.
+  const entries = getCatalogEntries();
   const index: RegistryIndex = {
-    version: "2.0.0",
+    version: "3.0.0",
     updated_at: getDeterministicUpdatedAt(),
-    count: behaviors.length + policies.length,
-    behaviors,
-    policies,
+    count: entries.length,
+    entries,
   };
 
   if (!fs.existsSync(PUBLIC_DIR)) {
@@ -141,7 +121,7 @@ export function generateRegistryIndex(): RegistryIndex {
 
   fs.writeFileSync(REGISTRY_OUT, JSON.stringify(index, null, 2), "utf-8");
 
-  console.log(`\x1b[32mSuccessfully compiled ${behaviors.length} behaviors\x1b[0m`);
+  console.log(`\x1b[32mSuccessfully compiled ${entries.length} catalog entries\x1b[0m`);
   return index;
 }
 

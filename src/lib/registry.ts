@@ -1,60 +1,116 @@
-import { getPolicies } from "./policies";
 import fs from "node:fs";
 import path from "node:path";
 import { BehaviorSchema, type Behavior } from "@registry/schema/behavior";
+import {
+  catalogEntriesFromSources,
+  type CatalogEntry,
+  type CatalogSimulationEvidence,
+} from "@registry/schema/catalog";
+import { getPolicies } from "./policies";
 
 const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
+const REGISTRY_MEDIA_DIR = path.resolve(process.cwd(), "public/media/registry-sim");
 
+/** Read the manually authored input records. Consumers should use
+ * getCatalogEntries(), which normalizes these with resolved Hub packages. */
 export function getAllBehaviors(): Behavior[] {
-  if (!fs.existsSync(BEHAVIORS_DIR)) {
-    return [];
-  }
+  if (!fs.existsSync(BEHAVIORS_DIR)) return [];
 
-  const files = fs.readdirSync(BEHAVIORS_DIR).filter((f) => f.endsWith(".json"));
   const behaviors: Behavior[] = [];
-
-  for (const file of files) {
+  for (const file of fs.readdirSync(BEHAVIORS_DIR).filter((name) => name.endsWith(".json")).sort()) {
     try {
-      const raw = fs.readFileSync(path.join(BEHAVIORS_DIR, file), "utf-8");
-      const parsed = JSON.parse(raw);
-      const res = BehaviorSchema.safeParse(parsed);
-      if (res.success) {
-        behaviors.push(res.data);
+      const parsed = BehaviorSchema.safeParse(
+        JSON.parse(fs.readFileSync(path.join(BEHAVIORS_DIR, file), "utf-8")),
+      );
+      if (parsed.success) {
+        behaviors.push(parsed.data);
       } else {
-        console.error(`Invalid behavior schema in ${file}:`, res.error.format());
+        console.error(`Invalid behavior schema in ${file}:`, parsed.error.format());
       }
-    } catch (err) {
-      console.error(`Failed to read ${file}:`, err);
+    } catch (error) {
+      console.error(`Failed to read ${file}:`, error);
     }
   }
 
-  const priorityMap: Record<string, number> = {
-    verified_hardware: 1,
-    claimed_hardware: 2,
-    community_experimental: 3,
-  };
-
-  return behaviors.sort((a, b) => {
-    const pA = priorityMap[a.verification.status] ?? 99;
-    const pB = priorityMap[b.verification.status] ?? 99;
-    if (pA !== pB) return pA - pB;
-    return a.name.localeCompare(b.name);
-  });
+  return behaviors.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 }
 
-export function getBehaviorById(id: string): Behavior | null {
-  const all = getAllBehaviors();
-  return all.find((b) => b.id === id) || null;
+function readEvidence(id: string): CatalogSimulationEvidence | null {
+  const directory = path.join(REGISTRY_MEDIA_DIR, id);
+  const reportPath = path.join(directory, "report.json");
+  if (!fs.existsSync(reportPath)) return null;
+
+  try {
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf-8")) as Record<string, unknown>;
+    const execution = report.execution;
+    const status: CatalogSimulationEvidence["status"] = execution === "rendered"
+      ? report.checks_status === "failed" ? "failed" : "passed"
+      : execution === "unsupported" ? "not-covered"
+        : execution === "rejected" || execution === "failed" ? "failed"
+          : "not-run";
+    const recipe = report.recipe && typeof report.recipe === "object" && !Array.isArray(report.recipe)
+      ? report.recipe as Record<string, unknown>
+      : {};
+    const media = report.media && typeof report.media === "object" && !Array.isArray(report.media)
+      ? report.media as Record<string, unknown>
+      : {};
+    const checks = Array.isArray(report.checks)
+      ? report.checks.filter((check): check is { check: string; passed: boolean; detail: string } => (
+        Boolean(check) && typeof check === "object" && !Array.isArray(check)
+        && typeof (check as Record<string, unknown>).check === "string"
+        && typeof (check as Record<string, unknown>).passed === "boolean"
+        && typeof (check as Record<string, unknown>).detail === "string"
+      ))
+      : [];
+    const localLoop = path.join(directory, "loop.mp4");
+    const localPoster = path.join(directory, "poster.png");
+    return {
+      status,
+      evidence_key: typeof report.evidence_key === "string" ? report.evidence_key : null,
+      inputs_sha256: typeof report.inputs_sha256 === "string" ? report.inputs_sha256 : null,
+      runner: typeof recipe.runner === "string" ? recipe.runner : null,
+      scene: typeof recipe.scene === "string" ? recipe.scene : null,
+      scenario: typeof recipe.scenario === "string" ? recipe.scenario : null,
+      report_url: `/media/registry-sim/${id}/report.json`,
+      loop_url: fs.existsSync(localLoop)
+        ? `/media/registry-sim/${id}/loop.mp4`
+        : typeof media.loop_url === "string" ? media.loop_url : null,
+      poster_url: fs.existsSync(localPoster)
+        ? `/media/registry-sim/${id}/poster.png`
+        : typeof media.poster_url === "string" ? media.poster_url : null,
+      checks,
+      reason: typeof report.reason === "string"
+        ? report.reason
+        : typeof report.notes === "string" ? report.notes : null,
+    };
+  } catch (error) {
+    console.error(`Failed to read registry evidence for ${id}:`, error);
+    return null;
+  }
+}
+
+/** The single public catalog consumed by pages, APIs, and index generation. */
+export function getCatalogEntries(): CatalogEntry[] {
+  const behaviors = getAllBehaviors();
+  const policies = getPolicies();
+  const evidence = new Map<string, CatalogSimulationEvidence>();
+  for (const entry of [...behaviors, ...policies]) {
+    const result = readEvidence(entry.id);
+    if (result) evidence.set(entry.id, result);
+  }
+  return catalogEntriesFromSources(behaviors, policies, evidence);
+}
+
+export function getCatalogEntryById(id: string): CatalogEntry | null {
+  return getCatalogEntries().find((entry) => entry.id === id) ?? null;
 }
 
 export function getRegistryStats() {
-  const all = getAllBehaviors();
-  const hardware = all.filter((b) => b.verification.status === "claimed_hardware").length;
-  const community = all.filter((b) => b.verification.status === "community_experimental").length + getPolicies().length;
-
+  const entries = getCatalogEntries();
   return {
-    total: all.length + getPolicies().length,
-    hardware,
-    community,
+    total: entries.length,
+    hardware: entries.filter((entry) => entry.hardware.status === "maintainer-verified").length,
+    community: entries.filter((entry) => entry.runtime.classification === "custom" || entry.category === "experimental").length,
   };
 }
+

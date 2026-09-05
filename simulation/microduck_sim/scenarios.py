@@ -35,6 +35,10 @@ class ScenarioSpec:
     # Runner-defined checks requested by the descriptor. These are assertions
     # over measured telemetry, not contributor-authored validation claims.
     checks: list[str] = field(default_factory=list)
+    # command_schedule: list of (duration_s, [twist_x, twist_y, twist_wz])
+    # segments. Unlike the legacy oneshot_zero scenario, each command value is
+    # explicit and is retained in the report/provenance for review.
+    command_segments: list = field(default_factory=list)
     # Alias of the scenario for reports.
     name: str = ""
 
@@ -82,6 +86,35 @@ def scenario_from_descriptor(sim_block: dict) -> ScenarioSpec:
             raise ValueError("velocity scenario requires explicit segments")
         spec.segments = [(float(s["duration_s"]), float(s["vx"]), float(s["vy"]),
                           float(s["wz"])) for s in segments]
+    elif spec.kind == "command_schedule":
+        if not isinstance(segments, list) or not segments:
+            raise ValueError("command_schedule requires explicit segments")
+        for index, segment in enumerate(segments):
+            if not isinstance(segment, dict):
+                raise ValueError(f"simulation.segments[{index}] must be an object")
+            command = segment.get("command")
+            if not isinstance(command, (list, tuple)) or len(command) != 3:
+                raise ValueError(
+                    f"simulation.segments[{index}].command must have three values"
+                )
+            values = []
+            for axis, value in enumerate(command):
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value):
+                    raise ValueError(
+                        f"simulation.segments[{index}].command[{axis}] must be finite"
+                    )
+                if value < -3 or value > 3:
+                    raise ValueError(
+                        f"simulation.segments[{index}].command[{axis}]={value:g} "
+                        "exceeds the supported command range [-3, 3]"
+                    )
+                values.append(float(value))
+            duration = segment.get("duration_s")
+            if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not np.isfinite(duration) or duration <= 0:
+                raise ValueError(
+                    f"simulation.segments[{index}].duration_s must be a positive finite number"
+                )
+            spec.command_segments.append((float(duration), tuple(values)))
     elif "segments" in sim_block:
         raise ValueError("simulation.segments is only valid with the velocity scenario")
     return spec
@@ -115,6 +148,23 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
             return wrap(np.array(validate_velocity(vx, vy, wz), dtype=np.float32))
 
         return vel_fn
+
+    if spec.kind == "command_schedule":
+        if not spec.command_segments:
+            raise ValueError("command_schedule requires explicit segments")
+        segments = spec.command_segments
+
+        def command_fn(t: float) -> np.ndarray:
+            remaining = t
+            chosen = segments[-1][1]
+            for duration, command in segments:
+                if remaining < duration:
+                    chosen = command
+                    break
+                remaining -= duration
+            return wrap(np.asarray(chosen, dtype=np.float32))
+
+        return command_fn
 
     if spec.kind == "standing":
         def stand_fn(t: float) -> np.ndarray:

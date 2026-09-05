@@ -1,12 +1,11 @@
-import { getPolicies } from "@/lib/policies";
 import { NextResponse } from "next/server";
-import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
+import { getCatalogEntries, getCatalogEntryById } from "@/lib/registry";
 
 // The catalog is bundled at build time and served as static Pages assets.
 export const dynamic = "force-static";
 
 export function generateStaticParams() {
-  return [...getAllBehaviors(), ...getPolicies()].map((behavior) => ({ id: behavior.id }));
+  return getCatalogEntries().map((entry) => ({ id: entry.id }));
 }
 
 interface Props {
@@ -15,13 +14,13 @@ interface Props {
 
 export async function GET(_request: Request, { params }: Props) {
   const { id } = await params;
-  const behavior = getBehaviorById(id) ?? getPolicies().find(p => p.id === id);
+  const entry = getCatalogEntryById(id);
 
-  if (!behavior) {
-    return NextResponse.json({ error: `Behavior '${id}' not found` }, { status: 404 });
+  if (!entry) {
+    return NextResponse.json({ error: `Catalog entry '${id}' not found` }, { status: 404 });
   }
 
-  return NextResponse.json(behavior, {
+  return NextResponse.json(entry, {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
@@ -29,3 +28,4 @@ export async function GET(_request: Request, { params }: Props) {
     },
   });
 }
+

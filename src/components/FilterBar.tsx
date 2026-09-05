@@ -7,8 +7,8 @@ interface FilterBarProps {
   setSearch: (s: string) => void;
   selectedCategory: string;
   setSelectedCategory: (c: string) => void;
-  selectedVerification: string;
-  setSelectedVerification: (v: string) => void;
+  selectedHardware: string;
+  setSelectedHardware: (v: string) => void;
   selectedAccessory: string;
   setSelectedAccessory: (a: string) => void;
   selectedSlot: string;
@@ -28,11 +28,11 @@ const categories = [
   { id: "experimental", label: "Experimental" },
 ];
 
-const verifications = [
+const hardwareStatuses = [
   { id: "all", label: "Any status" },
-  { id: "verified_hardware", label: "Hardware verified" },
-  { id: "claimed_hardware", label: "Hardware claimed" },
-  { id: "community_experimental", label: "Experimental" },
+  { id: "maintainer-verified", label: "Hardware verified" },
+  { id: "author-claimed", label: "Hardware claimed" },
+  { id: "none", label: "No hardware evidence" },
 ];
 
 const accessories = [
@@ -47,8 +47,8 @@ export function FilterBar({
   setSearch,
   selectedCategory,
   setSelectedCategory,
-  selectedVerification,
-  setSelectedVerification,
+  selectedHardware,
+  setSelectedHardware,
   selectedAccessory,
   setSelectedAccessory,
   selectedSlot,
@@ -60,14 +60,14 @@ export function FilterBar({
   const hasActiveFilters =
     search.trim() !== "" ||
     selectedCategory !== "all" ||
-    selectedVerification !== "all" ||
+    selectedHardware !== "all" ||
     selectedAccessory !== "all" ||
     selectedSlot !== "all";
 
   const clearAllFilters = () => {
     setSearch("");
     setSelectedCategory("all");
-    setSelectedVerification("all");
+    setSelectedHardware("all");
     setSelectedAccessory("all");
     setSelectedSlot("all");
   };
@@ -100,10 +100,10 @@ export function FilterBar({
             {categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
-        <label htmlFor="verification-filter">
-          <span className="sr-only">Verification status</span>
-          <select id="verification-filter" className="filter-select" value={selectedVerification} onChange={(event) => setSelectedVerification(event.target.value)} aria-label="Filter by verification status">
-            {verifications.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+        <label htmlFor="hardware-filter">
+          <span className="sr-only">Hardware evidence</span>
+          <select id="hardware-filter" className="filter-select" value={selectedHardware} onChange={(event) => setSelectedHardware(event.target.value)} aria-label="Filter by hardware evidence">
+            {hardwareStatuses.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
           </select>
         </label>
         <label htmlFor="accessory-filter">

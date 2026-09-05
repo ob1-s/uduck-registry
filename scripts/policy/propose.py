@@ -33,9 +33,10 @@ for file in Path('registry/policies').glob('*.json'):
     if old['id'] == p['id'] or old['source']['repo'].lower() == p['source']['repo'].lower():
         raise ValueError('Already registered; update existing pointer')
 branch = f'bot/policy-{issue}'
-existing = gh('pr', 'list', '--head', branch, '--state', 'all', '--json', 'number')
+existing = gh('pr', 'list', '--head', branch, '--state', 'all', '--json', 'number,url')
 if existing:
     print(f"Submission already has PR #{existing[0]['number']}")
+    gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"This submission already has a review PR: {existing[0]['url']}"})
     raise SystemExit(0)
 head = gh('api', f'repos/{repo}/git/ref/heads/main')['object']['sha']
 try:
@@ -46,19 +47,39 @@ except subprocess.CalledProcessError:
         raise
 content = base64.b64encode((json.dumps(p, indent=2) + '\n').encode()).decode()
 gh('api', f'repos/{repo}/contents/{relative}', payload={'message': f"Register {p['id']}", 'branch': branch, 'content': content})
+diagnosis = submission.get('diagnosis', {})
+def quoted(value):
+    return str(value).replace('`', '').replace('@', '@\u200b').replace('\n', ' ')[:1000]
+manifest = diagnosis.get('manifest', {})
+if not isinstance(manifest, dict):
+    manifest = {}
+unresolved = diagnosis.get('unresolved', [])
+if not isinstance(unresolved, list):
+    unresolved = []
+review_notes = '\n'.join('- ' + quoted(item) for item in unresolved[:20]) or '- No unresolved package metadata reported.'
 body = f"""Registers `{p['source']['repo']}` at `{p['source']['revision']}` from #{issue}.
 
 Only the pinned source and curation overlay are authored. Build resolution rechecks the manifest and ONNX hashes.
 
 - Artifact SHA256: `{p['source']['artifact_sha256']}`
 - Manifest SHA256: `{p['source']['manifest_sha256']}`
+- Manifest schema: `{quoted(manifest.get('schema_version', 'unknown'))}`
+- Kind: `{quoted(manifest.get('kind', 'unknown'))}`
+- Runtime assessment: `{quoted(diagnosis.get('runtime', 'needs review'))}`
+- License: `{quoted(diagnosis.get('license') or 'not declared')}`
+- ONNX inspection: zero-input smoke check completed; CI independently checks the pinned package again
 - Hardware: no registry verification
-- Behavior simulation: not covered; package inspection is not a behavioral pass
+- Registry simulation: see the explicitly dispatched CI run for its recipe, report, and measured outcome; package inspection alone is not a behavioral pass
+
+Package review notes:
+{review_notes}
 
 Review license, command semantics, curation, and build results before merging. Bot PRs created with GITHUB_TOKEN can leave pull_request workflows awaiting approval; this bot explicitly dispatches uDuck CI on the proposed branch. Check that run before merging.
 
 Closes #{issue}.
 """
-gh('api', f'repos/{repo}/pulls', payload={'title': f"Register {p['id']}", 'head': branch, 'base': 'main', 'body': body})
+pull = gh('api', f'repos/{repo}/pulls', payload={'title': f"Register {p['id']}", 'head': branch, 'base': 'main', 'body': body})
 
 gh('api', f'repos/{repo}/actions/workflows/ci.yml/dispatches', payload={'ref': branch})
+
+gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"Prepared {pull['html_url']} from the pinned package. CI has been requested; the PR contains the package diagnosis and links to the checks.\n\n{review_notes}"})

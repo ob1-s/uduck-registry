@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getAllBehaviors, getBehaviorById } from "@/lib/registry";
+import { getCatalogEntries, getCatalogEntryById } from "@/lib/registry";
 import { SOCIAL_IMAGE_SIZE } from "@/lib/site";
 import { BehaviorSocialCard } from "@/components/social/BehaviorSocialCard";
 
@@ -11,16 +11,16 @@ interface RouteProps {
 }
 
 export function generateStaticParams() {
-  return getAllBehaviors().map((behavior) => ({ id: behavior.id }));
+  return getCatalogEntries().map((entry) => ({ id: entry.id }));
 }
 
 export async function GET(_request: Request, { params }: RouteProps) {
   const { id } = await params;
-  const behavior = getBehaviorById(id);
-  if (!behavior) return new Response("Not found", { status: 404 });
+  const entry = getCatalogEntryById(id);
+  if (!entry) return new Response("Not found", { status: 404 });
 
   return new ImageResponse(
-    <BehaviorSocialCard behavior={behavior} variant="openGraph" />,
+    <BehaviorSocialCard entry={entry} variant="openGraph" />,
     SOCIAL_IMAGE_SIZE,
   );
 }

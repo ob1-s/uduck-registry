@@ -1,16 +1,13 @@
-import { getPolicies } from "@/lib/policies";
 import { ArrowRight } from "lucide-react";
-import { getAllBehaviors, getRegistryStats } from "@/lib/registry";
+import { getCatalogEntries, getRegistryStats } from "@/lib/registry";
 import { BehaviorCatalog } from "@/components/BehaviorCatalog";
 import { CopyPromptButton } from "@/components/CopyPromptButton";
 import { InteractiveDuck } from "@/components/InteractiveDuck";
 import { QuackAnchor } from "@/components/QuackAction";
-import { withRegistrySimulation } from "@/lib/simulation-results";
 
 export default function HomePage() {
-  const behaviors = getAllBehaviors().map(withRegistrySimulation);
+  const entries = getCatalogEntries();
   const stats = getRegistryStats();
-  const policies = getPolicies();
 
   return (
     <>
@@ -25,7 +22,7 @@ export default function HomePage() {
             <div className="button-row">
               <QuackAnchor href="#catalog" className="button-primary">Choose a behavior <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
             </div>
-            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} with upstream hardware claims</p>
+            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} maintainer-verified on hardware</p>
           </div>
 
           <div className="hero-art">
@@ -46,7 +43,7 @@ export default function HomePage() {
           {[0, 1].map((copy) => (
             <div className="ticker-group" key={copy}>
               <span>{stats.total} moves in the shelf</span><i>◆</i>
-              <span>{stats.hardware} with upstream hardware claims</span><i>◆</i>
+              <span>{stats.hardware} maintainer-verified on hardware</span><i>◆</i>
               <span>{stats.community} experimental</span><i>◆</i>
               <span>open weights</span><i>◆</i>
               <span>your policy here</span><i>◆</i>
@@ -66,7 +63,7 @@ export default function HomePage() {
             </div>
             <span className="section-note">{stats.total} moves</span>
           </div>
-          <BehaviorCatalog initialBehaviors={behaviors} policies={policies} />
+          <BehaviorCatalog entries={entries} />
         </div>
       </section>
 

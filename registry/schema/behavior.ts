@@ -238,6 +238,5 @@ export interface RegistryIndex {
   version: string;
   updated_at: string;
   count: number;
-  behaviors: Behavior[];
-  policies?: import("./policy").PolicyPointer[];
+  entries: import("./catalog").CatalogEntry[];
 }

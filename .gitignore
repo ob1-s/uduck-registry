@@ -47,4 +47,12 @@ __pycache__/
 public/registry.json
 public/media/registry-sim/
 .venv/
-registry-evidence.zip
+
+# Local evidence release staging
+evidence-assets/
+evidence-index.json
+evidence-fragment.json
+durable-evidence-index.json
+build-evidence-index.json
+evidence-plan.json
+ci-evidence/

@@ -7,47 +7,22 @@ on:
   pull_request:
     branches: [main, master]
 
+# Main pushes update one mutable index. Serialize them so a later run cannot
+# overwrite the index with a view that was based on an older release state.
+concurrency:
+  group: uduck-evidence-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
+env:
+  EVIDENCE_TAG: registry-evidence
+  EVIDENCE_RELEASE_URL: https://github.com/${{ github.repository }}/releases/download/registry-evidence
+
 jobs:
-  evidence:
-    name: Render current registry evidence
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 ffmpeg
-      - run: pip install -r simulation/requirements.txt
-      - uses: actions/cache@v4
-        with:
-          path: .simcache
-          key: sim-assets-${{ hashFiles('simulation/assets.lock.json') }}
-      - name: Test runner
-        run: PYTHONPATH=simulation python -m unittest discover -s simulation/tests
-      - name: Render diagnostics (failed checks remain visible)
-        env:
-          MUJOCO_GL: egl
-        run: |
-          python - <<'PYRUN'
-          import subprocess, sys
-          from pathlib import Path
-          for file in sorted(Path('registry/behaviors').glob('*.json')):
-              result = subprocess.run([sys.executable, 'simulation/run_check.py', '--behavior', file.stem, '--out', 'sim-results', '--keep-media'])
-              if result.returncode not in (0, 1):
-                  raise SystemExit(result.returncode)
-          PYRUN
-      - uses: actions/upload-artifact@v4
-        with:
-          name: registry-evidence
-          path: sim-results/
-          retention-days: 14
   resolve-policies:
+    name: Resolve pinned Hub packages
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -66,29 +41,144 @@ jobs:
           path: .generated/policies/
           include-hidden-files: true
           if-no-files-found: ignore
-  archive-evidence:
+
+  evidence:
+    name: Render current registry evidence
+    needs: resolve-policies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: resolved-policies
+          path: .generated/policies
+          if-no-artifact: warn
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libegl1 libgl1 ffmpeg
+      - run: pip install -r simulation/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: .simcache
+          key: sim-assets-${{ hashFiles('simulation/assets.lock.json') }}
+      - name: Fetch durable evidence index for cache planning
+        run: |
+          python3 scripts/evidence_store.py fetch-index \
+            --release-url "$EVIDENCE_RELEASE_URL" \
+            --out evidence-index.json \
+            --allow-missing
+      - name: Plan diagnostic runs
+        run: PYTHONPATH=simulation python3 scripts/evidence_store.py plan --index evidence-index.json --out evidence-plan.json
+      - name: Test runner
+        run: PYTHONPATH=simulation python -m unittest discover -s simulation/tests
+      - name: Render uncached diagnostics (failed checks remain visible)
+        env:
+          MUJOCO_GL: egl
+        run: |
+          PYTHONPATH=simulation python - <<'PYRUN'
+          import json
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          plan = json.loads(Path('evidence-plan.json').read_text())
+          Path('sim-results').mkdir(parents=True, exist_ok=True)
+          for item in plan['items']:
+              if item['status'] == 'cached':
+                  print(f"[{item['behavior']}] CACHED {item['evidence_key']}")
+                  continue
+              result = subprocess.run([
+                  sys.executable,
+                  'simulation/run_check.py',
+                  '--behavior', item['behavior'],
+                  '--out', 'sim-results',
+                  '--keep-media',
+              ])
+              if result.returncode not in (0, 1):
+                  raise SystemExit(result.returncode)
+          PYRUN
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: registry-evidence
+          path: |
+            sim-results/
+            evidence-plan.json
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish-evidence:
+    name: Publish trusted evidence release
     needs: evidence
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: registry-evidence
-          path: evidence
-      - name: Archive diagnostics outside source history
+          path: ci-evidence
+      - name: Package content-addressed evidence
+        run: python3 scripts/evidence_store.py package --results ci-evidence/sim-results --out evidence-assets --fragment evidence-fragment.json
+      - name: Read the existing release index
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p release-index
+          if gh release download "$EVIDENCE_TAG" --repo "$GH_REPO" --pattern index.json --dir release-index; then
+            echo 'Using existing evidence index.'
+          else
+            echo 'No prior evidence index; starting a new content-addressed store.'
+          fi
+      - name: Merge current results with evidence history
+        run: python3 scripts/evidence_store.py merge --existing release-index/index.json --fragment evidence-fragment.json --out evidence-index.json
+      - name: Create the durable evidence release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
-          zip -r registry-evidence.zip evidence
-          gh release view "evidence-$COMMIT_SHA" >/dev/null 2>&1 || gh release create "evidence-$COMMIT_SHA" --target "$COMMIT_SHA" --title "Registry evidence $COMMIT_SHA" --notes "Diagnostics from trusted main code. Individual reports state measured checks and exact policy hashes." --latest=false
-          gh release upload "evidence-$COMMIT_SHA" registry-evidence.zip --clobber
+          if gh release view "$EVIDENCE_TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo 'Evidence release already exists.'
+          else
+            gh release create "$EVIDENCE_TAG" --repo "$GH_REPO" --target "$COMMIT_SHA" --title 'uDuck registry evidence' --notes 'Content-addressed registry diagnostics generated by trusted main code. Each report describes its measured checks and input identity.' --latest=false
+          fi
+      - name: Upload immutable evidence assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          existing_assets=$(gh release view "$EVIDENCE_TAG" --repo "$GH_REPO" --json assets --jq '.assets[].name')
+          for asset in evidence-assets/*.tar.gz; do
+            if [ -f "$asset" ]; then
+              name=$(basename "$asset")
+              if printf '%s\n' "$existing_assets" | grep -Fqx "$name"; then
+                echo "Keeping immutable existing asset $name"
+              else
+                gh release upload "$EVIDENCE_TAG" "$asset" --repo "$GH_REPO"
+              fi
+            fi
+          done
+      - name: Upload the current evidence index
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$EVIDENCE_TAG" evidence-index.json --repo "$GH_REPO" --clobber
+
   validate:
     name: Validate Registry & Build
-    needs: [evidence, resolve-policies]
+    needs: [evidence, resolve-policies, publish-evidence]
+    if: always() && needs.evidence.result == 'success' && needs['resolve-policies'].result == 'success' && (needs['publish-evidence'].result == 'success' || needs['publish-evidence'].result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -108,6 +198,16 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: registry-evidence
+          path: ci-evidence
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: resolved-policies
+          path: .generated/policies
+          merge-multiple: true
+
       - name: Validate Registry
         run: pnpm validate
 
@@ -117,19 +217,14 @@ jobs:
       - name: Compile Public Registry Index
         run: pnpm compile
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: registry-evidence
-          path: sim-results
-
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: resolved-policies
-          path: .generated/policies
-          merge-multiple: true
-
-      - name: Publish matching diagnostics into this build
-        run: python3 scripts/policy/collect_evidence.py sim-results
+      - name: Read durable evidence index
+        run: python3 scripts/evidence_store.py fetch-index --release-url "$EVIDENCE_RELEASE_URL" --out durable-evidence-index.json --allow-missing
+      - name: Add this run's temporary diagnostics to the build view
+        run: |
+          python3 scripts/evidence_store.py package --results ci-evidence/sim-results --out ci-evidence/local-assets --fragment ci-evidence/local-fragment.json
+          python3 scripts/evidence_store.py merge --existing durable-evidence-index.json --fragment ci-evidence/local-fragment.json --out build-evidence-index.json
+      - name: Hydrate matching evidence into this build
+        run: python3 scripts/evidence_store.py hydrate --index build-evidence-index.json --release-url "$EVIDENCE_RELEASE_URL" --local ci-evidence/sim-results --out public/media/registry-sim
 
       - name: Build Web Application
         run: pnpm build

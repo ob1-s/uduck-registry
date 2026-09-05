@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 import tempfile
 import urllib.error
 import urllib.parse
@@ -12,6 +13,11 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from simulation.pointer_recipes import recipe_for_policy, recipe_reason
+
 SHA = re.compile(r"^[0-9a-f]{40}$")
 SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -53,7 +59,7 @@ def parse_url(value):
         raise ValueError('Unsupported revision')
     return repo, rev
 
-def classify(manifest):
+def classify(manifest, repo=None, source=None):
     """Accept upstream optional fields; missing claims remain unresolved."""
     if not isinstance(manifest, dict) or manifest.get('schema_version') != 2:
         raise ValueError('Expected Pollen manifest.json schema_version: 2')
@@ -103,10 +109,24 @@ def classify(manifest):
         issues.append('Held pose requires an explicit command and hold/unwind review')
     else:
         issues.append('Missing kind or episodic duration; install needs review')
-    # A constant encoding does NOT specify the command value. The upstream
-    # manifest's twist/head/body descriptions are prose, not executable data.
-    coverage = 'Manifest does not encode a machine-readable activation command and runner setup. No behavior test inferred from prose.'
-    return {'runtime': 'pollen-hub' if not issues else 'pollen-review', 'install_route': route if not issues else 'review', 'unresolved': issues, 'simulation': {'status': 'not-covered', 'reason': coverage}}
+    # A constant encoding does NOT generally specify the command value. The
+    # maintainer-owned recipe layer may cover a small set of documented
+    # defaults or named upstream examples, but that diagnosis is independent
+    # from install routing and never becomes authored pointer state.
+    recipe = recipe_for_policy(repo, manifest, source) if repo else None
+    if recipe:
+        simulation = {
+            'status': 'covered',
+            'runner': recipe['runner'],
+            'recipe': recipe,
+            'scope': recipe['provenance']['scope'],
+        }
+    else:
+        simulation = {
+            'status': 'not-covered',
+            'reason': recipe_reason(repo or '', manifest, source),
+        }
+    return {'runtime': 'pollen-hub' if not issues else 'pollen-review', 'install_route': route if not issues else 'review', 'unresolved': issues, 'simulation': simulation}
 
 def inspect_onnx(data):
     import onnxruntime as ort
@@ -139,11 +159,11 @@ def resolve(url, expected=None):
     base = f'https://huggingface.co/{repo}/resolve/{revision}'
     raw = fetch(base + '/manifest.json')
     manifest = json.loads(raw)
-    diagnosis = classify(manifest)
     data = fetch(base + '/policy.onnx', 100 * 1024 * 1024)
     hashes = {'manifest_sha256': digest(raw), 'artifact_sha256': digest(data)}
     if expected and any(expected[k] != v for k, v in hashes.items()):
         raise ValueError('Pinned manifest or policy hash mismatch')
+    diagnosis = classify(manifest, repo, {'revision': revision, **hashes})
     license_name = (metadata.get('cardData') or {}).get('license')
     if not isinstance(license_name, str) or not license_name.strip():
         diagnosis['unresolved'].append('Model card does not declare a license; maintainer review required')

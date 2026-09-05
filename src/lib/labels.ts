@@ -21,7 +21,7 @@ const robotdSlotLabels: Record<RobotDSlot, string> = {
   custom: "Custom",
 };
 
-export function formatCategory(category: BehaviorCategory) {
+export function formatCategory(category: BehaviorCategory | string) {
   return categoryLabels[category] ?? category;
 }
 
@@ -34,6 +34,6 @@ export function formatAccessory(accessory: string) {
   return labels[accessory] ?? accessory.replaceAll("_", " ");
 }
 
-export function formatRobotdSlot(slot: RobotDSlot) {
-  return robotdSlotLabels[slot];
+export function formatRobotdSlot(slot: RobotDSlot | string | null) {
+  return slot ? robotdSlotLabels[slot as RobotDSlot] ?? slot.replaceAll("_", " ") : "Unknown slot";
 }

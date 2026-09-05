@@ -42,20 +42,102 @@ from http_download import open_download
 from microduck_sim import checks, render  # noqa: E402
 from microduck_sim.preflight import SimulationPreflightError, require_valid  # noqa: E402
 from microduck_sim.scenarios import make_command_fn, scenario_from_descriptor  # noqa: E402
+from pointer_runner import policy_artifact_url, simulation_descriptor  # noqa: E402
+from pointer_recipes import recipe_reason  # noqa: E402
 from microduck_sim.robot import DuckRuntime, load_model  # noqa: E402
 
 REPO_ROOT = HERE.parent
 ALLOWED_HOSTS = ("huggingface.co", "raw.githubusercontent.com")
 MAX_ONNX_BYTES = 100 * 1024 * 1024
+MAX_MANIFEST_BYTES = 2 * 1024 * 1024
+
+
+def _manifest_url(pointer: dict) -> str:
+    source = pointer["source"]
+    return (
+        f"https://huggingface.co/{source['repo']}/resolve/"
+        f"{source['revision']}/manifest.json"
+    )
+
+
+def _download_manifest(pointer: dict) -> tuple[dict, bytes]:
+    """Fetch only the pinned manifest when prepare output is unavailable."""
+
+    req = urllib.request.Request(_manifest_url(pointer), headers={"User-Agent": "uduck-registry-ci"})
+    with open_download(req, timeout=60) as response:
+        raw = response.read(MAX_MANIFEST_BYTES + 1)
+    if len(raw) > MAX_MANIFEST_BYTES:
+        raise ValueError("policy manifest exceeds 2 MB sanity bound")
+    actual = hashlib.sha256(raw).hexdigest()
+    expected = pointer["source"]["manifest_sha256"]
+    if actual != expected:
+        raise ValueError(
+            f"policy manifest hash mismatch: expected {expected}, got {actual}"
+        )
+    try:
+        manifest = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("pinned policy manifest is not valid JSON") from exc
+    if not isinstance(manifest, dict):
+        raise ValueError("pinned policy manifest must be an object")
+    return manifest, raw
+
+
+def load_pointer_descriptor(policy_id: str) -> dict:
+    """Load a pointer plus prepared/fetched manifest as a runner descriptor.
+
+    Generated resolver output is preferred so the evidence job does not fetch
+    the same manifest twice.  A direct pinned fetch remains available for local
+    runs and verifies the authored manifest hash before a command recipe is
+    selected.
+    """
+
+    pointer_path = REPO_ROOT / "registry" / "policies" / f"{policy_id}.json"
+    if not pointer_path.exists():
+        raise SystemExit(f"no policy pointer at {pointer_path}")
+    pointer = json.loads(pointer_path.read_text())
+    generated_path = REPO_ROOT / ".generated" / "policies" / f"{policy_id}.json"
+    manifest = None
+    if generated_path.exists():
+        generated = json.loads(generated_path.read_text())
+        resolved = generated.get("resolved", generated)
+        if not isinstance(resolved, dict):
+            raise ValueError(f"invalid generated policy resolution: {generated_path}")
+        resolved_source = resolved.get("source")
+        if resolved_source is not None and resolved_source != pointer.get("source"):
+            raise ValueError(f"stale generated policy resolution: {generated_path}")
+        manifest = resolved.get("manifest")
+        if not isinstance(manifest, dict):
+            raise ValueError(f"generated policy has no manifest: {generated_path}")
+    else:
+        manifest, _ = _download_manifest(pointer)
+
+    descriptor = simulation_descriptor(pointer, manifest)
+    if descriptor is not None:
+        return descriptor
+    # Keep unsupported pointer entries visible and explicit.  The caller does
+    # not download an artifact when no recipe exists.
+    return {
+        "id": pointer["id"],
+        "name": manifest.get("name") or pointer["id"],
+        "simulation": {
+            "runner": "external",
+            "reason": "publisher_only",
+            "notes": recipe_reason(pointer["source"]["repo"], manifest, pointer["source"]),
+        },
+        "pointer": pointer,
+        "manifest": manifest,
+        "artifacts": {"onnx": {"url": policy_artifact_url(pointer), "filename": "policy.onnx"}},
+    }
 
 
 def load_descriptor(behavior_id: str) -> dict:
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", behavior_id):
         raise ValueError("Invalid behavior id")
     path = REPO_ROOT / "registry" / "behaviors" / f"{behavior_id}.json"
-    if not path.exists():
-        raise SystemExit(f"no descriptor at {path}")
-    return json.loads(path.read_text())
+    if path.exists():
+        return json.loads(path.read_text())
+    return load_pointer_descriptor(behavior_id)
 
 
 def download_onnx(descriptor: dict, dest_dir: Path) -> Path:
@@ -114,6 +196,10 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
             "media": None,
             "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         }
+        if descriptor.get("pointer"):
+            report["entry"] = "policy"
+            report["source"] = descriptor["pointer"]["source"]
+            report["manifest"] = descriptor["manifest"]
         write_report(out_dir, behavior_id, report)
         print(f"[{behavior_id}] UNSUPPORTED ({reason})")
         return 0
@@ -138,6 +224,11 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
     with tempfile.TemporaryDirectory(prefix="uduck-sim-") as tmp:
         onnx_path = download_onnx(descriptor, Path(tmp))
         onnx_sha = hashlib.sha256(onnx_path.read_bytes()).hexdigest()
+        expected_onnx_sha = descriptor["artifacts"]["onnx"].get("expected_sha256")
+        if expected_onnx_sha and onnx_sha != expected_onnx_sha:
+            raise ValueError(
+                f"policy artifact hash mismatch: expected {expected_onnx_sha}, got {onnx_sha}"
+            )
 
         from fetch_assets import fetch
         asset_variant = "rollers" if simulation_model == "microduck-rollers" else "standard"
@@ -201,6 +292,11 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
                 "renderer": "mujoco EGL offscreen",
             },
         })
+        if descriptor.get("pointer"):
+            report["entry"] = "policy"
+            report["source"] = descriptor["pointer"]["source"]
+            report["manifest"] = descriptor["manifest"]
+            report["recipe"]["provenance"] = sim_block.get("provenance")
     report_path = write_report(out_dir, behavior_id, report)
 
     print(f"[{behavior_id}] RENDERED; CHECKS {report['checks_status'].upper()} -> {report_path}")
@@ -221,22 +317,25 @@ def write_report(out_dir: Path, behavior_id: str, report: dict) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--behavior", required=True)
+    entry = parser.add_mutually_exclusive_group(required=True)
+    entry.add_argument("--behavior")
+    entry.add_argument("--policy")
     parser.add_argument("--out", default=str(REPO_ROOT / "sim-results"))
     parser.add_argument("--keep-media", action="store_true",
                         help="render the loop.mp4 / poster.png (slower)")
     args = parser.parse_args()
+    behavior_id = args.behavior or args.policy
     try:
-        return run(args.behavior, Path(args.out), args.keep_media)
+        return run(behavior_id, Path(args.out), args.keep_media)
     except Exception as exc:  # noqa: BLE001
-        write_report(Path(args.out), args.behavior, {
-            "behavior": args.behavior,
+        write_report(Path(args.out), behavior_id, {
+            "behavior": behavior_id,
             "execution": "failed",
             "error": str(exc),
             "media": None,
             "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         })
-        print(f"ERROR running sim for {args.behavior}: {exc}", file=sys.stderr)
+        print(f"ERROR running sim for {behavior_id}: {exc}", file=sys.stderr)
         return 2
 
 

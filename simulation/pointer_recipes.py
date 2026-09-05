@@ -218,11 +218,6 @@ def recipe_reason(repo: str, manifest: dict[str, Any], source: dict[str, Any] | 
         return "Scripted policies require daemon-driven command timing that the registry runner does not reproduce."
     if manifest.get("kind") == "episodic" and manifest.get("duration_s") is None:
         return "Episodic policy does not declare a finite duration."
-    if manifest.get("kind") == "episodic" and manifest.get("action_scale") is None:
-        return (
-            "Episodic policy does not declare action_scale. Republish with Pollen's "
-            "`uv run publish ... --action-scale <trained-scale>`; uDuck will not guess it."
-        )
     if isinstance(manifest.get("command"), dict) and manifest["command"].get("encoding") not in (None, "constant"):
         return "The upstream command encoding is daemon-driven and has no registry recipe."
     return "No maintainer-owned registry recipe covers this manifest."

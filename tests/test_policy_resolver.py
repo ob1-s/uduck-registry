@@ -25,7 +25,6 @@ class ResolverTests(unittest.TestCase):
         result = classify(MANIFEST)
         self.assertEqual(result['install_route'], 'skill')
         self.assertEqual(result['simulation']['status'], 'not-covered')
-        self.assertIn('--action-scale', result['simulation']['reason'])
         m = copy.deepcopy(MANIFEST)
         m.update(kind='perpetual', duration_s=None)
         m['command'] = {'twist': ['flag', 'side', 'unused'], 'idle': [0, 0, 0]}

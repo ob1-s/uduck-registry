@@ -18,6 +18,7 @@ class PolicyContributionContractTests(unittest.TestCase):
         proposer = (ROOT / 'scripts/policy/propose.py').read_text()
         self.assertIn('ONNX interface:', proposer)
         self.assertIn('Registry simulation:', proposer)
+        self.assertIn('--action-scale <trained-scale>', proposer)
         self.assertIn('Contributor notes (untrusted reviewer context; not runtime evidence):', proposer)
         self.assertIn("replace('@', '@\\u200b')", proposer)
 

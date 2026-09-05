@@ -94,7 +94,10 @@ if simulation.get('status') == 'covered':
         f"{quoted(simulation.get('scope') or recipe.get('provenance', {}).get('scope', ''))}"
     )
 else:
-    sim_review = f"**not-covered** — {quoted(simulation.get('reason', 'No registry recipe reported.'))}"
+    sim_reason = quoted(simulation.get('reason', 'No registry recipe reported.'))
+    if manifest.get('kind') == 'episodic' and manifest.get('action_scale') is None:
+        sim_reason += " Republish with Pollen's `uv run publish ... --action-scale <trained-scale>`; uDuck will not guess it."
+    sim_review = f"**not-covered** — {sim_reason}"
 contributor = submission.get('contributor', {})
 if not isinstance(contributor, dict):
     contributor = {}

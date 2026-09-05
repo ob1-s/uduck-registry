@@ -117,9 +117,8 @@ separate **Registry simulation** section on the behavior page.
 
 ## CI isolation
 
-- A changed descriptor runs only that behavior.
-- Shared runner/schema/workflow changes run the fixed golden set:
-  `alpha-walking`, `jump`, `max-height-jump`, and `roulade`.
+- `Sim Check` is a manual utility; `uDuck CI` owns PR and main evidence. This avoids duplicate concurrent downloads.
+- Pinned assets use the existing hash-checked Actions cache; transient download failures have bounded backoff.
 - The main CI workflow reruns the full legacy catalog before each build. Failed measured checks remain failed in the display; execution errors stop publication.
 - Main builds publish matching reports/media into the static site and archive the run in a GitHub Release. PR artifacts remain temporary diagnostics.
 - Generated media is ignored by git. No contributor or post-merge media commit is needed.

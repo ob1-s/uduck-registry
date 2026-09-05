@@ -38,6 +38,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 import mujoco  # noqa: E402
 
 from evidence import inputs_digest, evidence_key
+from http_download import open_download
 from microduck_sim import checks, render  # noqa: E402
 from microduck_sim.preflight import SimulationPreflightError, require_valid  # noqa: E402
 from microduck_sim.scenarios import make_command_fn, scenario_from_descriptor  # noqa: E402
@@ -66,7 +67,7 @@ def download_onnx(descriptor: dict, dest_dir: Path) -> Path:
     dest = dest_dir / filename
     if not dest.exists():
         req = urllib.request.Request(url, headers={"User-Agent": "uduck-registry-ci"})
-        with urllib.request.urlopen(req, timeout=300) as resp, dest.open("wb") as out:
+        with open_download(req, timeout=300) as resp, dest.open("wb") as out:
             size = 0
             while True:
                 chunk = resp.read(1 << 20)
@@ -209,6 +210,8 @@ def run(behavior_id: str, out_dir: Path, keep_media: bool) -> int:
 
 
 def write_report(out_dir: Path, behavior_id: str, report: dict) -> Path:
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", behavior_id):
+        raise ValueError("Invalid behavior id")
     target = out_dir / behavior_id
     target.mkdir(parents=True, exist_ok=True)
     report_path = target / "report.json"

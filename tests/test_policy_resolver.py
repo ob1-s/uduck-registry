@@ -71,4 +71,45 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(validate_pointer(p), p)
         for change in [{'id': '../test'}, {'verification': {'status': 'verified_hardware'}}, {'simulation': {'checks': ['pass']}}]:
             with self.assertRaises(ValueError): validate_pointer({**p, **change})
+    def test_fetch_retries_transient_and_honors_retry_after(self):
+        import urllib.error
+        import resolve as resolve_mod
+        calls = {'n': 0}
+        real_opener = resolve_mod.urllib.request.build_opener
+        class FakeHeaders(dict):
+            def get(self, key, default=''):
+                return super().get(key, default)
+        def fail_once_then_ok(*args, **kwargs):
+            class Ctx:
+                def __enter__(self_inner):
+                    if calls['n'] == 0:
+                        calls['n'] += 1
+                        raise urllib.error.HTTPError('url', 429, 'rate limit', FakeHeaders({'Retry-After': '1'}), None)
+                    import io
+                    calls['n'] += 1
+                    data = b'ok'
+                    class Resp:
+                        def read(self_inner2, n=-1): return data
+                        def __enter__(self_inner2): return self_inner2
+                        def __exit__(self_inner2, *a): return False
+                    return Resp()
+                def __exit__(self_inner, *a): return False
+            class Opener:
+                def open(self_inner, req, timeout=None): return Ctx()
+            return Opener()
+        with patch.object(resolve_mod.urllib.request, 'build_opener', fail_once_then_ok), \
+             patch('time.sleep', return_value=None) as slept:
+            self.assertEqual(resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/manifest.json', limit=10), b'ok')
+            self.assertTrue(slept.called)
+        # Permanent 404 is not retried indefinitely.
+        def always_404(*args, **kwargs):
+            class Opener:
+                def open(self_inner, req, timeout=None):
+                    raise urllib.error.HTTPError('url', 404, 'missing', FakeHeaders(), None)
+            return Opener()
+        with patch.object(resolve_mod.urllib.request, 'build_opener', always_404), \
+             patch('time.sleep', return_value=None) as slept:
+            with self.assertRaises(urllib.error.HTTPError):
+                resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/manifest.json', limit=10)
+            slept.assert_not_called()
 if __name__ == '__main__': unittest.main()

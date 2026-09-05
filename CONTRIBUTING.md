@@ -47,7 +47,7 @@ An explicit legacy simulation recipe remains a maintainer-owned diagnostic. Unsu
 
 Author media is welcome, including bespoke scenes and hardware clips; link to the publisher's HTTPS media. It remains separate from registry evidence. Existing cached author media is retained for continuity.
 
-CI reruns registry diagnostics, publishes matching reports and renders into the static build, and archives main-branch outputs in a GitHub Release. Contributors never commit generated videos. Reports bind the policy hash to the full descriptor, executable runner, dependency specification, and pinned asset lock. Changing those inputs invalidates earlier display evidence. A failed measured check remains visible as failed. No diagnostic establishes hardware verification.
+CI runs registry diagnostics when their execution identity is not already represented by trusted durable evidence, publishes matching reports and renders into the static build, and archives main-branch outputs in a content-addressed GitHub Release. Contributors never commit generated videos. Reports bind the policy hash to execution-relevant inputs only (source revision, manifest/artifact hashes, maintainer recipe, simulator code, asset lock, dependency pins, environment contract). Curation-only edits such as tags or summaries do not rerun simulation. Changing execution inputs invalidates earlier display evidence. A failed measured check remains visible as failed. Package inspection (ONNX shape/smoke), registry simulation (pinned runner + recipe), publisher facts, and hardware claims are independent axes. No diagnostic establishes hardware verification.
 
 ## Repository setup
 

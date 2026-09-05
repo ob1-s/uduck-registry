@@ -89,12 +89,55 @@ class PointerRecipeTests(unittest.TestCase):
             "kind": "episodic",
             "duration_s": 4.0,
             "command": {"encoding": "constant"},
+            "obs_len": 61,
+            "action_len": 14,
+            "model_api": 1,
+            "action_scale": 1.0,
+            "entry_pose": "standing",
+            "robot": {"model": "microduck", "hw_rev": 1, "servos": "xl330", "control_hz": 50},
         }
         recipe = recipe_for_policy("someone/microduck-bow", manifest)
         self.assertIsNotNone(recipe)
         assert recipe is not None
         self.assertEqual(recipe["scenario"], "oneshot_zero")
         self.assertEqual(recipe["provenance"]["command"], [0.0, 0.0, 0.0])
+        self.assertIn("upstream_pin", recipe["provenance"])
+
+    def test_generic_zero_requires_complete_runner_contract(self) -> None:
+        base = {
+            "schema_version": 2,
+            "kind": "episodic",
+            "duration_s": 4.0,
+            "command": {"encoding": "constant"},
+            "obs_len": 61,
+            "action_len": 14,
+            "model_api": 1,
+            "action_scale": 1.0,
+            "entry_pose": "standing",
+            "robot": {"model": "microduck", "hw_rev": 1, "servos": "xl330", "control_hz": 50},
+        }
+        import copy as _copy
+        # Missing action_scale stays not-covered, never defaults to 1.0.
+        missing_scale = _copy.deepcopy(base)
+        del missing_scale["action_scale"]
+        self.assertIsNone(recipe_for_policy("someone/microduck-bow", missing_scale))
+        # Custom twist/head/body prose is never interpreted.
+        for key in ("twist", "head", "body"):
+            m = _copy.deepcopy(base)
+            m["command"] = {"encoding": "constant", key: "unused (zeros)"}
+            self.assertIsNone(recipe_for_policy("someone/microduck-move", m), key)
+        # Non-standing entry pose stays not-covered.
+        m = _copy.deepcopy(base)
+        m["entry_pose"] = "crouching"
+        self.assertIsNone(recipe_for_policy("someone/microduck-bow", m))
+        # Wrong widths stay not-covered.
+        m = _copy.deepcopy(base)
+        m["obs_len"] = 60
+        self.assertIsNone(recipe_for_policy("someone/microduck-bow", m))
+        # Missing duration stays not-covered.
+        m = _copy.deepcopy(base)
+        del m["duration_s"]
+        self.assertIsNone(recipe_for_policy("someone/microduck-bow", m))
 
     def test_nonzero_command_prose_is_not_executed_as_a_guess(self) -> None:
         manifest = {
@@ -102,6 +145,12 @@ class PointerRecipeTests(unittest.TestCase):
             "kind": "episodic",
             "duration_s": 4.0,
             "command": {"encoding": "constant", "twist": "forward speed"},
+            "obs_len": 61,
+            "action_len": 14,
+            "model_api": 1,
+            "action_scale": 1.0,
+            "entry_pose": "standing",
+            "robot": {"model": "microduck", "hw_rev": 1, "servos": "xl330", "control_hz": 50},
         }
         self.assertIsNone(recipe_for_policy("someone/microduck-move", manifest))
 
@@ -147,6 +196,55 @@ class PointerRecipeTests(unittest.TestCase):
         fixture_data = b"fixture artifact"
         fixture_pointer = {"source": {"artifact_sha256": sha256(fixture_data).hexdigest()}}
         self.assertTrue(artifact_matches(fixture_pointer, fixture_data))
+
+    def test_unsupported_fixture_stays_registrable_without_recipe(self) -> None:
+        manifest = json.loads((Path(__file__).parent / "fixtures" / "unsupported-manifest.json").read_text())
+        self.assertIsNone(recipe_for_policy("someone/microduck-mystery", manifest))
+        pointer = {
+            "id": "mystery-spin",
+            "source": {
+                "repo": "someone/microduck-mystery",
+                "revision": "b" * 40,
+                "manifest_sha256": "c" * 64,
+                "artifact_sha256": "d" * 64,
+            },
+        }
+        # Incomplete coverage must not kill registration: adapter returns None.
+        self.assertIsNone(simulation_descriptor(pointer, manifest))
+
+    def test_generic_eligible_fixture_selects_zero_command_for_documented_reasons(self) -> None:
+        manifest = json.loads((Path(__file__).parent / "fixtures" / "generic-eligible-manifest.json").read_text())
+        recipe = recipe_for_policy("someone/microduck-polite-bow", manifest)
+        self.assertIsNotNone(recipe)
+        assert recipe is not None
+        self.assertEqual(recipe["scenario"], "oneshot_zero")
+        self.assertEqual(recipe["provenance"]["command"], [0.0, 0.0, 0.0])
+        pointer = {
+            "id": "polite-bow",
+            "source": {
+                "repo": "someone/microduck-polite-bow",
+                "revision": "b" * 40,
+                "manifest_sha256": "c" * 64,
+                "artifact_sha256": "d" * 64,
+            },
+        }
+        descriptor = simulation_descriptor(pointer, manifest)
+        self.assertIsNotNone(descriptor)
+        assert descriptor is not None
+        self.assertEqual(descriptor["contract"]["action_scale"], 0.8)
+
+    def test_incomplete_pointer_returns_not_covered_instead_of_preflight_failure(self) -> None:
+        manifest = {
+            "schema_version": 2, "kind": "episodic", "duration_s": 4.0,
+            "command": {"encoding": "constant"},
+            # Missing obs_len/action_len/robot/action_scale: cannot instantiate.
+        }
+        pointer = {
+            "id": "incomplete",
+            "source": {"repo": "o/r", "revision": "a" * 40,
+                        "manifest_sha256": "b" * 64, "artifact_sha256": "c" * 64},
+        }
+        self.assertIsNone(simulation_descriptor(pointer, manifest))
 
 
 if __name__ == "__main__":

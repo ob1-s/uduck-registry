@@ -138,6 +138,11 @@ class PointerRecipeTests(unittest.TestCase):
         m = _copy.deepcopy(base)
         del m["duration_s"]
         self.assertIsNone(recipe_for_policy("someone/microduck-bow", m))
+        # Missing model_api stays not-covered: 61 inputs and 14 outputs do
+        # not prove the semantics of those channels.
+        m = _copy.deepcopy(base)
+        del m["model_api"]
+        self.assertIsNone(recipe_for_policy("someone/microduck-bow", m))
 
     def test_nonzero_command_prose_is_not_executed_as_a_guess(self) -> None:
         manifest = {

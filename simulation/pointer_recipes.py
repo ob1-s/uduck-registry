@@ -102,7 +102,9 @@ def _generic_zero_recipe(manifest: dict[str, Any]) -> dict[str, Any] | None:
     # values stay missing; they never default to a convenient 1.0 here.
     if manifest.get("obs_len") != 61 or manifest.get("action_len") != 14:
         return None
-    if manifest.get("model_api") not in (None, 1):
+    # 61 inputs and 14 outputs alone do not prove the semantics of those
+    # channels; the daemon API version must be declared explicitly.
+    if manifest.get("model_api") != 1:
         return None
     robot = manifest.get("robot")
     if not isinstance(robot, dict):

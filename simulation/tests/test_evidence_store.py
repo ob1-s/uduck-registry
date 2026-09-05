@@ -132,6 +132,72 @@ class EvidenceStoreTests(unittest.TestCase):
         self.assertTrue(evidence_store.valid_sha256("b" * 64))
         self.assertFalse(evidence_store.valid_sha256("b" * 40))
 
+    def test_archive_is_deterministic_across_wall_clock(self) -> None:
+        files = [
+            ("test/report.json", b'{"behavior":"test","execution":"unsupported"}'),
+            ("test/loop.mp4", b"\x00" * 4096),
+        ]
+        # Force different wall-clock times: the old `w:gz` code path stamped
+        # time.time() into the gzip header, so identical inputs produced
+        # different blob SHAs ~1s apart. The header-mtime assertion below
+        # fails that code deterministically, without relying on a sleep.
+        with patch("time.time", return_value=1700000000.0):
+            first = evidence_store._archive_bytes(files)
+        with patch("time.time", return_value=1700000005.0):
+            second = evidence_store._archive_bytes(files)
+        self.assertEqual(first, second)
+        self.assertEqual(first[4:8], b"\x00\x00\x00\x00")
+        self.assertEqual(
+            evidence_store.sha256_bytes(first), evidence_store.sha256_bytes(second)
+        )
+
+    def test_first_publish_round_trips_into_cached_second_plan(self) -> None:
+        # Guards the durable-cache contract CI depends on: the merged index
+        # produced by `merge` must be plannable as-is, so a second run with
+        # unchanged inputs is fully cached instead of starting over.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            results = root / "sim-results" / "test"
+            results.mkdir(parents=True)
+            (results / "report.json").write_text(json.dumps(self._unsupported_report()))
+            descriptor = root / "test.json"
+            descriptor.write_text(json.dumps({
+                "id": "test",
+                "source": {
+                    "repo": "o/r",
+                    "revision": "a" * 40,
+                    "artifact_sha256": "b" * 64,
+                    "manifest_sha256": "c" * 64,
+                },
+            }))
+            with patch.object(evidence_store, "ROOT", root), \
+                 patch.object(evidence_store, "_authored_descriptors", return_value={"test": descriptor}), \
+                 patch.object(evidence_store, "_descriptor_identity", return_value="a" * 64), \
+                 patch.object(evidence_store, "_explicit_artifact_sha", return_value="b" * 64):
+                assets = root / "assets"
+                fragment = root / "fragment.json"
+                evidence_store.package(results.parent, assets, fragment)
+                # The release asset name is RELEASE_INDEX_NAME: this is what
+                # `fetch-index` downloads on the next run.
+                release_index = root / evidence_store.RELEASE_INDEX_NAME
+                evidence_store.merge(root / "missing-index.json", fragment, release_index)
+                plan_out = root / "plan.json"
+                plan = evidence_store.plan(release_index, plan_out)
+        item = next(i for i in plan["items"] if i["behavior"] == "test")
+        self.assertEqual(item["status"], "cached")
+
+    def test_publish_job_uploads_canonical_index_name(self) -> None:
+        # The durable Release must contain exactly RELEASE_INDEX_NAME, because
+        # that is the only asset fetch-index ever downloads. A drift here
+        # (e.g. uploading evidence-index.json) silently disables the cache.
+        repo_root = Path(__file__).resolve().parents[2]
+        workflow = (repo_root / ".github/workflows/ci.yml").read_text()
+        publish = workflow.split("publish-evidence:")[1].split("\n  validate:")[0]
+        self.assertIn("--out index.json", publish)
+        self.assertIn('index.json --repo "$GH_REPO" --clobber', publish)
+        self.assertNotIn("evidence-index.json", publish)
+        self.assertIn("--pattern index.json", publish)
+
     def test_archive_rejects_path_traversal_and_links(self) -> None:
         archive = evidence_store._archive_bytes([("test/report.json", b'{"behavior":"test","execution":"unsupported"}')])
         files = evidence_store._extract_archive(archive, "test", Path("unused"))

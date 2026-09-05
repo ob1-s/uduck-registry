@@ -142,7 +142,7 @@ jobs:
             echo 'No prior evidence index; starting a new content-addressed store.'
           fi
       - name: Merge current results with evidence history
-        run: python3 scripts/evidence_store.py merge --existing release-index/index.json --fragment evidence-fragment.json --out evidence-index.json
+        run: python3 scripts/evidence_store.py merge --existing release-index/index.json --fragment evidence-fragment.json --out index.json
       - name: Create the durable evidence release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -174,7 +174,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release upload "$EVIDENCE_TAG" evidence-index.json --repo "$GH_REPO" --clobber
+        run: gh release upload "$EVIDENCE_TAG" index.json --repo "$GH_REPO" --clobber
 
   validate:
     name: Validate Registry & Build

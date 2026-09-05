@@ -7,8 +7,13 @@ import subprocess
 from pathlib import Path
 from resolve import validate_pointer
 
-def gh(*args, payload=None):
+def gh(*args, payload=None, method=None):
+    # `gh api` defaults to GET; `--input` only supplies the body, so every
+    # mutating call must pass an explicit `--method` (POST for refs/PRs/
+    # comments/dispatches, PUT for Contents API writes).
     command = ['gh', *args]
+    if method is not None:
+        command += ['--method', method]
     if payload is not None:
         command += ['--input', '-']
     result = subprocess.run(command, input=json.dumps(payload) if payload is not None else None, text=True, capture_output=True, check=True)
@@ -36,17 +41,17 @@ branch = f'bot/policy-{issue}'
 existing = gh('pr', 'list', '--head', branch, '--state', 'all', '--json', 'number,url')
 if existing:
     print(f"Submission already has PR #{existing[0]['number']}")
-    gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"This submission already has a review PR: {existing[0]['url']}"})
+    gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"This submission already has a review PR: {existing[0]['url']}"}, method='POST')
     raise SystemExit(0)
 head = gh('api', f'repos/{repo}/git/ref/heads/main')['object']['sha']
 try:
-    gh('api', f'repos/{repo}/git/refs', payload={'ref': 'refs/heads/' + branch, 'sha': head})
+    gh('api', f'repos/{repo}/git/refs', payload={'ref': 'refs/heads/' + branch, 'sha': head}, method='POST')
 except subprocess.CalledProcessError:
     # Retry only a branch previously created from this exact main revision.
     if gh('api', f'repos/{repo}/git/ref/heads/{branch}')['object']['sha'] != head:
         raise
 content = base64.b64encode((json.dumps(p, indent=2) + '\n').encode()).decode()
-gh('api', f'repos/{repo}/contents/{relative}', payload={'message': f"Register {p['id']}", 'branch': branch, 'content': content})
+gh('api', f'repos/{repo}/contents/{relative}', payload={'message': f"Register {p['id']}", 'branch': branch, 'content': content}, method='PUT')
 diagnosis = submission.get('diagnosis', {})
 def quoted(value):
     return str(value).replace('`', '').replace('@', '@\u200b').replace('\n', ' ')[:1000]
@@ -78,8 +83,8 @@ Review license, command semantics, curation, and build results before merging. B
 
 Closes #{issue}.
 """
-pull = gh('api', f'repos/{repo}/pulls', payload={'title': f"Register {p['id']}", 'head': branch, 'base': 'main', 'body': body})
+pull = gh('api', f'repos/{repo}/pulls', payload={'title': f"Register {p['id']}", 'head': branch, 'base': 'main', 'body': body}, method='POST')
 
-gh('api', f'repos/{repo}/actions/workflows/ci.yml/dispatches', payload={'ref': branch})
+gh('api', f'repos/{repo}/actions/workflows/ci.yml/dispatches', payload={'ref': branch}, method='POST')
 
-gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"Prepared {pull['html_url']} from the pinned package. CI has been requested; the PR contains the package diagnosis and links to the checks.\n\n{review_notes}"})
+gh('api', f'repos/{repo}/issues/{issue}/comments', payload={'body': f"Prepared {pull['html_url']} from the pinned package. CI has been requested; the PR contains the package diagnosis and links to the checks.\n\n{review_notes}"}, method='POST')

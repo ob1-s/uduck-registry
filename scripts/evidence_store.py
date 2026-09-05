@@ -3,9 +3,10 @@
 
 The source tree contains authored descriptors and the executable runner. A
 simulation result is generated in a temporary CI workspace, then packaged as
-one immutable release asset named after its evidence key. ``index.json`` is
-the only mutable release asset: it maps the current descriptor ids to those
-immutable assets and retains older entries for auditability.
+one immutable release asset named after its content SHA-256
+(``<blob_sha256>.tar.gz``). ``index.json`` is the only mutable release asset:
+it maps the current descriptor ids to semantic evidence keys, each of which
+points at an immutable blob, and retains older entries for auditability.
 
 This module deliberately uses only the Python standard library. The native
 ONNX/MuJoCo runner is used by the evidence job, which has read-only token
@@ -191,9 +192,18 @@ def _download(url: str, limit: int) -> bytes:
 
 
 def _archive_bytes(files: Iterable[tuple[str, bytes]]) -> bytes:
-    """Create a deterministic gzip tar archive with regular files only."""
-    out = io.BytesIO()
-    with tarfile.open(fileobj=out, mode="w:gz", compresslevel=9) as archive:
+    """Create a deterministic gzip tar archive with regular files only.
+
+    Both layers are pinned: tar members carry ``mtime=0`` and fixed
+    ownership/mode, and the gzip wrapper is emitted with ``mtime=0`` and no
+    filename header. ``tarfile``'s ``w:gz`` mode would otherwise stamp the
+    current wall-clock time into the gzip header, breaking the
+    ``same evidence_key -> same blob_sha256`` invariant.
+    """
+    import gzip
+
+    tar_out = io.BytesIO()
+    with tarfile.open(fileobj=tar_out, mode="w") as archive:
         for name, data in sorted(files):
             safe_name = _safe_relative_name(name)
             info = tarfile.TarInfo(safe_name)
@@ -205,7 +215,7 @@ def _archive_bytes(files: Iterable[tuple[str, bytes]]) -> bytes:
             info.uname = ""
             info.gname = ""
             archive.addfile(info, io.BytesIO(data))
-    return out.getvalue()
+    return gzip.compress(tar_out.getvalue(), compresslevel=9, mtime=0)
 
 
 def _result_dirs(results: Path) -> list[Path]:

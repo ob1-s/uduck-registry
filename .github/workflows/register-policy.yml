@@ -1,7 +1,7 @@
 name: Register policy URL
 on:
   issues:
-    types: [opened, reopened]
+    types: [opened, edited, reopened]
 permissions:
   contents: read
 concurrency:
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   resolve:
-    if: startsWith(github.event.issue.title, '[policy]')
+    if: contains(github.event.issue.labels.*.name, 'policy-submission')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

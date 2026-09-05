@@ -35,8 +35,14 @@ if (Path('registry/behaviors') / f"{p['id']}.json").exists():
     raise ValueError('Candidate conflicts with existing behavior')
 for file in Path('registry/policies').glob('*.json'):
     old = json.loads(file.read_text())
-    if old['id'] == p['id'] or old['source']['repo'].lower() == p['source']['repo'].lower():
-        raise ValueError('Already registered; update existing pointer')
+    if old['id'] == p['id']:
+        raise ValueError(f"ID already registered at registry/policies/{old['id']}.json")
+    if old['source']['repo'].lower() == p['source']['repo'].lower():
+        raise ValueError(
+            f"Repository already registered as {old['id']}. To publish a new revision, "
+            f"open a normal PR updating registry/policies/{old['id']}.json; "
+            "the URL bot does not create update PRs yet."
+        )
 branch = f'bot/policy-{issue}'
 existing = gh('pr', 'list', '--head', branch, '--state', 'all', '--json', 'number,url')
 if existing:
@@ -53,8 +59,17 @@ except subprocess.CalledProcessError:
 content = base64.b64encode((json.dumps(p, indent=2) + '\n').encode()).decode()
 gh('api', f'repos/{repo}/contents/{relative}', payload={'message': f"Register {p['id']}", 'branch': branch, 'content': content}, method='PUT')
 diagnosis = submission.get('diagnosis', {})
-def quoted(value):
-    return str(value).replace('`', '').replace('@', '@\u200b').replace('\n', ' ')[:1000]
+
+def quoted(value, limit=1000):
+    return str(value).replace('`', '').replace('@', '@\u200b').replace('\n', ' ')[:limit]
+
+def blockquoted(value, limit=4000):
+    text = str(value or '')[:limit].replace('\r', '')
+    text = (text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                .replace('`', '&#96;').replace('@', '@\u200b'))
+    lines = text.splitlines() or ['No contributor notes provided.']
+    return '\n'.join('> ' + (line or ' ') for line in lines)
+
 manifest = diagnosis.get('manifest', {})
 if not isinstance(manifest, dict):
     manifest = {}
@@ -62,6 +77,31 @@ unresolved = diagnosis.get('unresolved', [])
 if not isinstance(unresolved, list):
     unresolved = []
 review_notes = '\n'.join('- ' + quoted(item) for item in unresolved[:20]) or '- No unresolved package metadata reported.'
+onnx = diagnosis.get('onnx', {})
+if not isinstance(onnx, dict):
+    onnx = {}
+simulation = diagnosis.get('simulation', {})
+if not isinstance(simulation, dict):
+    simulation = {}
+if simulation.get('status') == 'covered':
+    recipe = simulation.get('recipe', {})
+    if not isinstance(recipe, dict):
+        recipe = {}
+    sim_review = (
+        f"**covered** — runner `{quoted(simulation.get('runner', recipe.get('runner', 'unknown')))}`, "
+        f"scenario `{quoted(recipe.get('scenario', 'unknown'))}`, duration "
+        f"`{quoted(recipe.get('duration_s', 'unknown'))}s`. "
+        f"{quoted(simulation.get('scope') or recipe.get('provenance', {}).get('scope', ''))}"
+    )
+else:
+    sim_reason = quoted(simulation.get('reason', 'No registry recipe reported.'))
+    if manifest.get('kind') == 'episodic' and manifest.get('action_scale') is None:
+        sim_reason += " Republish with Pollen's `uv run publish ... --action-scale <trained-scale>`; uDuck will not guess it."
+    sim_review = f"**not-covered** — {sim_reason}"
+contributor = submission.get('contributor', {})
+if not isinstance(contributor, dict):
+    contributor = {}
+contributor_notes = blockquoted(contributor.get('notes'))
 body = f"""Registers `{p['source']['repo']}` at `{p['source']['revision']}` from #{issue}.
 
 Only the pinned source and curation overlay are authored. Build resolution rechecks the manifest and ONNX hashes.
@@ -72,12 +112,15 @@ Only the pinned source and curation overlay are authored. Build resolution reche
 - Kind: `{quoted(manifest.get('kind', 'unknown'))}`
 - Runtime assessment: `{quoted(diagnosis.get('runtime', 'needs review'))}`
 - License: `{quoted(diagnosis.get('license') or 'not declared')}`
-- ONNX inspection: zero-input smoke check completed; CI independently checks the pinned package again
+- ONNX interface: input `{quoted(onnx.get('input', 'unknown'))}` → output `{quoted(onnx.get('output', 'unknown'))}`; smoke `{quoted(onnx.get('smoke', 'unknown'))}`
+- Registry simulation: {sim_review}
 - Hardware: no registry verification
-- Registry simulation: see the explicitly dispatched CI run for its recipe, report, and measured outcome; package inspection alone is not a behavioral pass
 
 Package review notes:
 {review_notes}
+
+Contributor notes (untrusted reviewer context; not runtime evidence):
+{contributor_notes}
 
 Review license, command semantics, curation, and build results before merging. Bot PRs created with GITHUB_TOKEN can leave pull_request workflows awaiting approval; this bot explicitly dispatches uDuck CI on the proposed branch. Check that run before merging.
 

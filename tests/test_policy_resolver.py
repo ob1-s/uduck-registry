@@ -9,6 +9,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts/policy'))
 from ingest_issue import parse_issue
 from resolve import _discover_source, classify, digest, parse_artifact_url, parse_source_url, parse_url, register_policy, resolve, resolve_source, select_manifest_for_artifact, validate_policy
+from simulation.execution_recipes import GENESIS_ARTIFACT_SHA256, GENESIS_REPO, GENESIS_REVISION, POLLEN_ARTIFACT_SHA256, POLLEN_MANIFEST_SHA256, POLLEN_POLICY_REPO, POLLEN_POLICY_REVISION
 
 
 MANIFEST = {
@@ -157,6 +158,50 @@ class ResolverTests(unittest.TestCase):
         with patch('resolve.fetch', fetch):
             with self.assertRaisesRegex(ValueError, 'no unique entry'):
                 resolve_source({**source, 'artifact_path': 'missing.onnx'})
+
+    def test_exact_official_manifest_member_admits_the_matching_registry_recipe(self):
+        source = {
+            'provider': 'huggingface-model',
+            'repo': POLLEN_POLICY_REPO,
+            'revision': POLLEN_POLICY_REVISION,
+            'artifact_path': 'alpha_ground_pick.onnx',
+            'artifact_sha256': POLLEN_ARTIFACT_SHA256['alpha_ground_pick.onnx'],
+            'manifest_path': 'manifest.json',
+            'manifest_sha256': POLLEN_MANIFEST_SHA256,
+        }
+        raw_manifest = json.dumps(POLLEN_POLICY_SET).encode()
+
+        def fetch(url, *args):
+            if url.endswith('/manifest.json'):
+                return raw_manifest
+            return b'{}'
+
+        def fake_digest(data):
+            return POLLEN_MANIFEST_SHA256 if data == raw_manifest else source['artifact_sha256']
+
+        with patch('resolve.fetch', fetch), patch('resolve.digest', fake_digest), patch('resolve.inspect_onnx', return_value={'smoke': 'passed'}):
+            result = resolve_source(source)
+        self.assertEqual(result['manifest']['file'], 'alpha_ground_pick.onnx')
+        self.assertEqual(result['simulation']['status'], 'covered')
+        self.assertEqual(result['simulation']['recipe']['scenario'], 'oneshot_phase')
+        self.assertEqual(result['simulation']['recipe']['duration_s'], 2.8)
+
+    def test_exact_no_manifest_source_can_be_covered_without_a_general_fallback(self):
+        source = {
+            'provider': 'github',
+            'repo': GENESIS_REPO,
+            'revision': GENESIS_REVISION,
+            'artifact_path': 'policies/velocity.onnx',
+            'artifact_sha256': GENESIS_ARTIFACT_SHA256['policies/velocity.onnx'],
+            'manifest_path': None,
+            'manifest_sha256': None,
+        }
+        with patch('resolve.fetch', return_value=b'not-json'), patch('resolve.digest', return_value=source['artifact_sha256']), patch('resolve.inspect_onnx', return_value={'smoke': 'passed'}):
+            result = resolve_source(source)
+        self.assertIsNone(result['manifest'])
+        self.assertEqual(result['simulation']['status'], 'covered')
+        self.assertEqual(result['simulation']['recipe']['contract']['obs_len'], 61)
+        self.assertEqual(result['simulation']['recipe']['scenario'], 'velocity')
 
     def test_official_pollen_entries_select_their_exact_policy_set_members(self):
         expected = {

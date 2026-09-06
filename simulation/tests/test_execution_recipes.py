@@ -6,7 +6,14 @@ import unittest
 from pathlib import Path
 
 from execution import execution_spec_from_policy
-from execution_recipes import recipe_for_policy, recipe_reason
+from execution_recipes import (
+    POLLEN_ARTIFACT_SHA256,
+    POLLEN_MANIFEST_SHA256,
+    POLLEN_POLICY_REPO,
+    POLLEN_POLICY_REVISION,
+    recipe_for_policy,
+    recipe_reason,
+)
 from microduck_sim.preflight import preflight_execution
 from microduck_sim.scenarios import make_command_fn, scenario_from_recipe
 
@@ -81,6 +88,101 @@ class ExecutionRecipeTests(unittest.TestCase):
         command_prose = copy.deepcopy(manifest)
         command_prose["command"]["twist"] = "forward speed"
         self.assertIsNone(recipe_for_policy("someone/microduck-bow", command_prose))
+
+    def test_official_recipes_bind_to_exact_artifact_and_manifest_identity(self) -> None:
+        common = {
+            "provider": "huggingface-model",
+            "repo": POLLEN_POLICY_REPO,
+            "revision": POLLEN_POLICY_REVISION,
+            "manifest_path": "manifest.json",
+            "manifest_sha256": POLLEN_MANIFEST_SHA256,
+        }
+        manifests = {
+            "alpha_walking.onnx": {"file": "alpha_walking.onnx", "kind": "perpetual"},
+            "alpha_ground_pick.onnx": {
+                "file": "alpha_ground_pick.onnx", "kind": "episodic", "duration_s": 2.8,
+                "command": {"encoding": "phase", "period_s": 4.0, "end_phase": 0.7},
+            },
+            "roller.onnx": {"file": "roller.onnx", "kind": "perpetual", "mode": "roller", "action_scale": 0.8},
+            "roller_crouch.onnx": {
+                "file": "roller_crouch.onnx", "kind": "episodic", "duration_s": 3.5,
+                "mode": "roller", "action_scale": 0.8,
+                "command": {"encoding": "phase", "period_s": 5.0, "end_phase": 0.7},
+            },
+            "roulade.onnx": {"file": "roulade.onnx", "kind": "episodic", "duration_s": 1.0, "chain": True},
+            "ball_kick_left.onnx": {"file": "ball_kick_left.onnx", "kind": "episodic", "duration_s": 0.5},
+            "ball_kick_right.onnx": {"file": "ball_kick_right.onnx", "kind": "episodic", "duration_s": 0.5},
+            "alpha_sitstand.onnx": {
+                "file": "alpha_sitstand.onnx", "kind": "scripted", "ramp_s": 2.0, "unwind_s": 1.0,
+                "command": {"encoding": "posture_flag", "slot": "twist.vx", "sit": 1.0, "stand": 0.0},
+            },
+        }
+        for artifact_path, manifest in manifests.items():
+            source = {
+                **common,
+                "artifact_path": artifact_path,
+                "artifact_sha256": POLLEN_ARTIFACT_SHA256[artifact_path],
+            }
+            recipe = recipe_for_policy(POLLEN_POLICY_REPO, manifest, source)
+            self.assertIsNotNone(recipe, artifact_path)
+            altered_revision = {**source, "revision": "0" * 40}
+            self.assertIsNone(recipe_for_policy(POLLEN_POLICY_REPO, manifest, altered_revision), artifact_path)
+            altered_hash = {**source, "artifact_sha256": "0" * 64}
+            self.assertIsNone(recipe_for_policy(POLLEN_POLICY_REPO, manifest, altered_hash), artifact_path)
+
+        kick = recipe_for_policy(
+            POLLEN_POLICY_REPO,
+            manifests["ball_kick_left.onnx"],
+            {**common, "artifact_path": "ball_kick_left.onnx", "artifact_sha256": POLLEN_ARTIFACT_SHA256["ball_kick_left.onnx"]},
+        )
+        self.assertIsNotNone(kick)
+        assert kick is not None
+        self.assertEqual(kick["duration_s"], 0.5)
+        self.assertEqual(kick["scenario"], "oneshot_zero")
+
+    def test_exact_no_manifest_recipes_supply_only_their_pinned_contract(self) -> None:
+        from execution_recipes import GENESIS_ARTIFACT_SHA256, GENESIS_REPO, GENESIS_REVISION
+
+        source = {
+            "provider": "github",
+            "repo": GENESIS_REPO,
+            "revision": GENESIS_REVISION,
+            "artifact_path": "policies/velocity.onnx",
+            "artifact_sha256": GENESIS_ARTIFACT_SHA256["policies/velocity.onnx"],
+            "manifest_path": None,
+            "manifest_sha256": None,
+        }
+        recipe = recipe_for_policy(GENESIS_REPO, None, source)
+        self.assertIsNotNone(recipe)
+        assert recipe is not None
+        self.assertEqual(recipe["contract"]["obs_len"], 61)
+        self.assertEqual(recipe["contract"]["action_len"], 14)
+        self.assertEqual(recipe["contract"]["action_scale"], 1.0)
+        self.assertIsNone(recipe_for_policy(GENESIS_REPO, None, {**source, "artifact_sha256": "0" * 64}))
+
+    def test_scenario_semantics_follow_recipe_fields(self) -> None:
+        phase = scenario_from_recipe({
+            "runner": "microduck-standard-v1", "scenario": "oneshot_phase", "duration_s": 2.8,
+            "period_s": 4.0, "end_phase": 0.7,
+        })
+        phase_fn = make_command_fn(phase, use_13d=False)
+        self.assertAlmostEqual(float(phase_fn(0.0)[0]), 1.0, places=6)
+        self.assertAlmostEqual(float(phase_fn(2.0)[0]), -1.0, places=5)
+        self.assertEqual(phase_fn(2.8).tolist(), [0.0, 0.0, 0.0])
+
+        posture = scenario_from_recipe({
+            "runner": "microduck-standard-v1", "scenario": "sitstand", "duration_s": 3.0, "hold_s": 2.0,
+        })
+        posture_fn = make_command_fn(posture, use_13d=False)
+        self.assertEqual(posture_fn(1.99).tolist(), [1.0, 0.0, 0.0])
+        self.assertEqual(posture_fn(2.0).tolist(), [0.0, 0.0, 0.0])
+
+        trigger = scenario_from_recipe({
+            "runner": "microduck-standard-v1", "scenario": "oneshot_trigger", "duration_s": 1.0, "trigger_s": 0.75,
+        })
+        trigger_fn = make_command_fn(trigger, use_13d=False)
+        self.assertEqual(trigger_fn(0.74).tolist(), [1.0, 0.0, 0.0])
+        self.assertEqual(trigger_fn(0.75).tolist(), [0.0, 0.0, 0.0])
 
     def test_uncovered_policy_has_no_execution_spec(self) -> None:
         policy = {"id": "mystery", "source": {**FLAMINGO_SOURCE, "repo": "someone/mystery"}}

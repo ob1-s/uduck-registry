@@ -89,8 +89,8 @@ def preflight_execution(spec: "ExecutionSpec") -> PreflightResult:
 
     duration = recipe.get("duration_s")
     duration_value = float(duration) if _finite(duration) else None
-    if duration_value is None or not 1 <= duration_value <= 30:
-        errors.append("execution duration_s must be finite and between 1 and 30 seconds")
+    if duration_value is None or not 0 < duration_value <= 30:
+        errors.append("execution duration_s must be finite, positive, and at most 30 seconds")
 
     segments = recipe.get("segments")
     if scenario == "velocity":

@@ -33,6 +33,22 @@ class SimulationPreflightTest(unittest.TestCase):
         result = preflight_execution(spec())
         self.assertTrue(result.valid, result.errors)
 
+    def test_accepts_truthful_subsecond_policy_windows(self) -> None:
+        candidate = spec()
+        candidate.recipe["duration_s"] = 0.5
+        candidate.recipe["segments"] = [{"duration_s": 0.5, "vx": 0.0, "vy": 0.0, "wz": 0.0}]
+        result = preflight_execution(candidate)
+        self.assertTrue(result.valid, result.errors)
+
+    def test_rejects_nonpositive_policy_windows(self) -> None:
+        for duration in (0, -0.1):
+            candidate = spec()
+            candidate.recipe["duration_s"] = duration
+            candidate.recipe["segments"] = [{"duration_s": duration, "vx": 0.0, "vy": 0.0, "wz": 0.0}]
+            result = preflight_execution(candidate)
+            self.assertFalse(result.valid)
+            self.assertTrue(any("duration_s" in error for error in result.errors))
+
     def test_rejects_command_outside_the_runtime_range(self) -> None:
         candidate = spec()
         candidate.recipe["segments"][0]["vx"] = 2.2

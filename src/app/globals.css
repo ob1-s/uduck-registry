@@ -720,6 +720,18 @@ code {
 }
 
 .behavior-accessory { color: var(--cyan); }
+.behavior-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.8rem;
+  margin-top: 0.62rem;
+  color: var(--quiet);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
 .behavior-footer { min-width: 7.5rem; align-self: center; display: flex; justify-content: flex-end; border: 0; padding: 0; background: transparent; }
 
 .inspect-link {

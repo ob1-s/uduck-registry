@@ -43,6 +43,7 @@ POLLEN_MANIFEST_SHA256 = "d0c36e7b71129dd617339c63bcb1d704eab282c8617ebf14c2013a
 POLLEN_MANIFEST_URL = f"https://huggingface.co/{POLLEN_POLICY_REPO}/blob/{POLLEN_POLICY_REVISION}/{POLLEN_MANIFEST_PATH}"
 POLLEN_ARTIFACT_SHA256 = {
     "alpha_walking.onnx": "e36332d383997d51401897734cd3e79cf5038406feddb18b4d57ecfb141daa6c",
+    "alpha_stand.onnx": "1569268713e40deea795dd2922dba50d3621e15a872855408b6b1b125b1c094b",
     "alpha_ground_pick.onnx": "ffbf5109982ff999b0ba53afe86b9ae731bbec679d67fb7f8ab4c52152c88872",
     "roller.onnx": "cf05651d2708a2f9364212e86b866c97a70ace8131c492500105e8f28bf99afd",
     "roller_crouch.onnx": "a1a084be240469c76ac9d3fa44d4792f16d4b1da60398b3ecd3cfc5e2244d990",
@@ -278,10 +279,27 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
             "checks": checks,
             "action_scale": 1.0,
             "chain": bool(manifest.get("chain", False)),
+            "handoff": {
+                "at_s": command_duration,
+                "name": "stand",
+                "source": _pollen_source("alpha_stand.onnx"),
+                "action_scale": 1.0,
+                "provenance": _provenance(
+                    "Exact pinned Pollen alpha stand artifact and the pinned robotd skill-expiry selection",
+                    UPSTREAM_CONTROL_URL,
+                    "At the released episodic skill deadline, the zero external twist hands control back to the exact pinned stand policy; this is part of the registry diagnostic execution, not publisher hardware evidence.",
+                    policy_set_revision=POLLEN_POLICY_REVISION,
+                    manifest_sha256=POLLEN_MANIFEST_SHA256,
+                    artifact_path="alpha_stand.onnx",
+                    artifact_sha256=POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
+                    action_scale=1.0,
+                    selection="zero external command selects stand after the active skill expires",
+                ),
+            },
             "provenance": _provenance(
                 "Exact per-file Pollen schema-2 manifest and the pinned robotd zero-command skill contract",
                 UPSTREAM_MANIFEST_URL,
-                "Registry diagnostic rollout of the exact policy command window followed by an explicit recovery/settle tail under flat-v1; final checks cover the full capture horizon and this does not establish intended-task success or hardware verification.",
+                "Registry diagnostic rollout of the exact policy command window followed by the pinned stand-policy handoff under flat-v1; final checks cover the full capture horizon and this does not establish intended-task success or hardware verification.",
                 policy_set_revision=POLLEN_POLICY_REVISION,
                 manifest_sha256=POLLEN_MANIFEST_SHA256,
                 artifact_path=artifact_path,
@@ -293,6 +311,8 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
                 command_duration_s=command_duration,
                 post_command_settle_s=recovery_tail,
                 capture_duration_s=capture_duration,
+                handoff_artifact_path="alpha_stand.onnx",
+                handoff_artifact_sha256=POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
             ),
         }
 

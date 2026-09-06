@@ -114,6 +114,28 @@ def preflight_execution(spec: "ExecutionSpec") -> PreflightResult:
     schedule_value = command_value if has_settle_tail else duration_value
     schedule_name = "command_duration_s" if has_settle_tail else "duration_s"
 
+    handoff = getattr(spec, "handoff", None)
+    if recipe.get("handoff") is not None and handoff is None:
+        errors.append("execution recipe handoff could not be assembled into the ExecutionSpec")
+    if handoff is not None:
+        if not _finite(handoff.at_s) or not 0 < handoff.at_s < (capture_value or 0):
+            errors.append("execution handoff at_s must be inside the capture horizon")
+        if command_value is not None and abs(handoff.at_s - command_value) > 1e-9:
+            errors.append("execution handoff at_s must equal command_duration_s")
+        if not isinstance(handoff.name, str) or not handoff.name:
+            errors.append("execution handoff name must be non-empty")
+        if not _finite(handoff.action_scale) or handoff.action_scale <= 0:
+            errors.append("execution handoff action_scale must be finite and positive")
+        if not isinstance(handoff.artifact_sha256, str) or len(handoff.artifact_sha256) != 64 or any(char not in "0123456789abcdef" for char in handoff.artifact_sha256):
+            errors.append("execution handoff artifact SHA-256 is invalid")
+        if not isinstance(handoff.artifact_url, str) or not handoff.artifact_url.startswith("https://"):
+            errors.append("execution handoff artifact_url must be an HTTPS URL")
+        if (
+            not isinstance(handoff.source, dict)
+            or handoff.source.get("artifact_sha256") != handoff.artifact_sha256
+        ):
+            errors.append("execution handoff source hash does not match the handoff artifact hash")
+
     segments = recipe.get("segments")
     if scenario == "velocity":
         if not isinstance(segments, list) or not segments:

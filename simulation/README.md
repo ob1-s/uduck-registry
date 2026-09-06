@@ -18,7 +18,7 @@ content-addressed Release blob
 
 ## ExecutionSpec
 
-An `ExecutionSpec` must state the entry id, exact artifact URL and SHA-256, supported model, runner contract, reviewed recipe, source identity, and resolved manifest. The current runner owns one flat `flat-v1` scene with the official 61-observation/14-action Microduck contract. Recipes state the start preset, scenario, duration, explicit schedule, checks, and provenance.
+An `ExecutionSpec` must state the entry id, exact artifact URL and SHA-256, supported model, runner contract, reviewed recipe, source identity, and resolved manifest. The current runner owns one flat `flat-v1` scene with the official 61-observation/14-action Microduck contract. Recipes state the start preset, scenario, duration, explicit schedule, checks, and provenance. A recipe may also declare a source-bound policy handoff; the runner downloads and verifies that artifact, then switches the same physical simulation state at the declared deadline.
 
 Preflight runs before download or inference. It verifies the runner, model, scene, start state, duration, schedule, contract, and HTTPS artifact URL. It rejects malformed or out-of-range commands; it never clips them and never substitutes defaults.
 
@@ -45,7 +45,7 @@ Exit code 0 means the diagnostic passed or was not-covered; 1 means measured che
 
 ## Evidence identity
 
-`simulation/evidence.py` computes an entry-specific v3 identity from the immutable source, execution-relevant manifest fields, that entry's resolved recipe/status, the executable runner code, the asset lock, dependency pins, and the environment contract. Editorial curation does not enter the digest. The evidence key additionally binds the artifact SHA-256.
+`simulation/evidence.py` computes an entry-specific v4 identity from the immutable source, execution-relevant manifest fields, that entry's resolved recipe/status (including any source-bound policy handoff), the executable runner code, the asset lock, dependency pins, and the environment contract. Editorial curation does not enter the digest. The evidence key additionally binds the artifact SHA-256.
 
 The evidence store archives deterministic reports and media as `<blob_sha256>.tar.gz` assets in the `registry-evidence` GitHub Release. Its mutable index maps current entry ids to immutable blobs while retaining historical blobs. Hydration accepts only an exact current entry identity and exact authored artifact hash.
 

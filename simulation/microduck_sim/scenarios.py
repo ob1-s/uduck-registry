@@ -29,8 +29,9 @@ class ScenarioSpec:
     hold_s: float = 2.0
     # oneshot_zero: seconds the zeroed command window lasts (kicks, roulade).
     duration_s: float = 0.5
-    # A diagnostic can keep recording after the policy command window so final
-    # checks observe recovery at the end of the rollout, not mid-trajectory.
+    # A diagnostic can keep recording after the policy command window. The
+    # external command returns to idle; any source-bound policy handoff is
+    # carried by ExecutionSpec and applied by the runner at this boundary.
     command_duration_s: float = 0.5
     post_command_settle_s: float = 0.0
     capture_duration_s: float = 0.5
@@ -175,6 +176,8 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
 
         def scheduled_fn(t: float) -> np.ndarray:
             if t >= spec.command_duration_s:
+                # This is the external command after the active skill expires;
+                # it is not a substitute for the policy handoff itself.
                 return wrap(np.zeros(3, dtype=np.float32))
             return command_fn(t)
 

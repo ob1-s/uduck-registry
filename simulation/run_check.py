@@ -60,13 +60,13 @@ def load_policy_resolution(entry_id: str) -> tuple[dict, dict]:
     return policy, resolved
 
 
-def download_onnx(spec: ExecutionSpec, dest_dir: Path) -> Path:
-    parsed = urllib.parse.urlsplit(spec.artifact_url)
+def download_artifact(url: str, artifact_sha256: str, dest_dir: Path) -> Path:
+    parsed = urllib.parse.urlsplit(url)
     if parsed.hostname not in ALLOWED_HOSTS:
-        raise ValueError(f"artifact host not allowed: {spec.artifact_url}")
-    filename = Path(parsed.path).name or f"{spec.entry_id}.onnx"
+        raise ValueError(f"artifact host not allowed: {url}")
+    filename = Path(parsed.path).name or "policy.onnx"
     dest = dest_dir / filename
-    request = urllib.request.Request(spec.artifact_url, headers={"User-Agent": "uduck-registry-ci"})
+    request = urllib.request.Request(url, headers={"User-Agent": "uduck-registry-ci"})
     with open_download(request, timeout=300) as response, dest.open("wb") as output:
         size = 0
         while True:
@@ -78,9 +78,13 @@ def download_onnx(spec: ExecutionSpec, dest_dir: Path) -> Path:
                 raise ValueError("ONNX artifact exceeds 100 MB sanity bound")
             output.write(chunk)
     actual = hashlib.sha256(dest.read_bytes()).hexdigest()
-    if actual != spec.artifact_sha256:
-        raise ValueError(f"policy artifact hash mismatch: expected {spec.artifact_sha256}, got {actual}")
+    if actual != artifact_sha256:
+        raise ValueError(f"policy artifact hash mismatch: expected {artifact_sha256}, got {actual}")
     return dest
+
+
+def download_onnx(spec: ExecutionSpec, dest_dir: Path) -> Path:
+    return download_artifact(spec.artifact_url, spec.artifact_sha256, dest_dir)
 
 
 def identity_fields(entry_id: str, source: dict) -> dict[str, str]:
@@ -137,6 +141,13 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
     duration = scenario.capture_duration_s
     with tempfile.TemporaryDirectory(prefix="uduck-sim-") as temporary:
         onnx_path = download_onnx(spec, Path(temporary))
+        handoff_path = None
+        if spec.handoff is not None:
+            handoff_path = download_artifact(
+                spec.handoff.artifact_url,
+                spec.handoff.artifact_sha256,
+                Path(temporary),
+            )
         from fetch_assets import fetch
         asset_variant = "rollers" if simulation_model == "microduck-rollers" else "standard"
         model = load_model(fetch(variant=asset_variant))
@@ -147,6 +158,28 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
         runtime = DuckRuntime(model, onnx_path, action_scale=float(action_scale))
         runtime.prepare_start(spec.recipe["start"])
         command_fn = make_command_fn(scenario, runtime.use_13d)
+        handoffs = []
+        policy_timeline = [{
+            "at_s": 0.0,
+            "name": "primary",
+            "artifact_path": spec.source["artifact_path"],
+            "artifact_sha256": spec.artifact_sha256,
+            "action_scale": float(action_scale),
+        }]
+        if spec.handoff is not None:
+            assert handoff_path is not None
+
+            def switch_to_handoff() -> None:
+                runtime.switch_policy(handoff_path, spec.handoff.action_scale)
+
+            handoffs.append((spec.handoff.at_s, switch_to_handoff))
+            policy_timeline.append({
+                "at_s": spec.handoff.at_s,
+                "name": spec.handoff.name,
+                "artifact_path": spec.handoff.source["artifact_path"],
+                "artifact_sha256": spec.handoff.artifact_sha256,
+                "action_scale": spec.handoff.action_scale,
+            })
         renderer = render.LoopRenderer(model)
         renderer.attach(runtime.data)
 
@@ -155,7 +188,7 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
                 print(f"[sim] step {step}/{int(duration * 50)}", flush=True)
             renderer.capture(step, sample)
 
-        result = runtime.rollout(command_fn, duration, frame_hook=hook)
+        result = runtime.rollout(command_fn, duration, frame_hook=hook, handoffs=handoffs)
         report = checks.evaluate(result, scenario)
         media = renderer.finalize(out_dir / entry_id, f"registry sim {entry_id} (flat-v1, 50 Hz)") if keep_media else None
         report.update({
@@ -168,6 +201,7 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
             "post_command_settle_s": scenario.post_command_settle_s,
             "capture_duration_s": scenario.capture_duration_s,
             "evaluation_final_sample_s": report["observations"].get("final_sample_time_s"),
+            "policy_timeline": policy_timeline,
             "policy": {"url": spec.artifact_url, "sha256": spec.artifact_sha256},
             "media": media,
             "preflight": {"status": "passed", "warnings": list(preflight.warnings)},

@@ -159,9 +159,33 @@ class ExecutionRecipeTests(unittest.TestCase):
         self.assertGreater(recipe["post_command_settle_s"], 0.0)
         self.assertEqual(recipe["capture_duration_s"], recipe["duration_s"])
         self.assertGreater(recipe["capture_duration_s"], recipe["command_duration_s"])
+        self.assertEqual(recipe["handoff"]["at_s"], 1.0)
+        self.assertEqual(recipe["handoff"]["name"], "stand")
+        self.assertEqual(recipe["handoff"]["source"]["artifact_path"], "alpha_stand.onnx")
+        self.assertEqual(recipe["handoff"]["source"]["artifact_sha256"], POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"])
+        self.assertEqual(recipe["handoff"]["action_scale"], 1.0)
 
         scenario = scenario_from_recipe(recipe)
         self.assertEqual(scenario.capture_duration_s, 4.0)
+
+        manifest_for_spec = {
+            "schema_version": 2,
+            "model_api": 1,
+            "obs_len": 61,
+            "action_len": 14,
+            "robot": {"model": "microduck", "hw_rev": 1, "servos": "xl330", "control_hz": 50},
+            **manifest,
+        }
+        spec = execution_spec_from_policy(
+            {"id": "roulade", "source": source},
+            {"manifest": manifest_for_spec, "simulation": {"status": "covered", "recipe": recipe}},
+        )
+        self.assertIsNotNone(spec)
+        assert spec is not None
+        assert spec.handoff is not None
+        self.assertEqual(spec.handoff.at_s, 1.0)
+        self.assertEqual(spec.handoff.source["artifact_path"], "alpha_stand.onnx")
+        self.assertEqual(spec.handoff.artifact_sha256, POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"])
 
     def test_settle_tail_returns_to_idle_after_command_window(self) -> None:
         scenario = scenario_from_recipe({

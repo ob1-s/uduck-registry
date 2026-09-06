@@ -16,7 +16,7 @@ import evidence_store
 
 def evidence_key(inputs: str, artifact: str) -> str:
     return hashlib.sha256(
-        b"uduck-evidence-v3\0" + inputs.encode() + b"\0" + artifact.encode()
+        b"uduck-evidence-v4\0" + inputs.encode() + b"\0" + artifact.encode()
     ).hexdigest()
 
 
@@ -34,7 +34,7 @@ def report(entry: str = "test", inputs: str = "a" * 64, artifact: str = "b" * 64
 
 
 class EvidenceStoreTests(unittest.TestCase):
-    def test_actual_pre20_index_transitions_to_v3_identity_and_store(self) -> None:
+    def test_actual_pre20_index_transitions_to_v4_identity_and_store(self) -> None:
         fixture = Path(__file__).parent / "fixtures" / "pre20-evidence-index.json"
         old_index = json.loads(fixture.read_text())
         self.assertEqual(old_index["format"], "uduck-evidence-v2")

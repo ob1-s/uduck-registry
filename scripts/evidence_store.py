@@ -58,7 +58,7 @@ RELEASE_INDEX_NAME = "index.json"
 RELEASE_TAG = "registry-evidence"
 FORMAT_VERSION = 2
 # The release index container remains format v2 so it can retain historical
-# blobs, while report/evidence keys use the v3 semantic identity namespace in
+# blobs, while report/evidence keys use the v4 semantic identity namespace in
 # simulation/evidence.py.
 EVIDENCE_FORMAT = "uduck-evidence-v2"
 # Wall-clock fields are useful transiently but must not affect content

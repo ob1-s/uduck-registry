@@ -8,25 +8,31 @@ export interface CatalogPreviewMedia {
   caption?: string;
 }
 
-export function primaryMedia(entry: CatalogEntry): CatalogPreviewMedia {
+export function registryMediaPreview(entry: CatalogEntry): CatalogPreviewMedia | null {
   const registry = entry.media.registry;
-  if (entry.media.primary === "registry" && registry) {
+  return registry ? {
+    thumbnail_url: registry.poster_url,
+    loop_url: registry.loop_url,
+    video_url: registry.loop_url,
+    hero_type: "video",
+    caption: "Registry-owned diagnostic render",
+  } : null;
+}
+
+export function primaryMedia(entry: CatalogEntry): CatalogPreviewMedia {
+  const image = entry.media.author.find((item) => item.type === "image");
+  const video = entry.media.author.find((item) => item.type === "video");
+  if (image || video) {
     return {
-      thumbnail_url: registry.poster_url,
-      loop_url: registry.loop_url,
-      video_url: registry.loop_url,
-      hero_type: "video",
-      caption: "Registry-owned diagnostic render",
+      ...(image ? { thumbnail_url: image.url } : {}),
+      ...(video ? { loop_url: video.url, video_url: video.url } : {}),
+      hero_type: video ? "video" : "image",
+      caption: image?.label ?? video?.label,
     };
   }
 
-  const image = entry.media.author.find((item) => item.type === "image");
-  const video = entry.media.author.find((item) => item.type === "video");
-  return {
-    ...(image ? { thumbnail_url: image.url } : {}),
-    ...(video ? { loop_url: video.url, video_url: video.url } : {}),
-    hero_type: video ? "video" : image ? "image" : "badge",
-    caption: image?.label ?? video?.label,
+  return registryMediaPreview(entry) ?? {
+    hero_type: "badge",
   };
 }
 

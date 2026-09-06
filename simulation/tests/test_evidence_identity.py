@@ -11,9 +11,9 @@ from evidence import EVIDENCE_VERSION, IDENTITY_VERSION, execution_inputs, input
 
 
 class EvidenceIdentityTests(unittest.TestCase):
-    def test_identity_namespace_is_v3(self) -> None:
-        self.assertEqual(IDENTITY_VERSION, "uduck-execution-inputs-v3")
-        self.assertEqual(EVIDENCE_VERSION, "uduck-evidence-v3")
+    def test_identity_namespace_is_v4(self) -> None:
+        self.assertEqual(IDENTITY_VERSION, "uduck-execution-inputs-v4")
+        self.assertEqual(EVIDENCE_VERSION, "uduck-evidence-v4")
 
     def test_identity_is_entry_scoped(self) -> None:
         self.assertNotEqual(inputs_digest("alpha-walking"), inputs_digest("jump"))
@@ -24,6 +24,13 @@ class EvidenceIdentityTests(unittest.TestCase):
         self.assertIn("manifest", inputs)
         self.assertIn("simulation", inputs)
         self.assertNotIn("curation", inputs)
+
+    def test_roulade_identity_contains_the_standing_handoff_artifact(self) -> None:
+        handoff = execution_inputs("roulade")["simulation"]["recipe"]["handoff"]
+        self.assertEqual(handoff["at_s"], 1.0)
+        self.assertEqual(handoff["name"], "stand")
+        self.assertEqual(handoff["source"]["artifact_path"], "alpha_stand.onnx")
+        self.assertEqual(len(handoff["source"]["artifact_sha256"]), 64)
 
     def test_recipe_change_is_scoped_to_the_changed_entry(self) -> None:
         original_alpha = inputs_digest("alpha-walking")

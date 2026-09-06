@@ -8,6 +8,7 @@ from pathlib import Path
 from execution import execution_spec_from_policy
 from execution_recipes import (
     POLLEN_ARTIFACT_SHA256,
+    POLLEN_MANIFEST_PATH,
     POLLEN_MANIFEST_SHA256,
     POLLEN_POLICY_REPO,
     POLLEN_POLICY_REVISION,
@@ -139,6 +140,84 @@ class ExecutionRecipeTests(unittest.TestCase):
         assert kick is not None
         self.assertEqual(kick["duration_s"], 0.5)
         self.assertEqual(kick["scenario"], "oneshot_zero")
+
+    def test_roulade_keeps_command_and_recovery_windows_distinct(self) -> None:
+        manifest = {"file": "roulade.onnx", "kind": "episodic", "duration_s": 1.0, "chain": True}
+        source = {
+            "provider": "huggingface-model",
+            "repo": POLLEN_POLICY_REPO,
+            "revision": POLLEN_POLICY_REVISION,
+            "artifact_path": "roulade.onnx",
+            "artifact_sha256": POLLEN_ARTIFACT_SHA256["roulade.onnx"],
+            "manifest_path": POLLEN_MANIFEST_PATH,
+            "manifest_sha256": POLLEN_MANIFEST_SHA256,
+        }
+        recipe = recipe_for_policy(POLLEN_POLICY_REPO, manifest, source)
+        self.assertIsNotNone(recipe)
+        assert recipe is not None
+        self.assertEqual(recipe["command_duration_s"], 1.0)
+        self.assertGreater(recipe["post_command_settle_s"], 0.0)
+        self.assertEqual(recipe["capture_duration_s"], recipe["duration_s"])
+        self.assertGreater(recipe["capture_duration_s"], recipe["command_duration_s"])
+        self.assertEqual(recipe["handoff"]["at_s"], 1.0)
+        self.assertEqual(recipe["handoff"]["name"], "stand")
+        self.assertEqual(recipe["handoff"]["source"]["artifact_path"], "alpha_stand.onnx")
+        self.assertEqual(recipe["handoff"]["source"]["artifact_sha256"], POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"])
+        self.assertEqual(recipe["handoff"]["action_scale"], 1.0)
+
+        scenario = scenario_from_recipe(recipe)
+        self.assertEqual(scenario.capture_duration_s, 4.0)
+
+        manifest_for_spec = {
+            "schema_version": 2,
+            "model_api": 1,
+            "obs_len": 61,
+            "action_len": 14,
+            "robot": {"model": "microduck", "hw_rev": 1, "servos": "xl330", "control_hz": 50},
+            **manifest,
+        }
+        spec = execution_spec_from_policy(
+            {"id": "roulade", "source": source},
+            {"manifest": manifest_for_spec, "simulation": {"status": "covered", "recipe": recipe}},
+        )
+        self.assertIsNotNone(spec)
+        assert spec is not None
+        assert spec.handoff is not None
+        self.assertEqual(spec.handoff.at_s, 1.0)
+        self.assertEqual(spec.handoff.source["artifact_path"], "alpha_stand.onnx")
+        self.assertEqual(spec.handoff.artifact_sha256, POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"])
+
+    def test_settle_tail_returns_to_idle_after_command_window(self) -> None:
+        scenario = scenario_from_recipe({
+            "runner": "microduck-standard-v1",
+            "scenario": "command_schedule",
+            "duration_s": 2.0,
+            "command_duration_s": 1.0,
+            "post_command_settle_s": 1.0,
+            "capture_duration_s": 2.0,
+            "segments": [{"duration_s": 1.0, "command": [1.0, 0.0, 0.0]}],
+        })
+        command_fn = make_command_fn(scenario, use_13d=False)
+        self.assertEqual(command_fn(0.99).tolist(), [1.0, 0.0, 0.0])
+        self.assertEqual(command_fn(1.0).tolist(), [0.0, 0.0, 0.0])
+
+    def test_kicks_do_not_declare_a_post_window_policy_handoff(self) -> None:
+        common = {
+            "provider": "huggingface-model",
+            "repo": POLLEN_POLICY_REPO,
+            "revision": POLLEN_POLICY_REVISION,
+            "manifest_path": POLLEN_MANIFEST_PATH,
+            "manifest_sha256": POLLEN_MANIFEST_SHA256,
+        }
+        for artifact_path in ("ball_kick_left.onnx", "ball_kick_right.onnx"):
+            recipe = recipe_for_policy(
+                POLLEN_POLICY_REPO,
+                {"file": artifact_path, "kind": "episodic", "duration_s": 0.5},
+                {**common, "artifact_path": artifact_path, "artifact_sha256": POLLEN_ARTIFACT_SHA256[artifact_path]},
+            )
+            self.assertIsNotNone(recipe)
+            assert recipe is not None
+            self.assertNotIn("handoff", recipe)
 
     def test_exact_no_manifest_recipes_supply_only_their_pinned_contract(self) -> None:
         from execution_recipes import GENESIS_ARTIFACT_SHA256, GENESIS_REPO, GENESIS_REVISION

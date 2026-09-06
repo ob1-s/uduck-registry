@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from microduck_sim.robot import RolloutResult, StepSample
+from microduck_sim.robot import DuckRuntime, RolloutResult, StepSample
 from microduck_sim.scenarios import scenario_from_recipe
 
 
@@ -88,6 +88,56 @@ class RuntimeObservationsTest(unittest.TestCase):
         spec = scenario_from_recipe(recipe)
         self.assertEqual(spec.kind, "oneshot_zero")
         self.assertEqual(spec.checks, ["recover_upright"])
+
+    def test_final_observation_is_after_the_recovery_tail(self) -> None:
+        spec = scenario_from_recipe({
+            "runner": "microduck-standard-v1",
+            "scenario": "oneshot_zero",
+            "duration_s": 4.0,
+            "command_duration_s": 1.0,
+            "post_command_settle_s": 3.0,
+            "capture_duration_s": 4.0,
+            "checks": ["recover_upright"],
+        })
+        result = self.result([
+            sample(0.98, True, True, upright_z=0.0),
+            sample(1.00, True, True, upright_z=-1.0),
+            sample(3.98, True, True, upright_z=-1.0),
+        ])
+        result.duration_s = 4.0
+        metrics = result.metrics()
+        self.assertGreater(metrics["final_sample_time_s"], spec.command_duration_s)
+        self.assertEqual(metrics["final_sample_time_s"], 3.98)
+
+    def test_policy_handoff_occurs_before_the_first_tick_at_the_deadline(self) -> None:
+        class StubRuntime:
+            use_13d = True
+            obs_dim = 61
+
+            def __init__(self) -> None:
+                self.active = "roulade"
+                self.seen: list[tuple[float, str]] = []
+
+            def foot_contacts(self) -> tuple[bool, bool]:
+                return True, True
+
+            def switch_policy(self, _path, _action_scale) -> None:
+                self.active = "stand"
+
+            def step_control(self, t: float, command: np.ndarray) -> StepSample:
+                self.seen.append((t, self.active))
+                return sample(t, True, True)
+
+        runtime = StubRuntime()
+        DuckRuntime.rollout(
+            runtime,
+            lambda _t: np.zeros(13, dtype=np.float32),
+            2.0,
+            handoffs=[(1.0, lambda: runtime.switch_policy(None, 1.0))],
+        )
+        self.assertEqual(runtime.seen[0], (0.0, "roulade"))
+        self.assertEqual(runtime.seen[49], (0.98, "roulade"))
+        self.assertEqual(runtime.seen[50], (1.0, "stand"))
 
 
 if __name__ == "__main__":

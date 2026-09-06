@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 import mujoco
 import numpy as np
@@ -155,6 +156,7 @@ class RolloutResult:
             max_unilateral_s = max(max_unilateral_s, run)
         return {
             "duration_s": round(self.duration_s, 3),
+            "final_sample_time_s": round(float(self.samples[-1].t), 3),
             "control_steps": self.control_steps,
             "obs_dim": self.obs_dim,
             "command_dim": 13 if self.use_13d else 3,
@@ -186,24 +188,9 @@ class DuckRuntime:
     def __init__(self, model: mujoco.MjModel, onnx_path, action_scale: float = ACTION_SCALE):
         self.model = model
         self.data = mujoco.MjData(model)
-        self.action_scale = float(action_scale)
-
-        so = ort.SessionOptions()
-        so.intra_op_num_threads = 2
-        self.session = ort.InferenceSession(str(onnx_path), so,
-                                            providers=["CPUExecutionProvider"])
-        self.input_name = self.session.get_inputs()[0].name
-        self.output_name = self.session.get_outputs()[0].name
-        in_shape = self.session.get_inputs()[0].shape
-        out_shape = self.session.get_outputs()[0].shape
-        input_dim = in_shape[-1] if in_shape and isinstance(in_shape[-1], int) else None
-        output_dim = out_shape[-1] if out_shape and isinstance(out_shape[-1], int) else None
-        if input_dim != OBSERVATION_DIM:
-            raise ValueError(f"Policy expects {in_shape}; expected {OBSERVATION_DIM} obs dims")
-        if output_dim != ACTION_DIM:
-            raise ValueError(f"Policy returns {out_shape}; expected {ACTION_DIM} actions")
         self.use_13d = True
         self.obs_dim = OBSERVATION_DIM
+        self._load_policy(onnx_path, action_scale)
 
         self.imu_ang_vel_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SENSOR,
                                                 IMU_GYRO_SENSOR)
@@ -230,6 +217,35 @@ class DuckRuntime:
         self.default_pose = DEFAULT_POSE[: self.n_joints]
         self.last_action = np.zeros(self.n_joints, dtype=np.float32)
         self.reset()
+
+    def _load_policy(self, onnx_path, action_scale: float) -> None:
+        """Load one validated policy without resetting physical or observation state."""
+        so = ort.SessionOptions()
+        so.intra_op_num_threads = 2
+        session = ort.InferenceSession(str(onnx_path), so,
+                                       providers=["CPUExecutionProvider"])
+        input_name = session.get_inputs()[0].name
+        output_name = session.get_outputs()[0].name
+        in_shape = session.get_inputs()[0].shape
+        out_shape = session.get_outputs()[0].shape
+        input_dim = in_shape[-1] if in_shape and isinstance(in_shape[-1], int) else None
+        output_dim = out_shape[-1] if out_shape and isinstance(out_shape[-1], int) else None
+        if input_dim != OBSERVATION_DIM:
+            raise ValueError(f"Policy expects {in_shape}; expected {OBSERVATION_DIM} obs dims")
+        if output_dim != ACTION_DIM:
+            raise ValueError(f"Policy returns {out_shape}; expected {ACTION_DIM} actions")
+        self.session = session
+        self.input_name = input_name
+        self.output_name = output_name
+        self.action_scale = float(action_scale)
+
+    def switch_policy(self, onnx_path, action_scale: float) -> None:
+        """Hand the same physical rollout to another source-bound policy.
+
+        The MuJoCo state, filtered pose state, and shared last action are kept,
+        matching robotd's next-tick network selection after a skill expires.
+        """
+        self._load_policy(onnx_path, action_scale)
 
     def reset(self) -> None:
         mujoco.mj_resetData(self.model, self.data)
@@ -383,15 +399,36 @@ class DuckRuntime:
             right_foot_contact=right_contact,
         )
 
-    def rollout(self, command_fn, duration_s: float, frame_hook=None) -> RolloutResult:
-        """Run a rollout; `frame_hook(k, sample)` fires after every control step."""
+    def rollout(
+        self,
+        command_fn,
+        duration_s: float,
+        frame_hook=None,
+        handoffs: list[tuple[float, Callable[[], None]]] | None = None,
+    ) -> RolloutResult:
+        """Run a rollout; handoffs occur before the first tick at their deadline."""
         result = RolloutResult(obs_dim=self.obs_dim, use_13d=self.use_13d)
         initial_left, initial_right = self.foot_contacts()
         result.initial_left_foot_contact = initial_left
         result.initial_right_foot_contact = initial_right
         n_steps = int(round(duration_s * 50))
+        schedule = list(handoffs or [])
+        if any(
+            not isinstance(at_s, (int, float))
+            or isinstance(at_s, bool)
+            or not 0.0 < float(at_s) < duration_s
+            or not callable(callback)
+            for at_s, callback in schedule
+        ):
+            raise ValueError("policy handoffs must occur inside the rollout horizon")
+        if any(schedule[index][0] >= schedule[index + 1][0] for index in range(len(schedule) - 1)):
+            raise ValueError("policy handoffs must be strictly ordered")
+        next_handoff = 0
         for k in range(n_steps):
             t = k / 50.0
+            while next_handoff < len(schedule) and t >= schedule[next_handoff][0]:
+                schedule[next_handoff][1]()
+                next_handoff += 1
             command = command_fn(t)
             if not self.use_13d:
                 command = command[:3]

@@ -3,7 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Any
+
+
+@dataclass(frozen=True)
+class ExecutionHandoff:
+    """A source-bound policy selected after the primary policy window ends."""
+
+    at_s: float
+    name: str
+    artifact_url: str
+    artifact_sha256: str
+    action_scale: float
+    source: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -22,6 +35,7 @@ class ExecutionSpec:
     recipe: dict[str, Any]
     source: dict[str, Any]
     manifest: dict[str, Any] | None
+    handoff: ExecutionHandoff | None = None
 
 
 def artifact_url(source: dict[str, Any]) -> str:
@@ -33,6 +47,45 @@ def artifact_url(source: dict[str, Any]) -> str:
         return f"https://raw.githubusercontent.com/{repo}/{revision}/{artifact_path}"
     prefix = "spaces/" if provider == "huggingface-space" else ""
     return f"https://huggingface.co/{prefix}{repo}/resolve/{revision}/{artifact_path}"
+
+
+def _handoff_from_recipe(recipe: dict[str, Any]) -> ExecutionHandoff | None:
+    value = recipe.get("handoff")
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return None
+    source = value.get("source")
+    at_s = value.get("at_s")
+    name = value.get("name")
+    action_scale = value.get("action_scale")
+    if (
+        not isinstance(source, dict)
+        or not isinstance(at_s, (int, float))
+        or isinstance(at_s, bool)
+        or not isfinite(float(at_s))
+        or float(at_s) <= 0
+        or not isinstance(name, str)
+        or not name
+        or isinstance(action_scale, bool)
+        or not isinstance(action_scale, (int, float))
+        or not isfinite(float(action_scale))
+        or float(action_scale) <= 0
+        or not isinstance(source.get("artifact_sha256"), str)
+    ):
+        return None
+    try:
+        url = artifact_url(source)
+    except (KeyError, TypeError):
+        return None
+    return ExecutionHandoff(
+        at_s=float(at_s),
+        name=name,
+        artifact_url=url,
+        artifact_sha256=source["artifact_sha256"],
+        action_scale=float(action_scale),
+        source=source,
+    )
 
 
 def execution_spec_from_policy(policy: dict[str, Any], resolved: dict[str, Any]) -> ExecutionSpec | None:
@@ -80,6 +133,9 @@ def execution_spec_from_policy(policy: dict[str, Any], resolved: dict[str, Any])
     model = recipe.get("model")
     if not isinstance(model, str):
         return None
+    handoff = _handoff_from_recipe(recipe)
+    if recipe.get("handoff") is not None and handoff is None:
+        return None
     return ExecutionSpec(
         entry_id=str(policy["id"]),
         artifact_url=artifact_url(source),
@@ -89,4 +145,5 @@ def execution_spec_from_policy(policy: dict[str, Any], resolved: dict[str, Any])
         recipe=recipe,
         source=source,
         manifest=manifest,
+        handoff=handoff,
     )

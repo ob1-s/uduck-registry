@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import re
@@ -118,6 +119,38 @@ def parse_url(value: str) -> tuple[str, str]:
     return repo, revision
 
 
+def parse_artifact_url(value: str) -> tuple[str, str, str, str | None]:
+    """Parse a repository URL or an exact immutable ONNX file URL."""
+
+    parsed = urllib.parse.urlsplit(value)
+    if parsed.scheme != "https" or parsed.username or parsed.password or parsed.port or parsed.query or parsed.fragment:
+        raise ValueError("source URL must be an https URL without query or fragment")
+    parts = parsed.path.strip("/").split("/")
+    if parsed.hostname == "huggingface.co":
+        if len(parts) >= 3 and parts[0] == "spaces":
+            provider, repo_parts, offset = "huggingface-space", parts[1:3], 3
+        else:
+            provider, repo_parts, offset = "huggingface-model", parts[:2], 2
+        if len(repo_parts) != 2 or not REPO.fullmatch("/".join(repo_parts)):
+            raise ValueError("expected a Hugging Face owner/repository URL")
+    elif parsed.hostname == "github.com":
+        provider, repo_parts, offset = "github", parts[:2], 2
+        if len(repo_parts) != 2 or not REPO.fullmatch("/".join(repo_parts)):
+            raise ValueError("expected a GitHub owner/repository URL")
+    else:
+        raise ValueError("source URL host must be huggingface.co or github.com")
+
+    if len(parts) > offset and parts[offset] == "blob":
+        if len(parts) <= offset + 2 or not re.fullmatch(r"[A-Za-z0-9_.-]+", parts[offset + 1]):
+            raise ValueError("artifact URL must include /blob/<revision>/<path>")
+        artifact_path = "/".join(parts[offset + 2:])
+        if not PATH.fullmatch(artifact_path) or not artifact_path.lower().endswith(".onnx"):
+            raise ValueError("artifact URL must identify a safe relative ONNX path")
+        return provider, "/".join(repo_parts), parts[offset + 1], artifact_path
+    provider_from_repo, repo, revision = parse_source_url(value)
+    return provider_from_repo, repo, revision, None
+
+
 def source_artifact_url(source: dict) -> str:
     provider, repo, revision, artifact_path = source["provider"], source["repo"], source["revision"], source["artifact_path"]
     if provider == "github":
@@ -133,13 +166,41 @@ def source_file_url(source: dict, relative_path: str) -> str:
     return f"https://huggingface.co/{prefix}{source['repo']}/resolve/{source['revision']}/{relative_path}"
 
 
-def _manifest_diagnosis(manifest: dict, repo: str, source: dict) -> dict:
+def _merge_manifest(base: dict, overlay: dict) -> dict:
+    merged = copy.deepcopy(base)
+    for key, value in overlay.items():
+        if isinstance(merged.get(key), dict) and isinstance(value, dict):
+            merged[key] = _merge_manifest(merged[key], value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
+def select_manifest_for_artifact(manifest: dict, artifact_path: str) -> tuple[dict, bool]:
+    """Resolve a schema-2 policy-set manifest to one exact artifact entry."""
+
+    policies = manifest.get("policies")
+    if policies is None:
+        return manifest, False
+    if not isinstance(policies, list) or not policies:
+        raise ValueError("policy-set manifest policies must be a non-empty array")
+    matches = []
+    for entry in policies:
+        if not isinstance(entry, dict) or not isinstance(entry.get("file"), str) or not PATH.fullmatch(entry["file"]) or not entry["file"].lower().endswith(".onnx"):
+            raise ValueError("policy-set manifest contains an invalid policy file")
+        if entry["file"] == artifact_path:
+            matches.append(entry)
+    if len(matches) != 1:
+        raise ValueError(f"policy-set manifest has no unique entry for artifact {artifact_path!r}")
+    base = {key: value for key, value in manifest.items() if key != "policies"}
+    return _merge_manifest(base, matches[0]), True
+
+
+def _manifest_diagnosis(manifest: dict, repo: str, source: dict, policy_set: bool = False) -> dict:
     """Classify only explicit package metadata; missing facts stay unresolved."""
 
     if not isinstance(manifest, dict) or manifest.get("schema_version") not in (2, 3):
         raise ValueError("expected policy manifest schema_version 2 or 3")
-    if "policies" in manifest:
-        raise ValueError("multi-policy sets require separate authored entries")
     issues: list[str] = []
     for key, expected in (("obs_len", 61), ("action_len", 14), ("model_api", 1)):
         value = manifest.get(key)
@@ -174,6 +235,7 @@ def _manifest_diagnosis(manifest: dict, repo: str, source: dict) -> dict:
     if kind not in ("episodic", "perpetual", "scripted", None):
         raise ValueError(f"unknown kind: {kind!r}")
     encoding = command.get("encoding", "constant")
+    route = "review"
     if encoding not in ("constant", "phase", "posture_flag"):
         issues.append(f"unsupported command encoding: {encoding}")
     elif encoding != "constant" or kind == "scripted":
@@ -184,19 +246,27 @@ def _manifest_diagnosis(manifest: dict, repo: str, source: dict) -> dict:
         route = "slot"
     elif kind == "perpetual":
         issues.append("Held pose requires an explicit command and hold/unwind review")
-        route = "review"
     else:
         issues.append("Missing kind or episodic duration; install needs review")
-        route = "review"
-    if "route" not in locals():
-        route = "review"
 
     recipe = recipe_for_policy(repo, manifest, source) if repo else None
     simulation = {"status": "covered", "recipe": recipe, "scope": recipe["provenance"]["scope"]} if recipe else {"status": "not-covered", "reason": recipe_reason(repo, manifest, source)}
+    install_unresolved: list[str] = []
+    provider = source.get("provider") if isinstance(source, dict) else None
+    if provider is not None and provider != "huggingface-model":
+        install_unresolved.append("No supported robotctl install route exists for GitHub or Hugging Face Space sources.")
+        route = "review"
+    elif policy_set:
+        install_unresolved.append("Official policy-set artifacts are updated as a set; no per-entry robotctl install command is synthesized.")
+        route = "review"
+    if issues:
+        route = "review"
     return {
         "resolution": "ready" if not issues else "review",
-        "install_route": route if not issues else "review",
+        "install_route": route,
         "unresolved": issues,
+        "install_unresolved": install_unresolved,
+        "policy_set": policy_set,
         "simulation": simulation,
     }
 
@@ -271,11 +341,8 @@ def _resolve_revision(provider: str, repo: str, revision: str) -> str:
 def resolve_source(source: dict) -> dict:
     """Fetch and verify the exact authored source identity."""
 
-    artifact_raw = fetch(source_artifact_url(source), 100 * 1024 * 1024)
-    if digest(artifact_raw) != source["artifact_sha256"]:
-        raise ValueError("pinned artifact hash mismatch")
     manifest = None
-    manifest_raw = None
+    policy_set = False
     if source["manifest_path"] is not None:
         manifest_raw = fetch(source_file_url(source, source["manifest_path"]), 2 * 1024 * 1024)
         if digest(manifest_raw) != source["manifest_sha256"]:
@@ -283,16 +350,29 @@ def resolve_source(source: dict) -> dict:
         manifest = json.loads(manifest_raw)
         if not isinstance(manifest, dict):
             raise ValueError("pinned policy manifest must be an object")
+        # Resolve the exact policy-set member before downloading its artifact.
+        # This prevents a bad artifact selector from fetching an unrelated
+        # large ONNX file and makes per-file manifest semantics authoritative.
+        manifest, policy_set = select_manifest_for_artifact(manifest, source["artifact_path"])
+
+    artifact_raw = fetch(source_artifact_url(source), 100 * 1024 * 1024)
+    if digest(artifact_raw) != source["artifact_sha256"]:
+        raise ValueError("pinned artifact hash mismatch")
 
     if manifest is None:
+        install_unresolved = []
+        if source["provider"] != "huggingface-model":
+            install_unresolved.append("No supported robotctl install route exists for GitHub or Hugging Face Space sources.")
         diagnosis = {
             "resolution": "review",
             "install_route": "review",
             "unresolved": ["No machine-readable policy manifest is published with this artifact."],
+            "install_unresolved": install_unresolved,
+            "policy_set": False,
             "simulation": {"status": "not-covered", "reason": "No machine-readable policy manifest is published with this artifact."},
         }
     else:
-        diagnosis = _manifest_diagnosis(manifest, source["repo"], source)
+        diagnosis = _manifest_diagnosis(manifest, source["repo"], source, policy_set=policy_set)
     license_name = None
     try:
         metadata = _metadata(source["provider"], source["repo"], source["revision"])
@@ -316,13 +396,18 @@ def resolve_source(source: dict) -> dict:
     }
 
 
-def _discover_source(provider: str, repo: str, revision: str) -> dict:
+def _discover_source(provider: str, repo: str, revision: str, requested_artifact: str | None = None) -> dict:
     immutable = _resolve_revision(provider, repo, revision)
     paths = _source_files(provider, repo, immutable)
     artifacts = [item for item in paths if item.lower().endswith(".onnx")]
-    if len(artifacts) != 1:
-        raise ValueError("source must publish exactly one ONNX artifact")
-    artifact_path = artifacts[0]
+    if requested_artifact is not None:
+        if requested_artifact not in artifacts:
+            raise ValueError(f"source does not publish the requested ONNX artifact: {requested_artifact}")
+        artifact_path = requested_artifact
+    else:
+        if len(artifacts) != 1:
+            raise ValueError("source publishes multiple ONNX artifacts; submit an exact /blob/<revision>/<artifact>.onnx URL")
+        artifact_path = artifacts[0]
     if not PATH.fullmatch(artifact_path):
         raise ValueError("ONNX artifact path is not a safe relative path")
     manifest_path = "manifest.json" if "manifest.json" in paths else None
@@ -340,10 +425,12 @@ def _discover_source(provider: str, repo: str, revision: str) -> dict:
 
 
 def resolve(url: str, expected: dict | None = None) -> dict:
-    provider, repo, revision = parse_source_url(url)
-    source = expected or _discover_source(provider, repo, revision)
+    provider, repo, revision, requested_artifact = parse_artifact_url(url)
+    source = expected or _discover_source(provider, repo, revision, requested_artifact)
     if expected is not None and (source.get("provider") != provider or source.get("repo") != repo):
         raise ValueError("source URL does not match the authored provider or repository")
+    if expected is not None and requested_artifact is not None and source.get("artifact_path") != requested_artifact:
+        raise ValueError("source URL does not match the authored artifact path")
     if expected is None:
         source["revision"] = _resolve_revision(provider, repo, revision)
     elif source["revision"] != revision and revision != "main":
@@ -383,7 +470,7 @@ def validate_policy(policy: dict) -> dict:
     ):
         raise ValueError("invalid manifest path or SHA256")
     curation = policy.get("curation")
-    if not isinstance(curation, dict) or set(curation) - {"category", "tags", "name", "summary", "details", "authors", "license", "notes"} or curation.get("category") not in CATEGORIES:
+    if not isinstance(curation, dict) or set(curation) - {"category", "tags", "name", "summary", "details", "authors", "license", "notes", "requirements", "publisher_hardware"} or curation.get("category") not in CATEGORIES:
         raise ValueError("invalid curation")
     tags = curation.get("tags", [])
     if not isinstance(tags, list) or len(tags) > 20 or any(not isinstance(tag, str) or not 0 < len(tag) <= 80 for tag in tags):
@@ -409,6 +496,31 @@ def validate_policy(policy: dict) -> dict:
             parsed = urllib.parse.urlsplit(author["url"])
             if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
                 raise ValueError("invalid author")
+    requirements = curation.get("requirements")
+    if requirements is not None:
+        if not isinstance(requirements, dict) or set(requirements) != {"robot_model", "accessories", "terrain"}:
+            raise ValueError("invalid curation requirements")
+        if not isinstance(requirements["robot_model"], str) or not 0 < len(requirements["robot_model"]) <= 120:
+            raise ValueError("invalid curation requirements")
+        for key in ("accessories", "terrain"):
+            values = requirements[key]
+            if not isinstance(values, list) or len(values) > 20 or any(not isinstance(item, str) or not 0 < len(item) <= 120 for item in values):
+                raise ValueError("invalid curation requirements")
+    publisher_hardware = curation.get("publisher_hardware")
+    if publisher_hardware is not None:
+        if not isinstance(publisher_hardware, dict) or set(publisher_hardware) != {"status", "target", "source_url", "note"}:
+            raise ValueError("invalid publisher hardware facts")
+        if publisher_hardware["status"] not in ("claimed", "not-claimed", "unknown"):
+            raise ValueError("invalid publisher hardware facts")
+        for key, limit in (("target", 400), ("note", 4000)):
+            value = publisher_hardware[key]
+            if value is not None and (not isinstance(value, str) or not 0 < len(value) <= limit):
+                raise ValueError("invalid publisher hardware facts")
+        source_url = publisher_hardware["source_url"]
+        if source_url is not None:
+            parsed = urllib.parse.urlsplit(source_url)
+            if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+                raise ValueError("invalid publisher hardware facts")
     media = policy.get("media", [])
     if not isinstance(media, list) or len(media) > 20:
         raise ValueError("invalid media")
@@ -448,8 +560,11 @@ def main() -> None:
     policy = validate_policy({"id": policy_id, "source": result["source"], "curation": {"category": args.category, "tags": []}})
     for file in (ROOT / "registry/policies").glob("*.json"):
         existing = json.loads(file.read_text())
-        if existing["source"]["repo"].lower() == policy["source"]["repo"].lower():
-            raise ValueError(f"repository already registered as {existing['id']}; update that policy in a normal PR")
+        existing_source = existing.get("source", {})
+        if (existing_source.get("provider"), existing_source.get("repo", "").lower(), existing_source.get("artifact_path")) == (
+            policy["source"]["provider"], policy["source"]["repo"].lower(), policy["source"]["artifact_path"]
+        ):
+            raise ValueError(f"logical source already registered as {existing['id']}; update that policy in a normal PR")
     destination = ROOT / "registry/policies" / f"{policy_id}.json"
     with destination.open("x") as output:
         output.write(json.dumps(policy, indent=2) + "\n")

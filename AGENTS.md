@@ -17,5 +17,5 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md). Prefer a Pollen Hub package URL through
 - Do not guess normalizers, action scales, runtime slots, hardware evidence, or command values.
 - `.generated/`, public indexes, and registry renders are build outputs. Do not commit them.
 - ONNX inspection is not a behavior simulation. Upstream `eval` and author media are publisher claims.
-- Execution identity v2 covers execution-relevant inputs only; curation edits must not rerun simulation. Unsupported or recipe-less policies remain visible as `not-covered`. Evidence blobs are content-addressed (`<blob>.tar.gz`).
+- Execution identity v3 covers execution-relevant inputs only; curation edits must not rerun simulation. Unsupported or recipe-less policies remain visible as `not-covered`. Evidence blobs are content-addressed (`<blob>.tar.gz`).
 - Run `pnpm validate`, resolver tests, and relevant TypeScript/Python tests for tooling changes.

@@ -73,6 +73,9 @@ if not isinstance(manifest, dict):
 unresolved = diagnosis.get('unresolved', [])
 if not isinstance(unresolved, list):
     unresolved = []
+install_unresolved = diagnosis.get('install_unresolved', [])
+if isinstance(install_unresolved, list):
+    unresolved = [*unresolved, *install_unresolved]
 review_notes = '\n'.join('- ' + quoted(item) for item in unresolved[:20]) or '- No unresolved package metadata reported.'
 onnx = diagnosis.get('onnx', {})
 if not isinstance(onnx, dict):

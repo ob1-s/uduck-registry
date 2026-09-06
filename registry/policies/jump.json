@@ -16,6 +16,8 @@
     "summary": "One-shot vertical jump policy that crouches, launches, lands, and returns to a standing pose.",
     "details": "A community-trained policy in a browser simulator fork. The indexed artifact is the fork's jump ONNX, not the official policies also present in that repository.",
     "authors": [{"name": "Liyucheng1997", "github": "Liyucheng1997", "url": "https://github.com/Liyucheng1997"}],
-    "notes": "No machine-readable package manifest or separate artifact license is published with this source."
+    "notes": "No machine-readable package manifest or separate artifact license is published with this source.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://github.com/Liyucheng1997/318_lab-microduck-simulator", "note": "The source presents simulator results and no physical hardware evidence."}
   }
 }

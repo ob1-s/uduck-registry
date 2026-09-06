@@ -5,10 +5,14 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from evidence import execution_inputs, inputs_digest  # noqa: E402
+from evidence import EVIDENCE_VERSION, IDENTITY_VERSION, execution_inputs, inputs_digest  # noqa: E402
 
 
 class EvidenceIdentityTests(unittest.TestCase):
+    def test_identity_namespace_is_v3(self) -> None:
+        self.assertEqual(IDENTITY_VERSION, "uduck-execution-inputs-v3")
+        self.assertEqual(EVIDENCE_VERSION, "uduck-evidence-v3")
+
     def test_identity_is_entry_scoped(self) -> None:
         self.assertNotEqual(inputs_digest("alpha-walking"), inputs_digest("jump"))
 

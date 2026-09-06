@@ -57,6 +57,9 @@ MAX_REPORT_BYTES = 4 * 1024 * 1024
 RELEASE_INDEX_NAME = "index.json"
 RELEASE_TAG = "registry-evidence"
 FORMAT_VERSION = 2
+# The release index container remains format v2 so it can retain historical
+# blobs, while report/evidence keys use the v3 semantic identity namespace in
+# simulation/evidence.py.
 EVIDENCE_FORMAT = "uduck-evidence-v2"
 # Wall-clock fields are useful transiently but must not affect content
 # addressing: two runs with identical execution inputs archive identical bytes.
@@ -598,11 +601,13 @@ def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, e
             raise ValueError(f"invalid requested entry id: {entry_id!r}")
         key = current[entry_id]
         entry = index["entries"].get(key)
-        if not isinstance(entry, dict) or entry.get("entry") != entry_id:
+        if not isinstance(entry, dict):
             raise ValueError(f"evidence index entry is missing or mismatched for {entry_id}")
         expected_inputs = _policy_inputs(entry_id)
         if entry.get("inputs_sha256") != expected_inputs:
             raise ValueError(f"stale evidence identity for {entry_id}")
+        if entry.get("entry") != entry_id:
+            raise ValueError(f"evidence index entry is missing or mismatched for {entry_id}")
         expected_artifact = entry.get("artifact_sha256")
         authored_doc = read_json(authored[entry_id])
         authored_source = authored_doc.get("source") if isinstance(authored_doc, dict) else None

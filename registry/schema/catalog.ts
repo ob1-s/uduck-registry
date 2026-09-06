@@ -8,7 +8,6 @@ const NullableNumber = z.number().finite().nullable();
 const NullableUrl = z.string().url().refine(isHttpsUrl).nullable();
 const NullableMediaUrl = z.string().refine(isAllowedMediaUrl).nullable();
 const NullableSha256 = z.string().regex(/^[a-f0-9]{64}$/).nullable();
-const NullableRevision = z.string().regex(/^[a-f0-9]{40}$/).nullable();
 
 const CatalogAuthorSchema = strict({
   name: z.string().min(1),
@@ -33,7 +32,6 @@ const CatalogSourceSchema = strict({
     sha256: z.string().regex(/^[a-f0-9]{64}$/),
   }),
   upstream: strict({
-    runtime_url: NullableUrl,
     training_url: NullableUrl,
     simulator_url: NullableUrl,
     task_id: NullableString,
@@ -332,9 +330,15 @@ function authorsForPolicy(policy: ResolvedPolicy, manifest: Record<string, unkno
   return [{ name: author, affiliation: null, github: null, url: null }];
 }
 
+function publicInstallRoute(policy: ResolvedPolicy): CatalogRuntime["install"]["route"] {
+  if (policy.source.provider !== "huggingface-model" || policy.resolved.policy_set) return "review";
+  return policy.resolved.install_route;
+}
+
 function installCommand(policy: ResolvedPolicy, manifest: Record<string, unknown>, route: CatalogRuntime["install"]["route"]): string | null {
-  if (route === "review") return null;
-  const target = `${policy.source.repo}@${policy.source.revision}`;
+  if (route === "review" || policy.source.provider !== "huggingface-model" || policy.resolved.policy_set) return null;
+  const selector = policy.source.artifact_path === "policy.onnx" ? "" : `:${policy.source.artifact_path}`;
+  const target = `${policy.source.repo}@${policy.source.revision}${selector}`;
   if (route === "skill") return `robotctl policy add ${policy.id} ${target}`;
   const slot = manifestString(manifest, "slot");
   return slot ? `robotctl policy load ${slot} ${target}` : null;
@@ -350,11 +354,15 @@ export function catalogEntryFromPolicy(
   const compatibility = nestedRecord(manifest, "compatibility");
   const training = nestedRecord(manifest, "training");
   const source = policy.source;
-  const route = policy.resolved.install_route;
+  const route = publicInstallRoute(policy);
+  const requirements = policy.curation.requirements;
+  const publisherHardware = policy.curation.publisher_hardware;
   const authorMedia = authorMediaFromPolicy(policy);
   const registry = registryMedia(evidence);
   const description = policy.curation.summary ?? manifestString(manifest, "description") ?? `Policy artifact from ${source.repo}.`;
-  const robotModel = nullableString(robot.model);
+  const robotModel = nullableString(robot.model) ?? requirements?.robot_model ?? null;
+  const accessories = stringArray(compatibility.accessories_required) ?? (requirements ? requirements.accessories : null);
+  const terrain = stringArray(compatibility.terrain) ?? (requirements ? requirements.terrain : null);
   const trainingRepo = nullableString(training.repo);
   const trainingUrl = trainingRepo && /^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(trainingRepo)
     ? httpsOrNull(`https://github.com/${trainingRepo}`)
@@ -362,7 +370,7 @@ export function catalogEntryFromPolicy(
   const taskId = manifestString(manifest, "task_id") ?? manifestString(manifest, "task") ?? nullableString(training.task_id);
   const packageUrl = `${sourceBase(source.provider, source.repo)}/tree/${source.revision}`;
   const artifact = artifactUrl(source);
-  const unresolved = [...policy.resolved.unresolved];
+  const unresolved = [...policy.resolved.unresolved, ...(policy.resolved.install_unresolved ?? [])];
   const simulationReason = policy.resolved.simulation.status === "not-covered"
     ? policy.resolved.simulation.reason
     : null;
@@ -396,7 +404,6 @@ export function catalogEntryFromPolicy(
         sha256: source.artifact_sha256,
       },
       upstream: {
-        runtime_url: null,
         training_url: trainingUrl,
         simulator_url: source.provider === "huggingface-space" ? sourceBase(source.provider, source.repo) : null,
         task_id: taskId,
@@ -424,8 +431,8 @@ export function catalogEntryFromPolicy(
       },
       compatibility: {
         robot_model: robotModel,
-        accessories_required: stringArray(compatibility.accessories_required),
-        terrain: stringArray(compatibility.terrain),
+        accessories_required: accessories,
+        terrain,
       },
       install: {
         route,
@@ -435,9 +442,9 @@ export function catalogEntryFromPolicy(
     },
     coverage: coverage(packageInspection(policy), catalogEvidence),
     hardware: {
-      status: "none",
-      target: robotModel,
-      note: "No independent registry hardware evidence is recorded; upstream media and evaluation remain publisher claims.",
+      status: publisherHardware?.status === "claimed" ? "author-claimed" : "none",
+      target: publisherHardware?.target ?? null,
+      note: publisherHardware?.note ?? "No independent registry hardware evidence is recorded; upstream media and evaluation remain publisher claims.",
     },
     media: {
       author: authorMedia,

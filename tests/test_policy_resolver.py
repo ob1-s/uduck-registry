@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts/policy'))
 from ingest_issue import parse_issue
-from resolve import classify, digest, parse_source_url, parse_url, resolve, validate_policy
+from resolve import _discover_source, classify, digest, parse_artifact_url, parse_source_url, parse_url, resolve, resolve_source, select_manifest_for_artifact, validate_policy
 
 
 MANIFEST = {
@@ -30,6 +30,24 @@ FLAMINGO_SOURCE = {
     'artifact_sha256': 'df77929c39d7695092bdaf810c2075e20a9ba91abd8192b4073d3de593d56904',
     'manifest_path': 'manifest.json',
     'manifest_sha256': 'ac9b9ae16b4f21733990710275bd934c97558c6028e060bd2b34ec1f5341d302',
+}
+POLLEN_POLICY_SET = {
+    'schema_version': 2,
+    'model_api': 1,
+    'obs_len': 61,
+    'action_len': 14,
+    'robot': {'model': 'microduck', 'hw_rev': 1, 'servos': 'xl330', 'control_hz': 50},
+    'policies': [
+        {'file': 'alpha_walking.onnx', 'kind': 'perpetual'},
+        {'file': 'alpha_stand.onnx', 'kind': 'perpetual'},
+        {'file': 'roller.onnx', 'kind': 'perpetual', 'mode': 'roller', 'action_scale': 0.8},
+        {'file': 'alpha_sitstand.onnx', 'name': 'sitstand', 'kind': 'scripted', 'command': {'encoding': 'posture_flag', 'slot': 'twist.vx', 'sit': 1.0, 'stand': 0.0, 'idle': [0, 0, 0]}, 'ramp_s': 2.0, 'unwind_s': 1.0},
+        {'file': 'alpha_ground_pick.onnx', 'name': 'ground_pick', 'kind': 'episodic', 'duration_s': 2.8, 'command': {'encoding': 'phase', 'slots': 'twist.vx,twist.vy', 'period_s': 4.0, 'end_phase': 0.7}},
+        {'file': 'roller_crouch.onnx', 'name': 'crouch', 'kind': 'episodic', 'duration_s': 3.5, 'mode': 'roller', 'action_scale': 0.8, 'command': {'encoding': 'phase', 'slots': 'twist.vx,twist.vy', 'period_s': 5.0, 'end_phase': 0.7}},
+        {'file': 'roulade.onnx', 'kind': 'episodic', 'duration_s': 1.0, 'chain': True},
+        {'file': 'ball_kick_left.onnx', 'name': 'kick_left', 'kind': 'episodic', 'duration_s': 0.5},
+        {'file': 'ball_kick_right.onnx', 'name': 'kick_right', 'kind': 'episodic', 'duration_s': 0.5},
+    ],
 }
 
 
@@ -54,6 +72,7 @@ class ResolverTests(unittest.TestCase):
         self.assertEqual(parse_source_url('https://huggingface.co/owner/repo/tree/v2'), ('huggingface-model', 'owner/repo', 'v2'))
         self.assertEqual(parse_source_url('https://huggingface.co/spaces/owner/repo/tree/v2'), ('huggingface-space', 'owner/repo', 'v2'))
         self.assertEqual(parse_source_url('https://github.com/owner/repo'), ('github', 'owner/repo', 'main'))
+        self.assertEqual(parse_artifact_url('https://huggingface.co/owner/repo/tree/v2'), ('huggingface-model', 'owner/repo', 'v2', None))
         self.assertEqual(parse_url('https://huggingface.co/owner/repo/tree/v2'), ('owner/repo', 'v2'))
         for url in [
             'https://huggingface.co.evil.test/a/b',
@@ -64,6 +83,10 @@ class ResolverTests(unittest.TestCase):
             'https://huggingface.co/a/b?token=x',
         ]:
             with self.assertRaises(ValueError): parse_source_url(url)
+        self.assertEqual(
+            parse_artifact_url('https://huggingface.co/owner/repo/blob/' + 'a' * 40 + '/second.onnx'),
+            ('huggingface-model', 'owner/repo', 'a' * 40, 'second.onnx'),
+        )
 
     def test_missing_manifest_facts_remain_review(self):
         result = classify({'schema_version': 2})
@@ -85,6 +108,89 @@ class ResolverTests(unittest.TestCase):
         missing_scale = copy.deepcopy(MANIFEST)
         del missing_scale['action_scale']
         self.assertEqual(classify(missing_scale, source['repo'], source)['simulation']['status'], 'not-covered')
+
+    def test_non_hf_model_sources_never_receive_a_robotctl_install_route(self):
+        source = {**policy_fixture()['source'], 'provider': 'github'}
+        result = classify(MANIFEST, source['repo'], source)
+        self.assertEqual(result['resolution'], 'ready')
+        self.assertEqual(result['install_route'], 'review')
+        self.assertTrue(result['install_unresolved'])
+
+    def test_policy_set_manifest_selects_exact_per_file_runtime_facts(self):
+        manifest = {
+            'schema_version': 2,
+            'model_api': 1,
+            'obs_len': 61,
+            'action_len': 14,
+            'robot': {'model': 'microduck', 'hw_rev': 1, 'servos': 'xl330', 'control_hz': 50},
+            'policies': [
+                {'file': 'first.onnx', 'kind': 'perpetual'},
+                {'file': 'second.onnx', 'kind': 'episodic', 'duration_s': 2.8, 'command': {'encoding': 'phase', 'period_s': 4.0, 'end_phase': 0.7}},
+            ],
+        }
+        raw = json.dumps(manifest).encode()
+        source = {
+            **policy_fixture()['source'],
+            'repo': 'owner/policy-set',
+            'revision': 'a' * 40,
+            'artifact_path': 'second.onnx',
+            'artifact_sha256': digest(b'fake-onnx'),
+            'manifest_path': 'manifest.json',
+            'manifest_sha256': digest(raw),
+        }
+
+        def fetch(url, *args):
+            if url.endswith('/manifest.json'):
+                return raw
+            if '/api/models/' in url:
+                return json.dumps({'sha': 'a' * 40, 'siblings': [], 'cardData': {'license': 'apache-2.0'}}).encode()
+            return b'fake-onnx'
+
+        with patch('resolve.fetch', fetch), patch('resolve.inspect_onnx', return_value={'smoke': 'passed'}):
+            result = resolve_source(source)
+        self.assertTrue(result['policy_set'])
+        self.assertEqual(result['manifest']['file'], 'second.onnx')
+        self.assertEqual(result['manifest']['duration_s'], 2.8)
+        self.assertEqual(result['manifest']['command']['period_s'], 4.0)
+        self.assertNotIn('policies', result['manifest'])
+        with patch('resolve.fetch', fetch):
+            with self.assertRaisesRegex(ValueError, 'no unique entry'):
+                resolve_source({**source, 'artifact_path': 'missing.onnx'})
+
+    def test_official_pollen_entries_select_their_exact_policy_set_members(self):
+        expected = {
+            'alpha-walking': ('alpha_walking.onnx', 'perpetual', None, 'constant'),
+            'ball-kick-left': ('ball_kick_left.onnx', 'episodic', 0.5, 'constant'),
+            'ball-kick-right': ('ball_kick_right.onnx', 'episodic', 0.5, 'constant'),
+            'ground-pick': ('alpha_ground_pick.onnx', 'episodic', 2.8, 'phase'),
+            'roller-crouch': ('roller_crouch.onnx', 'episodic', 3.5, 'phase'),
+            'roller-drive': ('roller.onnx', 'perpetual', None, 'constant'),
+            'roulade': ('roulade.onnx', 'episodic', 1.0, 'constant'),
+            'sit-stand': ('alpha_sitstand.onnx', 'scripted', None, 'posture_flag'),
+        }
+        policies_dir = Path(__file__).resolve().parents[1] / 'registry/policies'
+        for entry_id, (artifact_path, kind, duration, encoding) in expected.items():
+            policy = json.loads((policies_dir / f'{entry_id}.json').read_text())
+            source = policy['source']
+            self.assertEqual(source['repo'], 'pollen-robotics/microduck-policies')
+            self.assertEqual(source['revision'], '088524a64e2557dc453256b6071dbb9d23888802')
+            self.assertEqual(source['artifact_path'], artifact_path)
+            manifest, policy_set = select_manifest_for_artifact(POLLEN_POLICY_SET, artifact_path)
+            self.assertTrue(policy_set)
+            self.assertEqual(manifest['file'], artifact_path)
+            self.assertEqual(manifest['kind'], kind)
+            self.assertEqual(manifest.get('duration_s'), duration)
+            self.assertEqual((manifest.get('command') or {}).get('encoding', 'constant'), encoding)
+            self.assertNotIn('policies', manifest)
+
+    def test_multi_onnx_discovery_requires_and_honors_exact_artifact(self):
+        with patch('resolve._resolve_revision', return_value='a' * 40), \
+             patch('resolve._source_files', return_value=['first.onnx', 'second.onnx']), \
+             patch('resolve.fetch', side_effect=lambda url, *args: b'second' if url.endswith('second.onnx') else b''):
+            result = _discover_source('huggingface-model', 'owner/policy-set', 'main', 'second.onnx')
+            self.assertEqual(result['artifact_path'], 'second.onnx')
+            with self.assertRaisesRegex(ValueError, 'multiple ONNX'):
+                _discover_source('huggingface-model', 'owner/policy-set', 'main')
 
     def test_named_recipe_marks_flamingo_simulation_covered(self):
         result = classify(FLAMINGO, FLAMINGO_SOURCE['repo'], FLAMINGO_SOURCE)

@@ -50,7 +50,7 @@ describe("authored policy schema", () => {
     unsafeRevision.source.revision = "main";
     expect(PolicySchema.safeParse(unsafeRevision).success).toBe(false);
     const mismatchedManifest = fixture();
-    mismatchedManifest.source.manifest_path = "manifest.json";
+    mismatchedManifest.source.manifest_sha256 = null;
     expect(PolicySchema.safeParse(mismatchedManifest).success).toBe(false);
   });
 

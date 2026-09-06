@@ -17,6 +17,8 @@
     "details": "The standalone ONNX export comes from a community Genesis training port. No physical robot test is documented in the source.",
     "authors": [{"name": "Macmachi", "github": "Macmachi", "url": "https://github.com/Macmachi"}],
     "license": "Apache-2.0",
-    "notes": "No machine-readable package manifest is published with this artifact."
+    "notes": "No machine-readable package manifest is published with this artifact.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://github.com/Macmachi/microduck-rl-genesis", "note": "No physical Microduck test is documented in the source."}
   }
 }

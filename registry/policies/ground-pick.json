@@ -1,13 +1,13 @@
 {
   "id": "ground-pick",
   "source": {
-    "provider": "huggingface-space",
-    "repo": "pollen-robotics/microduck-simulator",
-    "revision": "e81974b932c7ca1819843b7bb3dcd42e2993e98e",
-    "artifact_path": "app/public/policies/alpha_ground_pick.onnx",
+    "provider": "huggingface-model",
+    "repo": "pollen-robotics/microduck-policies",
+    "revision": "088524a64e2557dc453256b6071dbb9d23888802",
+    "artifact_path": "alpha_ground_pick.onnx",
     "artifact_sha256": "ffbf5109982ff999b0ba53afe86b9ae731bbec679d67fb7f8ab4c52152c88872",
-    "manifest_path": null,
-    "manifest_sha256": null
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "d0c36e7b71129dd617339c63bcb1d704eab282c8617ebf14c2013a01abfb2dda"
   },
   "curation": {
     "category": "manipulation",
@@ -17,7 +17,9 @@
     "details": "Publisher materials describe a phase-driven floor-pick gesture and articulated beak coordination.",
     "authors": [{"name": "Pollen Robotics", "affiliation": "Pollen Robotics", "github": "pollen-robotics", "url": "https://pollen-robotics.com"}],
     "license": "Apache-2.0",
-    "notes": "Publisher hardware and command claims are not independent registry evidence."
+    "notes": "Publisher hardware and command claims are not independent registry evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "claimed", "target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077, articulated beak)", "source_url": "https://github.com/pollen-robotics/microduck", "note": "Upstream materials claim physical object pickup on carpet and hard flooring; uDuck has not independently verified hardware."}
   },
   "media": [
     {"type": "video", "url": "https://pollen-robotics.com/assets/microduck/moves-portrait-alpha/grab.webm", "label": "Publisher ground-pick preview"},

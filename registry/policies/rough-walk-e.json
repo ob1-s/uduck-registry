@@ -17,7 +17,9 @@
     "details": "The publisher presents this as a drop-in walking replacement for alpha-walking and reports rough-ground trials. Those evaluation results are publisher claims.",
     "authors": [{"name": "RemiFabre", "github": "RemiFabre", "url": "https://huggingface.co/RemiFabre"}],
     "license": "Apache-2.0",
-    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat", "rough", "slope"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e", "note": "The publisher reports simulation trials and no physical Microduck deployment evidence."}
   },
   "media": [
     {"type": "video", "url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e/resolve/fa7b27eeb5610d3b351362f4bd71691ee8be3d7d/media/preview.mp4", "label": "Publisher rough-walk simulation"}

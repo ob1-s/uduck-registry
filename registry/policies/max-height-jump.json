@@ -17,7 +17,9 @@
     "details": "The canonical ONNX contains the jump controller. The repository documents a separate standing-policy handoff and publisher-side MuJoCo measurements; those claims are not registry simulation evidence.",
     "authors": [{"name": "Thomas Burgess", "affiliation": "Burgess Software", "github": "ThomasBurgess2000", "url": "https://github.com/ThomasBurgess2000"}],
     "license": "Apache-2.0",
-    "notes": "The handoff policy is not folded into this entry's immutable artifact identity."
+    "notes": "The handoff policy is not folded into this entry's immutable artifact identity.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://github.com/ThomasBurgess2000/microduck-max-height-jump", "note": "The source reports a CPU MuJoCo evaluation and explicitly documents no physical-hardware evidence."}
   },
   "media": [
     {"type": "video", "url": "https://raw.githubusercontent.com/ThomasBurgess2000/microduck-max-height-jump/7e5dc6028900f13d145e6710847378b007a675e9/media/preview-4x.mp4", "label": "Publisher maximum-height jump preview"}

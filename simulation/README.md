@@ -45,7 +45,7 @@ Exit code 0 means the diagnostic passed or was not-covered; 1 means measured che
 
 ## Evidence identity
 
-`simulation/evidence.py` computes an entry-specific identity from the immutable source, execution-relevant manifest fields, that entry's resolved recipe/status, the executable runner code, the asset lock, dependency pins, and the environment contract. Editorial curation does not enter the digest. The evidence key additionally binds the artifact SHA-256.
+`simulation/evidence.py` computes an entry-specific v3 identity from the immutable source, execution-relevant manifest fields, that entry's resolved recipe/status, the executable runner code, the asset lock, dependency pins, and the environment contract. Editorial curation does not enter the digest. The evidence key additionally binds the artifact SHA-256.
 
 The evidence store archives deterministic reports and media as `<blob_sha256>.tar.gz` assets in the `registry-evidence` GitHub Release. Its mutable index maps current entry ids to immutable blobs while retaining historical blobs. Hydration accepts only an exact current entry identity and exact authored artifact hash.
 

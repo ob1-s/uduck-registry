@@ -14,12 +14,7 @@ Missing runtime facts stay unknown. A package inspection proves only that the pi
 
 ## Catalog
 
-<!-- BEGIN GENERATED CATALOG TABLE -->
-
-| Behavior | ID | Category | Status | Publisher | Setup | Preview |
-| --- | --- | --- | --- | --- | --- | --- |
-
-<!-- END GENERATED CATALOG TABLE -->
+The live catalog is generated from the authored policies and served at [uduckmoves.com](https://uduckmoves.com). Machine consumers can use the generated [`registry.json`](https://uduckmoves.com/registry.json) index.
 
 ## Develop
 

@@ -17,7 +17,9 @@
     "details": "The publisher presents this as a from-scratch rough-terrain gait and reports synchronized trials. Those evaluation results are publisher claims.",
     "authors": [{"name": "RemiFabre", "github": "RemiFabre", "url": "https://huggingface.co/RemiFabre"}],
     "license": "Apache-2.0",
-    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat", "rough", "slope"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/RemiFabre/microduck-rough-walk-g", "note": "The publisher reports simulation trials and no physical Microduck deployment evidence."}
   },
   "media": [
     {"type": "video", "url": "https://huggingface.co/RemiFabre/microduck-rough-walk-g/resolve/242876a0aa8b40b702142fb0a5677fd43bc88a4c/media/preview.mp4", "label": "Publisher rough-walk simulation"}

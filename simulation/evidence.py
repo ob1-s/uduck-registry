@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-IDENTITY_VERSION = "uduck-execution-inputs-v2"
-EVIDENCE_VERSION = "uduck-evidence-v2"
+IDENTITY_VERSION = "uduck-execution-inputs-v3"
+EVIDENCE_VERSION = "uduck-evidence-v3"
 EVIDENCE_ENV = "uduck-evidence-env-v1:ubuntu-24.04:python3.12:mujoco==3.12.0:onnxruntime==1.29.0:numpy==2.5.2:pillow==12.3.0"
 
 

@@ -59,6 +59,19 @@ const PolicyMediaSchema = z.array(strict({
   label: z.string().min(1).max(240),
 })).max(20);
 
+const PolicyRequirementsSchema = strict({
+  robot_model: z.string().min(1).max(120),
+  accessories: z.array(z.string().min(1).max(120)).max(20),
+  terrain: z.array(z.string().min(1).max(120)).max(20),
+});
+
+const PublisherHardwareSchema = strict({
+  status: z.enum(["claimed", "not-claimed", "unknown"]),
+  target: z.string().min(1).max(400).nullable(),
+  source_url: HttpsUrlSchema.nullable(),
+  note: z.string().min(1).max(4000).nullable(),
+});
+
 const PolicyCurationSchema = strict({
   category: PolicyCategorySchema,
   tags: z.array(z.string().min(1).max(80)).max(20).default([]),
@@ -68,6 +81,8 @@ const PolicyCurationSchema = strict({
   authors: z.array(PolicyAuthorSchema).min(1).max(20).optional(),
   license: z.string().min(1).max(200).optional(),
   notes: z.string().min(1).max(4000).optional(),
+  requirements: PolicyRequirementsSchema.optional(),
+  publisher_hardware: PublisherHardwareSchema.optional(),
 });
 
 /** The only authored registry format: an immutable source plus curation. */
@@ -83,10 +98,12 @@ export interface ResolvedPolicy extends Policy {
   resolved: {
     source: PolicySource;
     manifest: Record<string, unknown> | null;
+    policy_set: boolean;
     license: string | null;
     resolution: "ready" | "review";
     install_route: "skill" | "slot" | "review";
     unresolved: string[];
+    install_unresolved: string[];
     onnx: { input: unknown[]; output: unknown[]; smoke: string; scope: string };
     simulation:
       | { status: "covered"; recipe: Record<string, unknown>; scope: string }

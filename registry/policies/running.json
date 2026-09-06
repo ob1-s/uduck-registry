@@ -17,7 +17,9 @@
     "details": "The public package is designed primarily for forward speed; its published command and simulation observations are not a hard hardware speed limit.",
     "authors": [{"name": "HannesVonEssen", "url": "https://huggingface.co/HannesVonEssen"}],
     "license": "Apache-2.0",
-    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/HannesVonEssen/microduck-running", "note": "The publisher reports simulation evaluation and no physical Microduck deployment evidence."}
   },
   "media": [
     {"type": "video", "url": "https://huggingface.co/HannesVonEssen/microduck-running/resolve/d839a07cd2cb4bdc2850ca72bf00d9b549ec600a/media/preview.mp4", "label": "Publisher running simulation"}

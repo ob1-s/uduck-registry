@@ -25,6 +25,8 @@ function flamingoPolicy(): ResolvedPolicy {
       resolution: "review",
       install_route: "review",
       unresolved: ["Held pose requires an explicit command and hold/unwind review"],
+      install_unresolved: [],
+      policy_set: false,
       onnx: { input: [1, 61], output: [1, 14], smoke: "passed", scope: "Shape inspection only." },
       simulation: {
         status: "covered",
@@ -57,6 +59,7 @@ describe("policy catalog boundary", () => {
     expect(entry.runtime.compatibility.accessories_required).toBeNull();
     expect(entry.runtime.compatibility.terrain).toBeNull();
     expect(entry.hardware.status).toBe("none");
+    expect(entry.hardware.target).toBeNull();
     expect(entry.media.author.length).toBeGreaterThan(0);
   });
 
@@ -102,6 +105,65 @@ describe("policy catalog boundary", () => {
       checks: [],
     });
     expect(entry.coverage.registry_simulation.status).not.toBe("passed");
+  });
+
+  it("keeps publisher hardware and setup facts separate from registry evidence", () => {
+    const policy = flamingoPolicy();
+    policy.curation.requirements = { robot_model: "microduck-standard", accessories: ["70mm_practice_ball"], terrain: ["flat"] };
+    policy.curation.publisher_hardware = {
+      status: "claimed",
+      target: "Microduck v1",
+      source_url: "https://github.com/pollen-robotics/microduck",
+      note: "Publisher claim only.",
+    };
+    const entry = catalogEntryFromPolicy(policy, {
+      status: "passed",
+      evidence_key: "a".repeat(64),
+      inputs_sha256: "b".repeat(64),
+      runner: "microduck-standard-v1",
+      scene: "flat-v1",
+      scenario: "command_schedule",
+      checks: [{ check: "no_fall", passed: true, detail: "measured" }],
+    });
+    expect(entry.hardware.status).toBe("author-claimed");
+    expect(entry.hardware.target).toBe("Microduck v1");
+    expect(entry.runtime.compatibility.accessories_required).toEqual(["70mm_practice_ball"]);
+    expect(entry.coverage.registry_simulation.status).toBe("passed");
+  });
+
+  it("only synthesizes exact robotctl targets for single-artifact Hugging Face models", () => {
+    const base = flamingoPolicy();
+    base.resolved = {
+      ...base.resolved,
+      policy_set: false,
+      resolution: "ready",
+      install_route: "skill",
+      install_unresolved: [],
+      manifest: { ...base.resolved.manifest, kind: "episodic", duration_s: 1, action_scale: 1, command: { encoding: "constant" } },
+    };
+    const hf = catalogEntryFromPolicy({
+      ...base,
+      source: { ...base.source, provider: "huggingface-model", artifact_path: "ball_kick_left.onnx" },
+    }, null);
+    expect(hf.runtime.install.route).toBe("skill");
+    expect(hf.runtime.install.command).toContain("@6646428394c6997106d2dc07c1588f20f6fea026:ball_kick_left.onnx");
+
+    for (const provider of ["github", "huggingface-space"] as const) {
+      const entry = catalogEntryFromPolicy({
+        ...base,
+        source: { ...base.source, provider, artifact_path: "ball_kick_left.onnx" },
+      }, null);
+      expect(entry.runtime.install.route).toBe("review");
+      expect(entry.runtime.install.command).toBeNull();
+    }
+
+    const officialSet = catalogEntryFromPolicy({
+      ...base,
+      source: { ...base.source, provider: "huggingface-model", artifact_path: "ball_kick_left.onnx" },
+      resolved: { ...base.resolved, policy_set: true },
+    }, null);
+    expect(officialSet.runtime.install.route).toBe("review");
+    expect(officialSet.runtime.install.command).toBeNull();
   });
 
   it("emits one entries collection", () => {

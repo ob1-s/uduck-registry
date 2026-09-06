@@ -13,7 +13,7 @@ retrieved 2026-08-31. The source README is preserved at
 
 ## Curation model
 
-The list is manually curated for signal: a short list of independent projects
+The list is maintainer-curated for signal: a short list of independent projects
 someone can inspect, run, build, or learn from today.
 
 Its contribution guide asks for:

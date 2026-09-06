@@ -4,7 +4,11 @@ import { PolicySchema, type Policy } from "../registry/schema/policy";
 
 const POLICIES_DIR = path.resolve(process.cwd(), "registry/policies");
 
-export function validatePolicies(): {
+export function logicalSourceKey(policy: Policy): string {
+  return `${policy.source.provider}:${policy.source.repo.toLowerCase()}:${policy.source.artifact_path}`;
+}
+
+export function validatePolicies(directory = POLICIES_DIR): {
   valid: boolean;
   policies: Policy[];
   errors: string[];
@@ -14,17 +18,17 @@ export function validatePolicies(): {
   const ids = new Set<string>();
   const sources = new Set<string>();
 
-  if (!fs.existsSync(POLICIES_DIR)) {
-    return { valid: false, policies, errors: [`Directory not found: ${POLICIES_DIR}`] };
+  if (!fs.existsSync(directory)) {
+    return { valid: false, policies, errors: [`Directory not found: ${directory}`] };
   }
 
-  const files = fs.readdirSync(POLICIES_DIR).filter((file) => file.endsWith(".json")).sort();
+  const files = fs.readdirSync(directory).filter((file) => file.endsWith(".json")).sort();
   if (files.length === 0) {
-    return { valid: false, policies, errors: ["No policy files found in registry/policies/"] };
+    return { valid: false, policies, errors: [`No policy files found in ${directory}/`] };
   }
 
   for (const file of files) {
-    const fullPath = path.join(POLICIES_DIR, file);
+    const fullPath = path.join(directory, file);
     try {
       const result = PolicySchema.safeParse(JSON.parse(fs.readFileSync(fullPath, "utf-8")));
       if (!result.success) {
@@ -37,8 +41,8 @@ export function validatePolicies(): {
       ids.add(policy.id);
       if (file !== `${policy.id}.json`) errors.push(`Filename mismatch: file is '${file}' but policy.id requires '${policy.id}.json'`);
 
-      const sourceKey = `${policy.source.provider}:${policy.source.repo.toLowerCase()}:${policy.source.revision}:${policy.source.artifact_path}`;
-      if (sources.has(sourceKey)) errors.push(`Duplicate immutable source detected: '${policy.source.repo}/${policy.source.artifact_path}'`);
+      const sourceKey = logicalSourceKey(policy);
+      if (sources.has(sourceKey)) errors.push(`Duplicate logical source detected: '${policy.source.provider}:${policy.source.repo}/${policy.source.artifact_path}'`);
       sources.add(sourceKey);
       policies.push(policy);
     } catch (error) {
@@ -46,8 +50,10 @@ export function validatePolicies(): {
     }
   }
 
-  const obsoleteDirectory = path.resolve(process.cwd(), "registry", "behaviors");
-  if (fs.existsSync(obsoleteDirectory)) errors.push("registry/policies must be the only authored registry directory");
+  if (directory === POLICIES_DIR) {
+    const obsoleteDirectory = path.resolve(process.cwd(), "registry", "behaviors");
+    if (fs.existsSync(obsoleteDirectory)) errors.push("registry/policies must be the only authored registry directory");
+  }
 
   return { valid: errors.length === 0, policies, errors };
 }

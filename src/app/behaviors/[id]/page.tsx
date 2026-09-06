@@ -172,7 +172,6 @@ export default async function BehaviorDetailPage({ params }: Props) {
             <h2><ExternalLink size={17} aria-hidden="true" /> Sources</h2>
             <div className="provenance-grid">
               {sourceUrl && <a className="provenance-link" href={sourceUrl} target="_blank" rel="noopener noreferrer"><span><small>Repository</small>{sourceUrl.replace(/^https:\/\//, "")}</span><ExternalLink size={14} aria-hidden="true" /></a>}
-              {entry.source.upstream.runtime_url && <a className="provenance-link" href={entry.source.upstream.runtime_url} target="_blank" rel="noopener noreferrer"><span><small>Runtime</small>Pollen Microduck</span><ExternalLink size={14} aria-hidden="true" /></a>}
               {entry.source.upstream.training_url && <a className="provenance-link" href={entry.source.upstream.training_url} target="_blank" rel="noopener noreferrer"><span><small>Training source</small>{entry.source.upstream.task_id ?? "Open source"}</span><ExternalLink size={14} aria-hidden="true" /></a>}
               {entry.source.upstream.simulator_url && <a className="provenance-link" href={entry.source.upstream.simulator_url} target="_blank" rel="noopener noreferrer"><span><small>Simulator</small>Publisher simulator</span><ExternalLink size={14} aria-hidden="true" /></a>}
             </div>

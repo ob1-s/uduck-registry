@@ -133,6 +133,29 @@ describe("policy catalog boundary", () => {
     expect(entry.coverage.registry_simulation.status).toBe("passed");
   });
 
+  it("uses complete registry evidence media as the primary catalog media", () => {
+    const entry = catalogEntryFromPolicy(flamingoPolicy(), {
+      status: "failed",
+      evidence_key: "a".repeat(64),
+      inputs_sha256: "b".repeat(64),
+      runner: "microduck-standard-v1",
+      scene: "flat-v1",
+      scenario: "command_schedule",
+      report_url: "/media/registry-sim/flamingo-cycle/report.json",
+      loop_url: "/media/registry-sim/flamingo-cycle/loop.mp4",
+      poster_url: "/media/registry-sim/flamingo-cycle/poster.png",
+      checks: [{ check: "no_fall", passed: false, detail: "measured" }],
+      reason: "The requested diagnostic check failed.",
+    });
+    expect(entry.media.primary).toBe("registry");
+    expect(entry.media.registry).toEqual({
+      loop_url: "/media/registry-sim/flamingo-cycle/loop.mp4",
+      poster_url: "/media/registry-sim/flamingo-cycle/poster.png",
+      report_url: "/media/registry-sim/flamingo-cycle/report.json",
+    });
+    expect(entry.coverage.registry_simulation.status).toBe("failed");
+  });
+
   it("only synthesizes exact robotctl targets for single-artifact Hugging Face models", () => {
     const base = flamingoPolicy();
     base.resolved = {

@@ -49,21 +49,33 @@ def execution_spec_from_policy(policy: dict[str, Any], resolved: dict[str, Any])
     if manifest is not None and not isinstance(manifest, dict):
         return None
 
-    robot = manifest.get("robot") if isinstance(manifest, dict) else None
+    # Manifest facts are authoritative when present. Exact source-bound
+    # maintainer recipes may provide a deliberately narrow contract for older
+    # artifacts that have no machine-readable manifest; there is no general
+    # legacy/default fallback here.
+    contract_source = manifest if isinstance(manifest, dict) else recipe.get("contract")
+    if not isinstance(contract_source, dict):
+        return None
+    robot = contract_source.get("robot")
     if not isinstance(robot, dict):
         return None
-    if manifest.get("obs_len") != 61 or manifest.get("action_len") != 14 or robot.get("model") != "microduck" or robot.get("control_hz") != 50:
+    if contract_source.get("obs_len") != 61 or contract_source.get("action_len") != 14 or robot.get("model") != "microduck" or robot.get("control_hz") != 50:
         return None
-    action_scale = manifest.get("action_scale")
+    action_scale = contract_source.get("action_scale")
+    recipe_action_scale = recipe.get("action_scale")
+    if action_scale is None:
+        action_scale = recipe_action_scale
+    elif recipe_action_scale is not None and action_scale != recipe_action_scale:
+        return None
     if isinstance(action_scale, bool) or not isinstance(action_scale, (int, float)):
         return None
     contract = {
-        "observation_dim": manifest.get("obs_len"),
-        "action_dim": manifest.get("action_len"),
+        "observation_dim": contract_source.get("obs_len"),
+        "action_dim": contract_source.get("action_len"),
         "control_frequency_hz": robot.get("control_hz"),
         "action_scale": float(action_scale),
-        "decimation": manifest.get("decimation", 4),
-        "actuator_model": manifest.get("actuator_model", "Registry deterministic position-control diagnostic runtime"),
+        "decimation": contract_source.get("decimation", 4),
+        "actuator_model": contract_source.get("actuator_model", "Registry deterministic position-control diagnostic runtime"),
     }
     model = recipe.get("model")
     if not isinstance(model, str):

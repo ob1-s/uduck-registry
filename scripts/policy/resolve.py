@@ -363,13 +363,19 @@ def resolve_source(source: dict) -> dict:
         install_unresolved = []
         if source["provider"] != "huggingface-model":
             install_unresolved.append("No supported robotctl install route exists for GitHub or Hugging Face Space sources.")
+        recipe = recipe_for_policy(source["repo"], None, source)
+        simulation = (
+            {"status": "covered", "recipe": recipe, "scope": recipe["provenance"]["scope"]}
+            if recipe is not None
+            else {"status": "not-covered", "reason": "No machine-readable policy manifest is published with this artifact."}
+        )
         diagnosis = {
             "resolution": "review",
             "install_route": "review",
             "unresolved": ["No machine-readable policy manifest is published with this artifact."],
             "install_unresolved": install_unresolved,
             "policy_set": False,
-            "simulation": {"status": "not-covered", "reason": "No machine-readable policy manifest is published with this artifact."},
+            "simulation": simulation,
         }
     else:
         diagnosis = _manifest_diagnosis(manifest, source["repo"], source, policy_set=policy_set)

@@ -9,6 +9,8 @@ describe("contributor-facing catalog documentation", () => {
     expect(policyCount).toBe(18);
     expect(readme).toContain("https://uduckmoves.com");
     expect(readme).toContain("https://uduckmoves.com/registry.json");
+    expect(readme).toContain("The live catalog is generated from the authored policies");
+    expect(readme).not.toMatch(/(?:empty|no) (?:policy|behavior|entry|catalog|registry)/i);
     expect(readme).not.toContain("BEGIN GENERATED CATALOG TABLE");
     expect(readme).not.toContain("| --- | --- | --- | --- | --- | --- | --- |");
   });

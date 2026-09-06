@@ -1,5 +1,5 @@
 # CODEOWNERS — uDuck Registry
-/registry/behaviors/    @uduck-registry-maintainers
+/registry/policies/     @uduck-registry-maintainers
 
 # Registry structure and tooling are maintainer-owned:
 /registry/schema/       @uduck-registry-maintainers

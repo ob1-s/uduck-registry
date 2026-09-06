@@ -5,107 +5,28 @@ import {
   ARTIFACT_URL_PATTERN,
   GITHUB_USERNAME_PATTERN,
   ID_PATTERN,
-  ONNX_FILENAME_PATTERN,
   HTTPS_URL_PATTERN,
   isAllowedArtifactUrl,
   isAllowedMediaUrl,
   isHttpsUrl,
 } from "../registry/schema/allowlist";
-import { BehaviorSchema } from "../registry/schema/behavior";
-
-const jsonSchema = JSON.parse(
-  fs.readFileSync(path.resolve("registry/schema/behavior.schema.json"), "utf8"),
-);
+import { PolicySchema } from "../registry/schema/policy";
 
 function fixture() {
-  return JSON.parse(
-    fs.readFileSync(path.resolve("registry/behaviors/alpha-walking.json"), "utf8"),
-  ) as Record<string, any>;
+  return JSON.parse(fs.readFileSync(path.resolve("registry/policies/alpha-walking.json"), "utf8")) as Record<string, any>;
 }
 
-describe("behavior schema", () => {
-  it("accepts every checked-in descriptor", () => {
-    const files = fs
-      .readdirSync(path.resolve("registry/behaviors"))
-      .filter((file) => file.endsWith(".json"))
-      .sort();
-
-    for (const file of files) {
-      const raw = JSON.parse(
-        fs.readFileSync(path.resolve("registry/behaviors", file), "utf8"),
-      );
-      const result = BehaviorSchema.safeParse(raw);
-      expect(result.success, file).toBe(true);
-    }
+describe("authored policy schema", () => {
+  it("accepts every checked-in policy", () => {
+    const directory = path.resolve("registry/policies");
+    const files = fs.readdirSync(directory).filter((file) => file.endsWith(".json")).sort();
+    expect(files.length).toBe(18);
+    for (const file of files) expect(PolicySchema.safeParse(JSON.parse(fs.readFileSync(path.join(directory, file), "utf8"))).success, file).toBe(true);
   });
 
-  it("keeps the manual JSON Schema artifact aligned with shared primitives", () => {
-    expect(jsonSchema.properties.id.$ref).toBe("#/$defs/id");
-    expect(jsonSchema.$defs.id.pattern).toBe(ID_PATTERN.source);
-    expect(jsonSchema.$defs.githubUsername.pattern).toBe(GITHUB_USERNAME_PATTERN.source);
-    expect(jsonSchema.$defs.onnxFilename.pattern).toBe(ONNX_FILENAME_PATTERN.source);
-    expect(jsonSchema.$defs.httpsUrl.pattern).toBe(HTTPS_URL_PATTERN.source.replaceAll("\\/", "/"));
-    expect(jsonSchema.$defs.artifactUrl.pattern).toBe(ARTIFACT_URL_PATTERN.source.replaceAll("\\/", "/"));
-
-    const contract = jsonSchema.properties.contract;
-    expect(contract.required).toEqual([
-      "observation_dim",
-      "observation_breakdown",
-      "action_dim",
-      "action_breakdown",
-      "control_frequency_hz",
-      "decimation",
-      "actuator_model",
-      "action_scale",
-    ]);
-    expect(contract.properties.observation_dim.const).toBe(61);
-    expect(contract.properties.action_dim.const).toBe(14);
-    expect(contract.properties.control_frequency_hz.const).toBe(50);
-    expect(jsonSchema.properties.media.properties.loop_url).toBeDefined();
-
-    for (const schema of [
-      jsonSchema,
-      jsonSchema.properties.authors.items,
-      jsonSchema.properties.verification,
-      contract,
-      contract.properties.observation_breakdown,
-      contract.properties.action_breakdown,
-      jsonSchema.properties.compatibility,
-      jsonSchema.properties.artifacts,
-      jsonSchema.properties.artifacts.properties.onnx,
-      jsonSchema.properties.media,
-      ...jsonSchema.properties.simulation.oneOf,
-      jsonSchema.properties.sources,
-      jsonSchema.properties.deployment,
-    ]) {
-      expect(schema.additionalProperties).toBe(false);
-    }
-  });
-
-  it("requires the exact Microduck contract and supported status", () => {
-    for (const [pathParts, value] of [
-      [["contract", "observation_dim"], 60],
-      [["contract", "action_dim"], 15],
-      [["contract", "control_frequency_hz"], 49],
-      [["contract", "observation_breakdown", "twist"], 4],
-    ] as const) {
-      const bad = fixture();
-      let target = bad;
-      for (const key of pathParts.slice(0, -1)) target = target[key];
-      target[pathParts.at(-1)!] = value;
-      expect(BehaviorSchema.safeParse(bad).success).toBe(false);
-    }
-
-    const unsupportedStatus = fixture();
-    unsupportedStatus.verification.status = "unknown";
-    expect(BehaviorSchema.safeParse(unsupportedStatus).success).toBe(false);
-
-    const missingExplicitContract = fixture();
-    delete missingExplicitContract.contract.observation_dim;
-    expect(BehaviorSchema.safeParse(missingExplicitContract).success).toBe(false);
-  });
-
-  it("uses the same ID, URL, filename, and metadata boundaries", () => {
+  it("uses shared ID, URL, and path boundaries", () => {
+    expect(ID_PATTERN.test("alpha-walking")).toBe(true);
+    expect(GITHUB_USERNAME_PATTERN.test("pollen-robotics")).toBe(true);
     expect(isHttpsUrl("https://example.com/policy")).toBe(true);
     expect(isHttpsUrl("http://example.com/policy")).toBe(false);
     expect(isHttpsUrl("https://user:pass@example.com/policy")).toBe(false);
@@ -114,94 +35,28 @@ describe("behavior schema", () => {
     expect(isAllowedArtifactUrl("https://evil.example/model/policy.onnx")).toBe(false);
     expect(isAllowedMediaUrl("/media/loops/policy.mp4")).toBe(true);
     expect(isAllowedMediaUrl("//evil.example/policy.mp4")).toBe(false);
-
-    for (const [field, value] of [
-      ["id", "Alpha-Walking"],
-      ["artifacts.onnx.url", "https://evil.example/policy.onnx"],
-      ["artifacts.onnx.filename", "../policy.onnx"],
-      ["authors[0].github", "not_a_github_name"],
-      ["authors[0].url", "http://example.com/author"],
-      ["media.thumbnail_url", "//evil.example/image.jpg"],
-    ] as const) {
-      const bad = fixture();
-      if (field === "id") bad.id = value;
-      if (field === "artifacts.onnx.url") bad.artifacts.onnx.url = value;
-      if (field === "artifacts.onnx.filename") bad.artifacts.onnx.filename = value;
-      if (field === "authors[0].github") bad.authors[0].github = value;
-      if (field === "authors[0].url") bad.authors[0].url = value;
-      if (field === "media.thumbnail_url") bad.media.thumbnail_url = value;
-      expect(BehaviorSchema.safeParse(bad).success, field).toBe(false);
-    }
-
-    const badNestedKey = fixture();
-    badNestedKey.verification.unexpected = true;
-    expect(BehaviorSchema.safeParse(badNestedKey).success).toBe(false);
-
-    const badCompatibilityKey = fixture();
-    badCompatibilityKey.compatibility.unexpected = "value";
-    expect(BehaviorSchema.safeParse(badCompatibilityKey).success).toBe(false);
+    expect(HTTPS_URL_PATTERN.test("https://example.com")).toBe(true);
+    expect(ARTIFACT_URL_PATTERN.test("https://raw.githubusercontent.com/o/r/a/policy.onnx")).toBe(true);
   });
 
-  it("accepts the optional simulation block and rejects bad values", () => {
-    const withSim = fixture();
-    withSim.simulation = {
-      runner: "microduck-standard-v1",
-      scene: "flat-v1",
-      start: { preset: "settled_standing", settle_s: 0.2 },
-      scenario: "velocity",
-      duration_s: 8,
-      checks: ["no_fall", "velocity_tracking"],
-      segments: [
-        { duration_s: 2, vx: 0.2, vy: 0, wz: 0 },
-        { duration_s: 1.5, vx: 0.1, vy: 0, wz: 0.5 },
-      ],
-    };
-    expect(BehaviorSchema.safeParse(withSim).success).toBe(true);
-
-    const external = fixture();
-    external.simulation = {
-      runner: "external",
-      reason: "custom_environment",
-      notes: "Requires the publisher's obstacle scene.",
-    };
-    expect(BehaviorSchema.safeParse(external).success).toBe(true);
-
-    const airborne = fixture();
-    airborne.simulation = {
-      runner: "microduck-standard-v1",
-      scene: "flat-v1",
-      start: {
-        preset: "airborne_drop",
-        trunk_height_m: 0.2,
-        orientation: "side",
-      },
-      scenario: "standing",
-      duration_s: 4,
-    };
-    expect(BehaviorSchema.safeParse(airborne).success).toBe(false);
-    airborne.simulation.start.orientation = "left";
-    expect(BehaviorSchema.safeParse(airborne).success).toBe(true);
-    airborne.simulation.start.linear_velocity_mps = [0, 0, -4];
-    expect(BehaviorSchema.safeParse(airborne).success).toBe(false);
-
-    for (const sim of [
-      { ...withSim.simulation, scenario: "teleport" },
-      { ...withSim.simulation, duration_s: 0.5 },
-      { ...withSim.simulation, duration_s: 60 },
-      { ...withSim.simulation, end_phase: 1.5 },
-      { ...withSim.simulation, trigger_s: 5.5 },
-      { ...withSim.simulation, checks: ["jump_really_high"] },
-      { ...withSim.simulation, segments: [{ duration_s: 0, vx: 0, vy: 0, wz: 0 }] },
-      { ...withSim.simulation, segments: [{ duration_s: 1, vx: 0, vy: 0, wz: 0, boost: 1 }] },
-    ]) {
-      const bad = fixture();
-      bad.simulation = sim;
-      expect(BehaviorSchema.safeParse(bad).success, JSON.stringify(sim)).toBe(false);
-    }
-
-    const badKey = fixture();
-    badKey.simulation = { ...withSim.simulation, warp: true };
-    expect(BehaviorSchema.safeParse(badKey).success).toBe(false);
+  it("rejects runtime claims and malformed immutable sources", () => {
+    const bad = fixture();
+    bad.runtime = { runner: "microduck-standard-v1" };
+    expect(PolicySchema.safeParse(bad).success).toBe(false);
+    const unsafePath = fixture();
+    unsafePath.source.artifact_path = "../policy.onnx";
+    expect(PolicySchema.safeParse(unsafePath).success).toBe(false);
+    const unsafeRevision = fixture();
+    unsafeRevision.source.revision = "main";
+    expect(PolicySchema.safeParse(unsafeRevision).success).toBe(false);
+    const mismatchedManifest = fixture();
+    mismatchedManifest.source.manifest_path = "manifest.json";
+    expect(PolicySchema.safeParse(mismatchedManifest).success).toBe(false);
   });
 
+  it("rejects unknown nested curation fields", () => {
+    const bad = fixture();
+    bad.curation.unexpected = true;
+    expect(PolicySchema.safeParse(bad).success).toBe(false);
+  });
 });

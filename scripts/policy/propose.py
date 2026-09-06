@@ -1,11 +1,11 @@
-"""Trusted publisher: validates inert pointer data; never loads the ONNX."""
+"""Trusted publisher: validates inert policy data; never loads the ONNX."""
 import base64
 import json
 import os
 import re
 import subprocess
 from pathlib import Path
-from resolve import validate_pointer
+from resolve import validate_policy
 
 def gh(*args, payload=None, method=None):
     # `gh api` defaults to GET; `--input` only supplies the body, so every
@@ -22,26 +22,23 @@ def gh(*args, payload=None, method=None):
 repo = os.environ['GH_REPO']
 issue = int(os.environ['ISSUE_NUMBER'])
 submission = json.loads(Path('candidate/submission.json').read_text())
-relative = submission['pointer']
+relative = submission['policy']
 if not re.fullmatch(r'registry/policies/[a-z0-9]+(?:-[a-z0-9]+)*\.json', relative):
     raise ValueError('Invalid candidate path')
 candidate_file = Path('candidate') / relative
 if candidate_file.stat().st_size > 65536:
-    raise ValueError('Pointer exceeds 64 KB')
-p = validate_pointer(json.loads(candidate_file.read_text()))
+    raise ValueError('Policy exceeds 64 KB')
+p = validate_policy(json.loads(candidate_file.read_text()))
 if relative != f"registry/policies/{p['id']}.json":
     raise ValueError('Candidate filename mismatch')
-if (Path('registry/behaviors') / f"{p['id']}.json").exists():
-    raise ValueError('Candidate conflicts with existing behavior')
 for file in Path('registry/policies').glob('*.json'):
     old = json.loads(file.read_text())
     if old['id'] == p['id']:
         raise ValueError(f"ID already registered at registry/policies/{old['id']}.json")
-    if old['source']['repo'].lower() == p['source']['repo'].lower():
+    if (old['source']['provider'], old['source']['repo'].lower(), old['source']['artifact_path']) == (p['source']['provider'], p['source']['repo'].lower(), p['source']['artifact_path']):
         raise ValueError(
-            f"Repository already registered as {old['id']}. To publish a new revision, "
-            f"open a normal PR updating registry/policies/{old['id']}.json; "
-            "the URL bot does not create update PRs yet."
+            f"Immutable source already registered as {old['id']}. To publish a new revision, "
+            f"open a normal PR updating registry/policies/{old['id']}.json."
         )
 branch = f'bot/policy-{issue}'
 existing = gh('pr', 'list', '--head', branch, '--state', 'all', '--json', 'number,url')
@@ -110,7 +107,7 @@ Only the pinned source and curation overlay are authored. Build resolution reche
 - Manifest SHA256: `{p['source']['manifest_sha256']}`
 - Manifest schema: `{quoted(manifest.get('schema_version', 'unknown'))}`
 - Kind: `{quoted(manifest.get('kind', 'unknown'))}`
-- Runtime assessment: `{quoted(diagnosis.get('runtime', 'needs review'))}`
+- Runtime assessment: `{quoted(diagnosis.get('resolution', 'needs review'))}`
 - License: `{quoted(diagnosis.get('license') or 'not declared')}`
 - ONNX interface: input `{quoted(onnx.get('input', 'unknown'))}` → output `{quoted(onnx.get('output', 'unknown'))}`; smoke `{quoted(onnx.get('smoke', 'unknown'))}`
 - Registry simulation: {sim_review}

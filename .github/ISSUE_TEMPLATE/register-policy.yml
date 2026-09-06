@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Publish with Pollen's publisher, then paste the Hugging Face model repository URL below.
-        Custom sources and official multi-policy sets need maintainer review. Do not guess runtime fields.
+        Sources without one immutable ONNX artifact need maintainer review. Do not guess runtime fields.
   - type: input
     id: url
     attributes:

@@ -8,9 +8,7 @@
     "start": "python3 -m http.server 3000 --directory out",
     "test": "vitest run",
     "check": "pnpm validate && pnpm test && pnpm build",
-    "new-behavior": "tsx scripts/new-behavior.ts",
     "validate": "tsx scripts/validate-registry.ts",
-    "preflight": "tsx scripts/preflight.ts",
     "compile": "tsx scripts/generate-registry-index.ts",
     "uduck": "tsx scripts/uduck.ts",
     "policies:prepare": "tsx scripts/uduck.ts prepare"

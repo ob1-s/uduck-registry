@@ -1,6 +1,6 @@
 """Named scenarios: how the 13D command evolves over a diagnostic rollout.
 
-A scenario is selected explicitly by a descriptor's `simulation` block.
+A scenario is selected explicitly by an ExecutionSpec recipe.
 Compatibility and robotd installation slots are intentionally not inputs.
 """
 
@@ -30,13 +30,13 @@ class ScenarioSpec:
     # oneshot_zero: seconds the zeroed command window lasts (kicks, roulade).
     duration_s: float = 0.5
     # oneshot_trigger: binary launch request followed by the zero command
-    # (custom one-shot policies such as jumps).
+    # (publisher-specific one-shot policies such as jumps).
     trigger_s: float = 0.2
-    # Runner-defined checks requested by the descriptor. These are assertions
+    # Runner-defined checks requested by the recipe. These are assertions
     # over measured telemetry, not contributor-authored validation claims.
     checks: list[str] = field(default_factory=list)
     # command_schedule: list of (duration_s, [twist_x, twist_y, twist_wz])
-    # segments. Unlike the legacy oneshot_zero scenario, each command value is
+    # segments. Unlike a blind one-shot scenario, each command value is
     # explicit and is retained in the report/provenance for review.
     command_segments: list = field(default_factory=list)
     # Alias of the scenario for reports.
@@ -47,7 +47,7 @@ def validate_velocity(vx: float, vy: float, wz: float) -> tuple:
     """Return a velocity command unchanged, rejecting unsupported values.
 
     A registry recipe is declarative input, not a user-control stream. Silently
-    clipping it would make the rendered rollout differ from what the descriptor
+    clipping it would make the rendered rollout differ from what the recipe
     says, so out-of-range values are an explicit error.
     """
     limits = (
@@ -66,20 +66,29 @@ def validate_velocity(vx: float, vy: float, wz: float) -> tuple:
     return float(vx), float(vy), float(wz)
 
 
-def scenario_from_descriptor(sim_block: dict) -> ScenarioSpec:
-    """Build a scenario solely from an explicit registry simulation recipe."""
+def scenario_from_recipe(sim_block: dict) -> ScenarioSpec:
+    """Build a scenario solely from an explicit maintainer-owned recipe."""
     if sim_block.get("runner") != "microduck-standard-v1":
-        raise ValueError("descriptor does not declare a registry simulation recipe")
+        raise ValueError("recipe does not declare the registry runner")
 
     spec = ScenarioSpec()
     spec.kind = sim_block["scenario"]
     spec.name = spec.kind
     spec.checks = list(sim_block.get("checks", []))
     spec.duration_s = float(sim_block["duration_s"])
-    spec.trigger_s = float(sim_block.get("trigger_s", spec.trigger_s))
-    spec.period_s = float(sim_block.get("period_s", spec.period_s))
-    spec.end_phase = float(sim_block.get("end_phase", spec.end_phase))
-    spec.hold_s = float(sim_block.get("hold_s", spec.hold_s))
+    if spec.kind == "oneshot_trigger":
+        if "trigger_s" not in sim_block:
+            raise ValueError("oneshot_trigger requires an explicit trigger_s")
+        spec.trigger_s = float(sim_block["trigger_s"])
+    if spec.kind == "oneshot_phase":
+        if "period_s" not in sim_block or "end_phase" not in sim_block:
+            raise ValueError("oneshot_phase requires explicit period_s and end_phase")
+        spec.period_s = float(sim_block["period_s"])
+        spec.end_phase = float(sim_block["end_phase"])
+    if spec.kind == "sitstand":
+        if "hold_s" not in sim_block:
+            raise ValueError("sitstand requires an explicit hold_s")
+        spec.hold_s = float(sim_block["hold_s"])
     segments = sim_block.get("segments")
     if spec.kind == "velocity":
         if not isinstance(segments, list) or not segments:
@@ -124,7 +133,7 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
     """Return f(t) -> command vector for the scenario.
 
     `use_13d` selects the unified 13D command (twist + head + body pose);
-    otherwise the legacy 3D twist command is produced.
+    otherwise the compact 3D twist command is produced.
     """
     def wrap(cmd: np.ndarray) -> np.ndarray:
         if not use_13d:
@@ -203,7 +212,7 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
         return zero_fn
 
     if spec.kind == "oneshot_trigger":
-        # Custom one-shot policies documented by their authors as a binary
+        # Publisher-specific one-shot policies documented by their authors as a binary
         # launch request in twist-vx, followed by the settling command.
         trigger_s = spec.trigger_s
 

@@ -1,0 +1,25 @@
+{
+  "id": "running",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "HannesVonEssen/microduck-running",
+    "revision": "d839a07cd2cb4bdc2850ca72bf00d9b549ec600a",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "007707dd7779b2756ded67c58b2e9f94fe5071794a48c2b5a20d5f8d841efbeb",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "7d70763e525e23d6c37b4f991be3732e2cd67be84f8c7c510ce4652cd63f1487"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "running", "fast-locomotion", "flat-ground", "simulation-only", "50hz"],
+    "name": "Microduck Running",
+    "summary": "Fast forward-running policy for Microduck, trained for flat ground at commands up to 2.2 m/s.",
+    "details": "The public package is designed primarily for forward speed; its published command and simulation observations are not a hard hardware speed limit.",
+    "authors": [{"name": "HannesVonEssen", "url": "https://huggingface.co/HannesVonEssen"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/HannesVonEssen/microduck-running/resolve/d839a07cd2cb4bdc2850ca72bf00d9b549ec600a/media/preview.mp4", "label": "Publisher running simulation"}
+  ]
+}

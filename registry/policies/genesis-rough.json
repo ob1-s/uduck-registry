@@ -1,0 +1,22 @@
+{
+  "id": "genesis-rough",
+  "source": {
+    "provider": "github",
+    "repo": "Macmachi/microduck-rl-genesis",
+    "revision": "9d1f213879650f2623e3bbd7bf06fe63dbf71a10",
+    "artifact_path": "policies/rough.onnx",
+    "artifact_sha256": "04261902d3651dc02303e3e9e5ab756062c4d93c45400f431a0ae68b5969185c",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "genesis", "rough-terrain", "velocity-tracking", "50hz"],
+    "name": "Genesis Rough-Terrain Walk",
+    "summary": "Velocity-tracking walking policy fine-tuned for rough terrain in a Genesis port of the Microduck environment.",
+    "details": "The standalone ONNX export comes from a community Genesis training port. No physical robot test is documented in the source.",
+    "authors": [{"name": "Macmachi", "github": "Macmachi", "url": "https://github.com/Macmachi"}],
+    "license": "Apache-2.0",
+    "notes": "No machine-readable package manifest is published with this artifact."
+  }
+}

@@ -44,9 +44,7 @@ export function coverageLabel(status: CatalogEntry["coverage"]["registry_simulat
 }
 
 export function runtimeLabel(runtime: CatalogRuntime): string {
-  if (runtime.classification === "pollen-hub") return "Pollen Hub package";
-  if (runtime.classification === "pollen-review") return "Pollen package · review needed";
-  return "Manual registry entry";
+  return runtime.status === "ready" ? "Runtime ready" : "Runtime review needed";
 }
 
 export function runtimeKindLabel(kind: CatalogRuntime["kind"]): string {
@@ -71,4 +69,3 @@ export function catalogSearchText(entry: CatalogEntry): string {
     ...(entry.runtime.compatibility.terrain ?? []),
   ].join(" ").toLowerCase();
 }
-

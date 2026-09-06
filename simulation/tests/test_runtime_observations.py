@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from microduck_sim.robot import RolloutResult, StepSample
-from microduck_sim.scenarios import scenario_from_descriptor
+from microduck_sim.scenarios import scenario_from_recipe
 
 
 def sample(t: float, left: bool, right: bool, upright_z: float = -1.0) -> StepSample:
@@ -85,7 +85,7 @@ class RuntimeObservationsTest(unittest.TestCase):
             "duration_s": 4,
             "checks": ["recover_upright"],
         }
-        spec = scenario_from_descriptor(recipe)
+        spec = scenario_from_recipe(recipe)
         self.assertEqual(spec.kind, "oneshot_zero")
         self.assertEqual(spec.checks, ["recover_upright"])
 

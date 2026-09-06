@@ -1,0 +1,25 @@
+{
+  "id": "rough-walk-e",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "RemiFabre/microduck-rough-walk-e",
+    "revision": "fa7b27eeb5610d3b351362f4bd71691ee8be3d7d",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "5aa423bd693e431b19e2ead77f99cbae6184e40a529eb2f7c1b4f85bb7f57040",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "f9b9cdbd7450de266ae1c7f6dd3ed1cc82fd5de01582bf073cc73d81cb2c0332"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "rough-terrain", "velocity-tracking", "sim2real", "simulation-only", "50hz"],
+    "name": "Rough Walk E",
+    "summary": "Velocity-commanded walking fine-tuned for grids, small steps, rubble, and slopes.",
+    "details": "The publisher presents this as a drop-in walking replacement for alpha-walking and reports rough-ground trials. Those evaluation results are publisher claims.",
+    "authors": [{"name": "RemiFabre", "github": "RemiFabre", "url": "https://huggingface.co/RemiFabre"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/RemiFabre/microduck-rough-walk-e/resolve/fa7b27eeb5610d3b351362f4bd71691ee8be3d7d/media/preview.mp4", "label": "Publisher rough-walk simulation"}
+  ]
+}

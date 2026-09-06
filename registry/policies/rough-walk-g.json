@@ -1,0 +1,25 @@
+{
+  "id": "rough-walk-g",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "RemiFabre/microduck-rough-walk-g",
+    "revision": "242876a0aa8b40b702142fb0a5677fd43bc88a4c",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "7a0d132f121d4bea3b713d3d7509500319389e0ac8de1ec9b390256471bbfc18",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "a304b650a9fe558eb054695654d2b2a346a2c246c05dd56f4524a1fff42174c6"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "rough-terrain", "velocity-tracking", "from-scratch", "simulation-only", "50hz"],
+    "name": "Rough Walk G",
+    "summary": "Velocity-commanded walking trained from scratch for small stairs, rubble, and slopes.",
+    "details": "The publisher presents this as a from-scratch rough-terrain gait and reports synchronized trials. Those evaluation results are publisher claims.",
+    "authors": [{"name": "RemiFabre", "github": "RemiFabre", "url": "https://huggingface.co/RemiFabre"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; no independent hardware evidence is recorded."
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/RemiFabre/microduck-rough-walk-g/resolve/242876a0aa8b40b702142fb0a5677fd43bc88a4c/media/preview.mp4", "label": "Publisher rough-walk simulation"}
+  ]
+}

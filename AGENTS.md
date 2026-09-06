@@ -12,10 +12,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md). Prefer a Pollen Hub package URL through the issue form or `pnpm uduck register <URL>`.
 
-- `registry/policies/*.json` is authored pointer + curation state. `registry/behaviors/` is the legacy/manual path.
-- One public shape: `CatalogEntry`. No `/policies` routes; Flamingo lives at `/behaviors/flamingo-cycle`.
+- `registry/policies/*.json` is the only authored format: immutable upstream source identity plus curation state.
+- The resolver produces prepared facts, the resolver/recipe boundary produces `ExecutionSpec`, and `CatalogEntry` is the only public shape. No `/policies` routes; Flamingo lives at `/behaviors/flamingo-cycle`.
 - Do not guess normalizers, action scales, runtime slots, hardware evidence, or command values.
 - `.generated/`, public indexes, and registry renders are build outputs. Do not commit them.
 - ONNX inspection is not a behavior simulation. Upstream `eval` and author media are publisher claims.
-- Execution identity v2 covers execution-relevant inputs only; curation edits must not rerun simulation. Evidence blobs are content-addressed (`<blob>.tar.gz`).
+- Execution identity v2 covers execution-relevant inputs only; curation edits must not rerun simulation. Unsupported or recipe-less policies remain visible as `not-covered`. Evidence blobs are content-addressed (`<blob>.tar.gz`).
 - Run `pnpm validate`, resolver tests, and relevant TypeScript/Python tests for tooling changes.

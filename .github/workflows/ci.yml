@@ -22,7 +22,7 @@ env:
 
 jobs:
   resolve-policies:
-    name: Resolve pinned Hub packages
+    name: Resolve pinned upstream policy artifacts
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -90,12 +90,12 @@ jobs:
           Path('sim-results').mkdir(parents=True, exist_ok=True)
           for item in plan['items']:
               if item['status'] == 'cached':
-                  print(f"[{item['behavior']}] CACHED {item['evidence_key']}")
+                  print(f"[{item['entry']}] CACHED {item['evidence_key']}")
                   continue
               result = subprocess.run([
                   sys.executable,
                   'simulation/run_check.py',
-                  '--behavior', item['behavior'],
+                  '--entry', item['entry'],
                   '--out', 'sim-results',
                   '--keep-media',
               ])
@@ -205,15 +205,14 @@ jobs:
       - name: Run Vitest Suite
         run: pnpm test
 
-      - name: Compile Public Registry Index
-        run: pnpm compile
-
       - name: Add this run's temporary diagnostics to the build view
         run: |
           python3 scripts/evidence_store.py package --results ci-evidence/sim-results --out ci-evidence/local-assets --fragment ci-evidence/local-fragment.json
           python3 scripts/evidence_store.py merge --existing ci-evidence/evidence-index.json --fragment ci-evidence/local-fragment.json --out build-evidence-index.json
       - name: Hydrate matching evidence into this build
         run: python3 scripts/evidence_store.py hydrate --index build-evidence-index.json --release-url "$EVIDENCE_RELEASE_URL" --local ci-evidence/sim-results --out public/media/registry-sim
+      - name: Compile Public Registry Index
+        run: pnpm compile
 
       - name: Build Web Application
         run: pnpm build

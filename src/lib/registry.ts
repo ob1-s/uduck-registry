@@ -1,66 +1,59 @@
 import fs from "node:fs";
 import path from "node:path";
-import { BehaviorSchema, type Behavior } from "@registry/schema/behavior";
 import {
-  catalogEntriesFromSources,
+  catalogEntries,
   type CatalogEntry,
   type CatalogSimulationEvidence,
 } from "@registry/schema/catalog";
-import { getPolicies } from "./policies";
+import type { Policy } from "@registry/schema/policy";
+import { getResolvedPolicies } from "./policies";
 
-const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
 const REGISTRY_MEDIA_DIR = path.resolve(process.cwd(), "public/media/registry-sim");
 
-/** Read the manually authored input records. Consumers should use
- * getCatalogEntries(), which normalizes these with resolved Hub packages. */
-export function getAllBehaviors(): Behavior[] {
-  if (!fs.existsSync(BEHAVIORS_DIR)) return [];
-
-  const behaviors: Behavior[] = [];
-  for (const file of fs.readdirSync(BEHAVIORS_DIR).filter((name) => name.endsWith(".json")).sort()) {
-    try {
-      const parsed = BehaviorSchema.safeParse(
-        JSON.parse(fs.readFileSync(path.join(BEHAVIORS_DIR, file), "utf-8")),
-      );
-      if (parsed.success) {
-        behaviors.push(parsed.data);
-      } else {
-        console.error(`Invalid behavior schema in ${file}:`, parsed.error.format());
-      }
-    } catch (error) {
-      console.error(`Failed to read ${file}:`, error);
-    }
-  }
-
-  return behaviors.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+function sameSource(report: unknown, policy: Policy): boolean {
+  if (!report || typeof report !== "object" || Array.isArray(report)) return false;
+  const source = report as Record<string, unknown>;
+  return ["provider", "repo", "revision", "artifact_path", "artifact_sha256", "manifest_path", "manifest_sha256"]
+    .every((key) => source[key] === policy.source[key as keyof Policy["source"]]);
 }
 
-function readEvidence(id: string): CatalogSimulationEvidence | null {
+function readEvidence(id: string, policy: Policy): CatalogSimulationEvidence | null {
   const directory = path.join(REGISTRY_MEDIA_DIR, id);
   const reportPath = path.join(directory, "report.json");
   if (!fs.existsSync(reportPath)) return null;
 
   try {
     const report = JSON.parse(fs.readFileSync(reportPath, "utf-8")) as Record<string, unknown>;
+    if (report.entry !== id || !sameSource(report.source, policy)) return null;
+    const reportPolicy = report.policy;
+    const inputs = report.inputs_sha256;
+    const artifact = policy.source.artifact_sha256;
+    if (!reportPolicy || typeof reportPolicy !== "object" || Array.isArray(reportPolicy)
+      || (reportPolicy as Record<string, unknown>).sha256 !== artifact
+      || typeof inputs !== "string" || !/^[a-f0-9]{64}$/.test(inputs)
+      || typeof report.evidence_key !== "string" || !/^[a-f0-9]{64}$/.test(report.evidence_key)) return null;
+    // The Python runner and evidence store are the single canonical identity
+    // implementation. Hydration verifies the digest and key before this
+    // website-facing reader sees the report; TypeScript only enforces the
+    // source binding and report shape here, avoiding a second implementation.
     const execution = report.execution;
-    // Fail closed: a rendered report without an explicit checks_status,
-    // identity, and checks never becomes "passed".
     let status: CatalogSimulationEvidence["status"];
     if (execution === "rendered") {
       if (report.checks_status !== "passed" && report.checks_status !== "failed") return null;
-      status = report.checks_status;
       if (typeof report.evidence_key !== "string" || !/^[a-f0-9]{64}$/.test(report.evidence_key)) return null;
       if (typeof report.inputs_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(report.inputs_sha256)) return null;
       const recipe = report.recipe as Record<string, unknown> | undefined;
       if (!recipe || typeof recipe.runner !== "string" || typeof recipe.scenario !== "string") return null;
       if (!Array.isArray(report.checks) || report.checks.length === 0) return null;
-    } else if (execution === "unsupported") {
+      status = report.checks_status;
+    } else if (execution === "not-covered") {
       status = "not-covered";
     } else if (execution === "rejected" || execution === "failed") {
       status = "failed";
     } else {
       return null;
     }
+
     const recipe = report.recipe && typeof report.recipe === "object" && !Array.isArray(report.recipe)
       ? report.recipe as Record<string, unknown>
       : {};
@@ -75,8 +68,8 @@ function readEvidence(id: string): CatalogSimulationEvidence | null {
         && typeof (check as Record<string, unknown>).detail === "string"
       ))
       : [];
-    // Rendered evidence requires checks; report-only (unsupported) may have none.
     if (execution === "rendered" && checks.length === 0) return null;
+
     const localLoop = path.join(directory, "loop.mp4");
     const localPoster = path.join(directory, "poster.png");
     return {
@@ -87,16 +80,10 @@ function readEvidence(id: string): CatalogSimulationEvidence | null {
       scene: typeof recipe.scene === "string" ? recipe.scene : null,
       scenario: typeof recipe.scenario === "string" ? recipe.scenario : null,
       report_url: `/media/registry-sim/${id}/report.json`,
-      loop_url: fs.existsSync(localLoop)
-        ? `/media/registry-sim/${id}/loop.mp4`
-        : typeof media.loop_url === "string" ? media.loop_url : null,
-      poster_url: fs.existsSync(localPoster)
-        ? `/media/registry-sim/${id}/poster.png`
-        : typeof media.poster_url === "string" ? media.poster_url : null,
+      loop_url: fs.existsSync(localLoop) ? `/media/registry-sim/${id}/loop.mp4` : typeof media.loop_url === "string" ? media.loop_url : null,
+      poster_url: fs.existsSync(localPoster) ? `/media/registry-sim/${id}/poster.png` : typeof media.poster_url === "string" ? media.poster_url : null,
       checks,
-      reason: typeof report.reason === "string"
-        ? report.reason
-        : typeof report.notes === "string" ? report.notes : null,
+      reason: typeof report.reason === "string" ? report.reason : typeof report.notes === "string" ? report.notes : null,
     };
   } catch (error) {
     console.error(`Failed to read registry evidence for ${id}:`, error);
@@ -104,16 +91,15 @@ function readEvidence(id: string): CatalogSimulationEvidence | null {
   }
 }
 
-/** The single public catalog consumed by pages, APIs, and index generation. */
+/** The only public catalog consumed by pages, APIs, and index generation. */
 export function getCatalogEntries(): CatalogEntry[] {
-  const behaviors = getAllBehaviors();
-  const policies = getPolicies();
+  const policies = getResolvedPolicies();
   const evidence = new Map<string, CatalogSimulationEvidence>();
-  for (const entry of [...behaviors, ...policies]) {
-    const result = readEvidence(entry.id);
-    if (result) evidence.set(entry.id, result);
+  for (const policy of policies) {
+    const result = readEvidence(policy.id, policy);
+    if (result) evidence.set(policy.id, result);
   }
-  return catalogEntriesFromSources(behaviors, policies, evidence);
+  return catalogEntries(policies, evidence);
 }
 
 export function getCatalogEntryById(id: string): CatalogEntry | null {
@@ -125,7 +111,6 @@ export function getRegistryStats() {
   return {
     total: entries.length,
     hardware: entries.filter((entry) => entry.hardware.status === "maintainer-verified").length,
-    community: entries.filter((entry) => entry.runtime.classification === "custom" || entry.category === "experimental").length,
+    community: entries.filter((entry) => entry.category === "experimental").length,
   };
 }
-

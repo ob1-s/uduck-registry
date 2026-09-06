@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Store registry diagnostics in a content-addressed GitHub Release.
 
-The source tree contains authored descriptors and the executable runner. A
+The source tree contains authored policies and the executable runner. A
 simulation result is generated in a temporary CI workspace, then packaged as
 one immutable release asset named after its content SHA-256
 (``<blob_sha256>.tar.gz``). ``index.json`` is the only mutable release asset:
-it maps the current descriptor ids to semantic evidence keys, each of which
-points at an immutable blob, and retains older entries for auditability.
+it maps the current entry ids to semantic evidence keys, each of which points
+at an immutable blob, and retains older entries for auditability.
 
 This module deliberately uses only the Python standard library. The native
 ONNX/MuJoCo runner is used by the evidence job, which has read-only token
@@ -120,9 +120,9 @@ def read_index(path: Path) -> dict[str, Any]:
     for key, entry in entries.items():
         if not valid_key(key) or not isinstance(entry, dict):
             raise ValueError(f"invalid evidence index entry: {key!r}")
-    for behavior_id, key in current.items():
-        if not valid_id(behavior_id) or not valid_key(key):
-            raise ValueError(f"invalid current evidence mapping: {behavior_id!r} -> {key!r}")
+    for entry_id, key in current.items():
+        if not valid_id(entry_id) or not valid_key(key):
+            raise ValueError(f"invalid current evidence mapping: {entry_id!r} -> {key!r}")
     result = empty_index()
     result.update(value)
     result["version"] = FORMAT_VERSION
@@ -227,12 +227,7 @@ def _result_dirs(results: Path) -> list[Path]:
 def _policy_sha(report: dict[str, Any]) -> str | None:
     policy = report.get("policy")
     if isinstance(policy, dict):
-        for key in ("sha256", "artifact_sha256"):
-            value = policy.get(key)
-            if valid_key(value):
-                return value
-    for key in ("artifact_sha256", "policy_sha256"):
-        value = report.get(key)
+        value = policy.get("sha256")
         if valid_key(value):
             return value
     return None
@@ -240,99 +235,58 @@ def _policy_sha(report: dict[str, Any]) -> str | None:
 
 def _report_key(report: dict[str, Any]) -> tuple[str, str]:
     key = report.get("evidence_key")
-    if valid_key(key):
-        return key, "runner"
     identity = report.get("inputs_sha256")
     artifact = _policy_sha(report)
-    if valid_key(identity) and valid_key(artifact):
-        # Keep the key algorithm owned by the runner. Import lazily so this
-        # publisher remains usable in a minimal Python job.
-        sys.path.insert(0, str(SIMULATION_DIR))
-        from evidence import evidence_key  # type: ignore
-        return evidence_key(identity, artifact), "derived"
-
-    # Unsupported/rejected reports from older runners did not carry identity
-    # fields. They can still be made visible in the release, but are marked as
-    # fallback identities and are never treated as a cache hit by ``plan``.
-    stable = {k: v for k, v in report.items() if k != "generated_at"}
-    return sha256_bytes(b"uduck-report-v1\0" + canonical_json(stable)), "report-fallback"
+    if not (valid_key(key) and valid_key(identity) and valid_key(artifact)):
+        raise ValueError("every evidence report must carry inputs_sha256, artifact_sha256, and evidence_key")
+    sys.path.insert(0, str(SIMULATION_DIR))
+    from evidence import evidence_key  # type: ignore
+    expected = evidence_key(identity, artifact)
+    if key != expected:
+        raise ValueError("evidence_key does not match the report inputs")
+    return key, "runner"
 
 
-def _authored_descriptors() -> dict[str, Path]:
-    """Return the one descriptor source for every current catalog id."""
+def _authored_policies() -> dict[str, Path]:
+    """Return the one authored policy source for every current catalog id."""
     result: dict[str, Path] = {}
-    for directory in (ROOT / "registry" / "behaviors", ROOT / "registry" / "policies"):
-        if not directory.is_dir():
-            continue
-        for path in sorted(directory.glob("*.json")):
-            value = read_json(path)
-            behavior_id = value.get("id") if isinstance(value, dict) else None
-            if not valid_id(behavior_id) or path.stem != behavior_id:
-                raise ValueError(f"descriptor filename/id mismatch: {path}")
-            if behavior_id in result:
-                raise ValueError(f"duplicate authored descriptor id: {behavior_id}")
-            result[behavior_id] = path
+    directory = ROOT / "registry" / "policies"
+    if not directory.is_dir():
+        return result
+    for path in sorted(directory.glob("*.json")):
+        value = read_json(path)
+        entry_id = value.get("id") if isinstance(value, dict) else None
+        if not valid_id(entry_id) or path.stem != entry_id:
+            raise ValueError(f"policy filename/id mismatch: {path}")
+        if entry_id in result:
+            raise ValueError(f"duplicate authored policy id: {entry_id}")
+        result[entry_id] = path
     return result
 
 
-def _descriptor_identity(path: Path, behavior_id: str) -> str:
-    """Use the exact identity implementation used by ``run_check``.
-
-    There is intentionally no generic fallback. If a new descriptor class is
-    introduced, its runner must teach ``simulation.evidence.inputs_digest`` how
-    to represent it before evidence can be cached or hydrated.
-    """
+def _policy_inputs(entry_id: str) -> str:
+    """Use the exact identity implementation used by the runner."""
     sys.path.insert(0, str(SIMULATION_DIR))
     try:
         from evidence import inputs_digest  # type: ignore
     except ImportError as exc:
         raise ValueError("simulation.evidence.inputs_digest is unavailable") from exc
     try:
-        return inputs_digest(behavior_id)
+        return inputs_digest(entry_id)
     except Exception as exc:  # noqa: BLE001
-        raise ValueError(f"unable to compute canonical evidence identity for {behavior_id}: {exc}") from exc
+        raise ValueError(f"unable to compute canonical evidence identity for {entry_id}: {exc}") from exc
 
 
 def _validate_report(report: Any, path: Path) -> dict[str, Any]:
     if not isinstance(report, dict):
         raise ValueError(f"report must be an object: {path}")
-    behavior_id = report.get("behavior")
-    if not valid_id(behavior_id):
-        raise ValueError(f"report has an unsafe behavior id: {path}")
+    entry_id = report.get("entry")
+    if not valid_id(entry_id):
+        raise ValueError(f"report has an unsafe entry id: {path}")
     execution = report.get("execution")
-    if execution not in ("rendered", "unsupported", "rejected", "failed"):
+    if execution not in ("rendered", "not-covered", "rejected", "failed"):
         raise ValueError(f"report has unsupported execution status {execution!r}: {path}")
     return report
-
-
-def _explicit_artifact_sha(descriptor: dict[str, Any]) -> str | None:
-    candidates: list[Any] = [descriptor]
-    for key in ("source", "resolved"):
-        child = descriptor.get(key)
-        if isinstance(child, dict):
-            candidates.append(child)
-            source = child.get("source")
-            if isinstance(source, dict):
-                candidates.append(source)
-    for candidate in candidates:
-        for key in ("artifact_sha256", "policy_sha256"):
-            value = candidate.get(key) if isinstance(candidate, dict) else None
-            if valid_key(value):
-                return value
-    return None
-
-
-def _artifact_url(descriptor: dict[str, Any]) -> str | None:
-    onnx = descriptor.get("artifacts", {}).get("onnx") if isinstance(descriptor.get("artifacts"), dict) else None
-    if isinstance(onnx, dict) and isinstance(onnx.get("url"), str):
-        return onnx["url"]
-    source = descriptor.get("source")
-    if isinstance(source, dict) and isinstance(source.get("repo"), str) and valid_git_revision(source.get("revision")):
-        return f"https://huggingface.co/{source['repo']}/resolve/{source['revision']}/policy.onnx"
-    resolved = descriptor.get("resolved")
-    if isinstance(resolved, dict):
-        return _artifact_url(resolved)
-    return None
 
 
 def normalize_report_for_archive(report: dict[str, Any]) -> dict[str, Any]:
@@ -340,55 +294,11 @@ def normalize_report_for_archive(report: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in report.items() if k not in VOLATILE_REPORT_FIELDS}
 
 
-def _augment_report_identity(report: dict[str, Any]) -> dict[str, Any]:
-    """Fill identity fields for old unsupported/rejected runner reports."""
-    behavior_id = report["behavior"]
-    descriptor_path = _authored_descriptors().get(behavior_id)
-    if descriptor_path is None:
-        return report
-    descriptor = read_json(descriptor_path)
-    if not isinstance(descriptor, dict):
-        return report
-    inputs_sha = _descriptor_identity(descriptor_path, behavior_id)
-    existing_inputs = report.get("inputs_sha256")
-    if existing_inputs is not None and existing_inputs != inputs_sha:
-        raise ValueError(f"report input identity does not match current descriptor: {behavior_id}")
-    report["inputs_sha256"] = inputs_sha
-
-    artifact_sha = _policy_sha(report) or _explicit_artifact_sha(descriptor)
-    if artifact_sha:
-        policy = report.setdefault("policy", {})
-        if not isinstance(policy, dict):
-            raise ValueError(f"report policy field is not an object: {behavior_id}")
-        existing_artifact = _policy_sha(report)
-        if existing_artifact is not None and existing_artifact != artifact_sha:
-            raise ValueError(f"report artifact identity does not match current descriptor: {behavior_id}")
-        policy["sha256"] = artifact_sha
-        expected_key = None
-        sys.path.insert(0, str(SIMULATION_DIR))
-        try:
-            from evidence import evidence_key  # type: ignore
-            expected_key = evidence_key(inputs_sha, artifact_sha)
-        except ImportError:
-            expected_key = None
-        if expected_key is not None:
-            current_key = report.get("evidence_key")
-            if current_key is not None and current_key != expected_key:
-                raise ValueError(f"report evidence key does not match current inputs: {behavior_id}")
-            report["evidence_key"] = expected_key
-    return report
-
-
 def normalize_report_identity(report: dict[str, Any]) -> dict[str, Any]:
-    """Canonical identity path used by package, local discovery, and hydration.
-
-    Every evidence-key computation must go through here so a new unsupported
-    pointer on a PR produces the same key in its temporary index and in the
-    local-results map. Without this, hydrate cannot find the local result and
-    tries to download an unpublished Release asset.
-    """
-    validated = _validate_report(report, Path(f"report:{report.get('behavior', '?')}"))
-    return _augment_report_identity(validated)
+    """Canonical identity path used by package, local discovery, and hydration."""
+    validated = _validate_report(report, Path(f"report:{report.get('entry', '?')}"))
+    _report_key(validated)
+    return validated
 
 
 def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
@@ -402,12 +312,12 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
         if report_path.stat().st_size > MAX_REPORT_BYTES:
             raise ValueError(f"report exceeds {MAX_REPORT_BYTES} bytes: {report_path}")
         report = normalize_report_identity(read_json(report_path))
-        behavior_id = report["behavior"]
+        entry_id = report["entry"]
         key, identity_source = _report_key(report)
         # Archive the normalized report so wall-clock timestamps do not break
         # content addressing. Observation/upload time lives in index metadata.
         normalized = normalize_report_for_archive(report)
-        files: list[tuple[str, bytes]] = [(f"{behavior_id}/report.json", canonical_json(normalized) + b"\n")]
+        files: list[tuple[str, bytes]] = [(f"{entry_id}/report.json", canonical_json(normalized) + b"\n")]
         present: list[str] = []
         for filename in ("loop.mp4", "poster.png"):
             source = result_dir / filename
@@ -415,12 +325,12 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
                 data = source.read_bytes()
                 if len(data) > MAX_EVIDENCE_BYTES:
                     raise ValueError(f"evidence file exceeds size limit: {source}")
-                files.append((f"{behavior_id}/{filename}", data))
+                files.append((f"{entry_id}/{filename}", data))
                 present.append(filename)
 
         if report["execution"] == "rendered" and set(present) != {"loop.mp4", "poster.png"}:
             raise ValueError(f"rendered report is missing loop.mp4 or poster.png: {result_dir}")
-        if report["execution"] in ("unsupported", "rejected", "failed") and present not in ([], ["loop.mp4", "poster.png"]):
+        if report["execution"] in ("not-covered", "rejected", "failed") and present not in ([], ["loop.mp4", "poster.png"]):
             # Report-only evidence is legitimate; partial media is not.
             if present:
                 raise ValueError(f"non-rendered report must not carry partial media: {result_dir}")
@@ -437,7 +347,7 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
 
         artifact_sha = _policy_sha(report)
         entry = {
-            "behavior": behavior_id,
+            "entry": entry_id,
             "key": key,
             "asset": asset_name,
             "asset_sha256": blob_sha,
@@ -463,7 +373,7 @@ def package(results: Path, out: Path, fragment: Path) -> dict[str, Any]:
             # the first observation time, ignore wall-clock reruns.
             continue
         entries[key] = entry
-        current[behavior_id] = key
+        current[entry_id] = key
 
     fragment_value = {
         "version": FORMAT_VERSION,
@@ -498,10 +408,10 @@ def merge(existing: Path, fragment: Path, out: Path) -> dict[str, Any]:
     # Prune deleted IDs from current while retaining historical blobs in
     # entries for audit. The evidence plan knows the entire desired catalog.
     try:
-        authored_ids = set(_authored_descriptors())
+        authored_ids = set(_authored_policies())
     except Exception:
         authored_ids = set(current)
-    for stale_id in [bid for bid in current if bid not in authored_ids]:
+    for stale_id in [entry_id for entry_id in current if entry_id not in authored_ids]:
         del current[stale_id]
     base["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -509,87 +419,39 @@ def merge(existing: Path, fragment: Path, out: Path) -> dict[str, Any]:
     return base
 
 
-def _descriptor_files() -> list[Path]:
-    return list(_authored_descriptors().values())
-
-
-def _descriptor_inputs(path: Path, behavior_id: str) -> str:
-    if path not in _authored_descriptors().values():
-        raise ValueError(f"descriptor is not an authored registry input: {path}")
-    return _descriptor_identity(path, behavior_id)
-
-
-def _hash_artifact(url: str) -> str:
-    parsed = urllib.parse.urlsplit(url)
-    if parsed.scheme != "https" or parsed.username or parsed.password or parsed.hostname not in ("huggingface.co", "raw.githubusercontent.com"):
-        raise ValueError(f"artifact host is not allowed: {url}")
-    request = urllib.request.Request(url, headers={"User-Agent": "uduck-registry-evidence"})
-    # This uses the same bounded retry behavior as the simulation runner when
-    # available, while keeping planning independent from MuJoCo imports.
-    try:
-        sys.path.insert(0, str(SIMULATION_DIR))
-        from http_download import open_download  # type: ignore
-        response = open_download(request, timeout=300)
-    except ImportError:
-        response = urllib.request.urlopen(request, timeout=300)
-    with response:
-        digest = hashlib.sha256()
-        size = 0
-        while True:
-            chunk = response.read(1 << 20)
-            if not chunk:
-                break
-            size += len(chunk)
-            if size > MAX_ONNX_BYTES:
-                raise ValueError("ONNX artifact exceeds 100 MB sanity bound")
-            digest.update(chunk)
-        return digest.hexdigest()
+def _policy_files() -> list[Path]:
+    return list(_authored_policies().values())
 
 
 def plan(index_path: Path, out: Path) -> dict[str, Any]:
-    """Plan expensive simulations, reusing a release result when safe.
-
-    A missing index deliberately means ``run`` for every descriptor. On a main
-    build with an index, descriptors are first compared by runner input
-    identity. For a legacy descriptor without an authored artifact hash, the
-    immutable byte hash is downloaded only when that identity is otherwise a
-    candidate for reuse.
-    """
+    """Plan execution for each authored policy, reusing only exact identities."""
     index = read_index(index_path)
     current = index.get("current", {})
     entries = index.get("entries", {})
     items: list[dict[str, Any]] = []
-    for path in _descriptor_files():
-        descriptor = read_json(path)
-        if not isinstance(descriptor, dict):
+    for policy_path in _policy_files():
+        policy = read_json(policy_path)
+        if not isinstance(policy, dict):
             continue
-        behavior_id = descriptor.get("id")
-        if not valid_id(behavior_id):
+        entry_id = policy.get("id")
+        if not valid_id(entry_id):
             continue
-        inputs_sha = _descriptor_inputs(path, behavior_id)
-        previous_key = current.get(behavior_id)
+        source = policy.get("source")
+        artifact_sha = source.get("artifact_sha256") if isinstance(source, dict) else None
+        if not valid_sha256(artifact_sha):
+            raise ValueError(f"policy has no valid artifact SHA256: {entry_id}")
+        inputs_sha = _policy_inputs(entry_id)
+        previous_key = current.get(entry_id)
         previous = entries.get(previous_key) if valid_key(previous_key) else None
         item: dict[str, Any] = {
-            "behavior": behavior_id,
-            "descriptor": str(path.relative_to(ROOT)),
+            "entry": entry_id,
+            "policy": str(policy_path.relative_to(ROOT)),
             "inputs_sha256": inputs_sha,
+            "artifact_sha256": artifact_sha,
             "status": "run",
         }
-        if isinstance(previous, dict) and previous.get("inputs_sha256") == inputs_sha and valid_key(previous_key):
-            artifact_sha = _explicit_artifact_sha(descriptor)
-            if artifact_sha is None:
-                url = _artifact_url(descriptor)
-                if url:
-                    try:
-                        artifact_sha = _hash_artifact(url)
-                    except Exception as exc:  # noqa: BLE001
-                        # A transient upstream failure must never turn a
-                        # missing verification into a cache hit. Re-run the
-                        # trusted diagnostic, which will report the actual
-                        # download failure if the source remains unavailable.
-                        print(f"[{behavior_id}] unable to verify cached artifact; scheduling a fresh run: {exc}", file=sys.stderr)
-            if artifact_sha and previous.get("artifact_sha256") == artifact_sha:
-                item.update({"status": "cached", "evidence_key": previous_key, "artifact_sha256": artifact_sha})
+        if isinstance(previous, dict) and previous.get("inputs_sha256") == inputs_sha and previous.get("artifact_sha256") == artifact_sha and valid_key(previous_key):
+            item.update({"status": "cached", "evidence_key": previous_key})
         items.append(item)
 
     value = {"version": FORMAT_VERSION, "format": "uduck-evidence-plan-v1", "items": items}
@@ -632,7 +494,7 @@ def _local_results(local: Path | None) -> dict[str, Path]:
     return result
 
 
-def _extract_archive(data: bytes, behavior_id: str, out: Path) -> dict[str, bytes]:
+def _extract_archive(data: bytes, entry_id: str, out: Path) -> dict[str, bytes]:
     if len(data) > MAX_EVIDENCE_BYTES:
         raise ValueError("evidence release asset exceeds size limit")
     files: dict[str, bytes] = {}
@@ -641,9 +503,9 @@ def _extract_archive(data: bytes, behavior_id: str, out: Path) -> dict[str, byte
             name = _safe_relative_name(member.name)
             if not member.isfile() or member.issym() or member.islnk():
                 raise ValueError(f"evidence archive contains a non-regular member: {member.name}")
-            expected_prefix = behavior_id + "/"
+            expected_prefix = entry_id + "/"
             if not name.startswith(expected_prefix):
-                raise ValueError(f"evidence archive member is for a different behavior: {member.name}")
+                raise ValueError(f"evidence archive member is for a different entry: {member.name}")
             filename = name[len(expected_prefix):]
             if filename not in RESULT_FILE_NAMES:
                 raise ValueError(f"unexpected evidence archive member: {member.name}")
@@ -661,7 +523,7 @@ def _extract_archive(data: bytes, behavior_id: str, out: Path) -> dict[str, byte
 
 def _write_result(
     files: dict[str, bytes],
-    behavior_id: str,
+    entry_id: str,
     out: Path,
     expected_key: str,
     expected_inputs: str | None = None,
@@ -669,27 +531,27 @@ def _write_result(
 ) -> None:
     report = normalize_report_identity(json.loads(files["report.json"]))
     actual_key, _ = _report_key(report)
-    if report.get("evidence_key") != expected_key and actual_key != expected_key:
-        raise ValueError(f"evidence report key mismatch for {behavior_id}")
-    if report.get("behavior") != behavior_id:
-        raise ValueError(f"evidence report behavior mismatch for {behavior_id}")
+    if report.get("evidence_key") != expected_key or actual_key != expected_key:
+        raise ValueError(f"evidence report key mismatch for {entry_id}")
+    if report.get("entry") != entry_id:
+        raise ValueError(f"evidence report entry mismatch for {entry_id}")
     if expected_inputs is not None and report.get("inputs_sha256") != expected_inputs:
-        raise ValueError(f"stale evidence identity for {behavior_id}")
+        raise ValueError(f"stale evidence identity for {entry_id}")
     if expected_artifact is not None:
         actual_artifact = _policy_sha(report)
         if actual_artifact is not None and actual_artifact != expected_artifact:
-            raise ValueError(f"evidence artifact mismatch for {behavior_id}")
+            raise ValueError(f"evidence artifact mismatch for {entry_id}")
     execution = report.get("execution")
     if execution == "rendered":
         if "loop.mp4" not in files or "poster.png" not in files:
-            raise ValueError(f"rendered result is missing loop/poster for {behavior_id}")
-    elif execution in ("unsupported", "rejected", "failed"):
+            raise ValueError(f"rendered result is missing loop/poster for {entry_id}")
+    elif execution in ("not-covered", "rejected", "failed"):
         # Report-only evidence is legitimate; partial media is not.
         if ("loop.mp4" in files) != ("poster.png" in files):
-            raise ValueError(f"non-rendered result has partial media for {behavior_id}")
+            raise ValueError(f"non-rendered result has partial media for {entry_id}")
     else:
-        raise ValueError(f"unsupported execution status for {behavior_id}: {execution!r}")
-    destination = out / behavior_id
+        raise ValueError(f"unsupported execution status for {entry_id}: {execution!r}")
+    destination = out / entry_id
     # No stale generated files survive from a previous hydration.
     if destination.exists():
         for stale in sorted(destination.iterdir()):
@@ -701,7 +563,7 @@ def _write_result(
     destination.mkdir(parents=True, exist_ok=True)
     for filename, content in files.items():
         if filename not in RESULT_FILE_NAMES:
-            raise ValueError(f"unexpected result file for {behavior_id}: {filename}")
+            raise ValueError(f"unexpected result file for {entry_id}: {filename}")
         (destination / filename).write_bytes(content)
     # The report's paths are generated in a disposable runner workspace. The
     # site consumes stable build paths instead. Reattach the index observation
@@ -709,52 +571,44 @@ def _write_result(
     report["evidence_key"] = expected_key
     if "loop.mp4" in files and "poster.png" in files:
         report["media"] = {
-            "loop_url": f"/media/registry-sim/{behavior_id}/loop.mp4",
-            "poster_url": f"/media/registry-sim/{behavior_id}/poster.png",
+            "loop_url": f"/media/registry-sim/{entry_id}/loop.mp4",
+            "poster_url": f"/media/registry-sim/{entry_id}/poster.png",
         }
     (destination / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, behavior_ids: list[str]) -> dict[str, Any]:
+def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, entry_ids: list[str]) -> dict[str, Any]:
     index = read_index(index_path)
     base = _safe_release_url(release_url)
     local_map = _local_results(local)
     current: dict[str, str] = index.get("current", {})
-    authored = _authored_descriptors()
-    requested = set(behavior_ids) if behavior_ids else set(authored)
+    authored = _authored_policies()
+    requested = set(entry_ids) if entry_ids else set(authored)
     unknown_authored = requested - set(authored)
     if unknown_authored:
-        raise ValueError("no authored descriptor for: " + ", ".join(sorted(unknown_authored)))
+        raise ValueError("no authored policy for: " + ", ".join(sorted(unknown_authored)))
     unknown = requested - set(current)
     if unknown:
         raise ValueError("evidence index has no current entries for: " + ", ".join(sorted(unknown)))
     hydrated: list[dict[str, str]] = []
     # Clear the generated target before hydration so stale files cannot survive.
     out.mkdir(parents=True, exist_ok=True)
-    for behavior_id in sorted(requested):
-        if not valid_id(behavior_id):
-            raise ValueError(f"invalid requested behavior id: {behavior_id!r}")
-        key = current[behavior_id]
+    for entry_id in sorted(requested):
+        if not valid_id(entry_id):
+            raise ValueError(f"invalid requested entry id: {entry_id!r}")
+        key = current[entry_id]
         entry = index["entries"].get(key)
-        if not isinstance(entry, dict) or entry.get("behavior") != behavior_id:
-            raise ValueError(f"evidence index entry is missing or mismatched for {behavior_id}")
-        expected_inputs = _descriptor_identity(authored[behavior_id], behavior_id)
+        if not isinstance(entry, dict) or entry.get("entry") != entry_id:
+            raise ValueError(f"evidence index entry is missing or mismatched for {entry_id}")
+        expected_inputs = _policy_inputs(entry_id)
         if entry.get("inputs_sha256") != expected_inputs:
-            raise ValueError(f"stale evidence identity for {behavior_id}")
+            raise ValueError(f"stale evidence identity for {entry_id}")
         expected_artifact = entry.get("artifact_sha256")
-        if expected_artifact is not None and not valid_sha256(expected_artifact):
-            raise ValueError(f"invalid artifact hash in index for {behavior_id}")
-        # Authored pointer identity must still match where explicitly known.
-        try:
-            authored_doc = read_json(authored[behavior_id])
-            if isinstance(authored_doc, dict):
-                explicit = _explicit_artifact_sha(authored_doc)
-                if explicit is not None and expected_artifact is not None and explicit != expected_artifact:
-                    raise ValueError(f"index artifact does not match authored pointer for {behavior_id}")
-        except ValueError:
-            raise
-        except Exception:
-            pass
+        authored_doc = read_json(authored[entry_id])
+        authored_source = authored_doc.get("source") if isinstance(authored_doc, dict) else None
+        authored_artifact = authored_source.get("artifact_sha256") if isinstance(authored_source, dict) else None
+        if not valid_sha256(expected_artifact) or expected_artifact != authored_artifact:
+            raise ValueError(f"index artifact does not match authored policy for {entry_id}")
         source = local_map.get(key)
         if source is not None:
             files: dict[str, bytes] = {}
@@ -765,25 +619,21 @@ def hydrate(index_path: Path, release_url: str, out: Path, local: Path | None, b
                         raise ValueError(f"local result exceeds size limit: {path}")
                     files[filename] = path.read_bytes()
             if "report.json" not in files:
-                raise ValueError(f"local result has no report for {behavior_id}")
-            _write_result(files, behavior_id, out, key, expected_inputs, expected_artifact)
-            hydrated.append({"behavior": behavior_id, "key": key, "source": "local"})
+                raise ValueError(f"local result has no report for {entry_id}")
+            _write_result(files, entry_id, out, key, expected_inputs, expected_artifact)
+            hydrated.append({"entry": entry_id, "key": key, "source": "local"})
             continue
         asset = entry.get("asset")
-        blob_sha = entry.get("blob_sha256") or entry.get("asset_sha256")
-        # Prefer blob-identity filenames; accept legacy key-named assets when
-        # the blob hash matches, so a partially migrated Release still hydrates.
-        if not isinstance(asset, str) or not asset.endswith(".tar.gz"):
-            raise ValueError(f"invalid release asset name for {behavior_id}")
-        if blob_sha is not None and asset != f"{blob_sha}.tar.gz" and asset != f"{key}.tar.gz":
-            raise ValueError(f"invalid release asset name for {behavior_id}: {asset}")
+        blob_sha = entry.get("blob_sha256")
+        expected_asset_sha = entry.get("asset_sha256")
+        if not isinstance(asset, str) or not valid_sha256(blob_sha) or expected_asset_sha != blob_sha or asset != f"{blob_sha}.tar.gz":
+            raise ValueError(f"invalid release asset name for {entry_id}")
         data = _download(f"{base}/{asset}", MAX_EVIDENCE_BYTES)
-        expected_asset_sha = entry.get("asset_sha256") or blob_sha
         if not valid_sha256(expected_asset_sha) or sha256_bytes(data) != expected_asset_sha:
-            raise ValueError(f"evidence asset hash mismatch for {behavior_id}")
-        files = _extract_archive(data, behavior_id, out)
-        _write_result(files, behavior_id, out, key, expected_inputs, expected_artifact)
-        hydrated.append({"behavior": behavior_id, "key": key, "source": "release"})
+            raise ValueError(f"evidence asset hash mismatch for {entry_id}")
+        files = _extract_archive(data, entry_id, out)
+        _write_result(files, entry_id, out, key, expected_inputs, expected_artifact)
+        hydrated.append({"entry": entry_id, "key": key, "source": "release"})
     return {"version": FORMAT_VERSION, "hydrated": hydrated}
 
 
@@ -815,7 +665,7 @@ def _parser() -> argparse.ArgumentParser:
     hydrate_parser.add_argument("--release-url", required=True)
     hydrate_parser.add_argument("--out", type=Path, required=True)
     hydrate_parser.add_argument("--local", type=Path)
-    hydrate_parser.add_argument("--behavior", action="append", default=[])
+    hydrate_parser.add_argument("--entry", action="append", default=[])
 
     return parser
 
@@ -832,7 +682,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "fetch-index":
             fetch_index(args.release_url, args.out, args.allow_missing)
         elif args.command == "hydrate":
-            hydrate(args.index, args.release_url, args.out, args.local, args.behavior)
+            hydrate(args.index, args.release_url, args.out, args.local, args.entry)
         else:
             raise ValueError(f"unknown command {args.command}")
     except Exception as exc:  # noqa: BLE001

@@ -3,7 +3,7 @@
 Working inventory for the uDuck Registry. This file records the current
 curation surface of [`ob1-s/awesome-microduck`](https://github.com/ob1-s/awesome-microduck)
 and the policy/choreography leads that were found but are not ready for a
-uDuck Registry descriptor. It does not change the awesome list or add any of
+uDuck Registry entry. It does not change the awesome list or add any of
 the research leads to the registry.
 
 Source snapshot: `ob1-s/awesome-microduck` `main` at
@@ -13,7 +13,7 @@ retrieved 2026-08-31. The source README is preserved at
 
 ## Curation model
 
-The list is manually curated for signal: a short list of independent projects
+The list is maintainer-curated for signal: a short list of independent projects
 someone can inspect, run, build, or learn from today.
 
 Its contribution guide asks for:
@@ -41,11 +41,11 @@ rewriting.
 - [Embodied Agent](https://github.com/mjschock/embodied-agent) — Simulation-first multi-robot agent platform with a MicroDuck MuJoCo/ONNX adapter and semantic skill API.
 - [Meckie Duck Gateway](https://github.com/rangerchaz/meckie-duck-gateway) — Small HTTP gateway and hardware-free protocol double for experimenting with MicroDuck control from scripts, agents, or home automation.
 - [MicroDuck MCP](https://github.com/aj-dev-smith/microduck-mcp) — MCP server and CPU MuJoCo simulator exposing MicroDuck intents, sensing, tricks, camera frames, and agent-facing tools.
-- [MicroDuck Runtime (legacy)](https://github.com/TommyZihao/microduck_runtime) — Community Raspberry Pi runtime with standing body-pose controls for Z height, pitch, and roll; exploratory and separate from Pollen's current runtime.
+- [MicroDuck Runtime (older)](https://github.com/TommyZihao/microduck_runtime) — Community Raspberry Pi runtime with standing body-pose controls for Z height, pitch, and roll; exploratory and separate from Pollen's current runtime.
 - [OpenCastor — MicroDuck](https://docs.opencastor.com/robots/microduck/) — Third-party OpenCastor integration that discovers MicroDucks, sends intent commands through `robotd`, and composes routines.
 - [quackd](https://github.com/rokbenko/quackd) — LLM goal-planning layer with a bundled simulator, `.duck` task files, safety rules, and MCP support.
 - [Strands Robots — MicroDuck](https://strands-labs.github.io/robots/policies/microduck/) — Third-party Python/MuJoCo provider for running Pollen MicroDuck policies through a common simulation and hardware interface.
-- [uDuck Registry](https://uduck-registry.pages.dev/) — Community catalog of MicroDuck policy descriptors and artifact links.
+- [uDuck Registry](https://uduck-registry.pages.dev/) — Community catalog of MicroDuck policy entries and immutable artifact links.
 
 ### Simulation & policy research
 
@@ -59,7 +59,7 @@ rewriting.
 
 - [MicroDuck AR](https://huggingface.co/spaces/multimodalart/microduck-ar) — Community WebXR/AR adaptation of the MicroDuck simulator with AR placement and ground-pick interaction; it uses Pollen's policies rather than publishing new weights.
 - [MicroDuck iPhone Simulator](https://github.com/littlejohntj/microduck-sim) — Native Swift/MuJoCo/RealityKit simulator that runs the released policies on-device and includes AR mode.
-- [MicroDuck Jump Playground](https://github.com/Liyucheng1997/318_lab-microduck-simulator) — Fork of the browser simulator with a custom-trained vertical-jump policy and live demo; simulation-only, with no hardware validation.
+- [MicroDuck Jump Playground](https://github.com/Liyucheng1997/318_lab-microduck-simulator) — Fork of the browser simulator with a separately trained vertical-jump policy and live demo; simulation-only, with no hardware validation.
 - [Microquack](https://github.com/lryain/microquack) — Procedural droid-voice engine and WebAssembly experience for MicroDuck, built around a reusable Rust core.
 
 ### Hardware & fabrication
@@ -78,24 +78,24 @@ Pollen's official MicroDuck software:
 
 These are intentionally not repeated in the not-ready queue:
 
-- [Microduck Running](../registry/behaviors/running.json)
-- [Flamingo Cycle](../registry/behaviors/flamingo-cycle.json)
-- [Rough Walk E](../registry/behaviors/rough-walk-e.json)
-- [Rough Walk G](../registry/behaviors/rough-walk-g.json)
+- [Microduck Running](../registry/policies/running.json)
+- [Flamingo Cycle](../registry/policies/flamingo-cycle.json)
+- [Rough Walk E](../registry/policies/rough-walk-e.json)
+- [Rough Walk G](../registry/policies/rough-walk-g.json)
 
 They are standalone public ONNX exports that meet the current 61-observation,
-14-action, 50 Hz descriptor contract, and are listed in the registry as
-`community_experimental`.
+14-action, 50 Hz contract, and are listed in the registry as experimental
+community entries.
 
 ## Policy and choreography leads not yet uDuck-ready
 
-“Not uDuck-ready” here means not ready for a current uDuck Registry descriptor;
+“Not uDuck-ready” here means not ready for a current uDuck Registry entry;
 it does not mean the project is uninteresting or should never appear on the
 awesome list.
 
 ### Public policy artifacts with a current registry blocker
 
-- [Step-Up + Head-Brake Recovery](https://github.com/bihaokun/microduck-step-up-policy) ([Hugging Face release](https://huggingface.co/Nupr-Haokun/microduck-step-up-head-brake)) — Strong simulation-only release with two coordinated ONNX policies, a public source snapshot, and a 25 mm step-up evaluation. The current registry schema models one ONNX artifact per descriptor, so the walking/recovery bundle needs a small schema or descriptor-design decision first.
+- [Step-Up + Head-Brake Recovery](https://github.com/bihaokun/microduck-step-up-policy) ([Hugging Face release](https://huggingface.co/Nupr-Haokun/microduck-step-up-head-brake)) — Strong simulation-only release with two coordinated ONNX policies, a public source snapshot, and a 25 mm step-up evaluation. The current registry entry models one ONNX artifact, so the walking/recovery bundle needs a separate entry for each artifact first.
 - [Polite Bow](https://huggingface.co/fffiloni/microduck-polite-bow-b1d864) — Public ONNX and simulation preview; the card reports a passed export/quality gate, but does not state 50 Hz and does not provide an explicit artifact license.
 - [Backward Moonwalk](https://huggingface.co/fffiloni/microduck-moonwalk-backward-55e6af) — Public ONNX and preview for a backward moonwalk task, but the card marks its quality gate as needing review, leaves semantic matching unverified, does not state 50 Hz, and has no explicit artifact license.
 - [nottyduck](https://github.com/reachjalil/nottyduck) ([policy Hub](https://huggingface.co/reachjalil/nottyduck-policies)) — Real desk-companion/training-lab project, but the public policy Hub currently contains no downloadable policy artifact beyond its README/scaffold.

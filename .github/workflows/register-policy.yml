@@ -54,7 +54,7 @@ jobs:
         with:
           name: policy-submission
           path: candidate
-      - name: Validate pointer data and open a review PR
+      - name: Validate policy data and open a review PR
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

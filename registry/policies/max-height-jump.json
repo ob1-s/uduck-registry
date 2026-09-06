@@ -1,0 +1,27 @@
+{
+  "id": "max-height-jump",
+  "source": {
+    "provider": "github",
+    "repo": "ThomasBurgess2000/microduck-max-height-jump",
+    "revision": "7e5dc6028900f13d145e6710847378b007a675e9",
+    "artifact_path": "policy/max_height_jump.onnx",
+    "artifact_sha256": "046debd3eebd61a8c027d5595c1bca4fe32056fbb0ae63ac0b2f4e3798e1270f",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "agility-tricks",
+    "tags": ["community", "jump", "vertical-hop", "maximum-height", "one-shot", "policy-handoff", "simulation-only", "50hz"],
+    "name": "Maximum-Height Jump",
+    "summary": "Height-optimized one-shot vertical hop with an optional standing-policy handoff for a quiet reset.",
+    "details": "The canonical ONNX contains the jump controller. The repository documents a separate standing-policy handoff and publisher-side MuJoCo measurements; those claims are not registry simulation evidence.",
+    "authors": [{"name": "Thomas Burgess", "affiliation": "Burgess Software", "github": "ThomasBurgess2000", "url": "https://github.com/ThomasBurgess2000"}],
+    "license": "Apache-2.0",
+    "notes": "The handoff policy is not folded into this entry's immutable artifact identity.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://github.com/ThomasBurgess2000/microduck-max-height-jump", "note": "The source reports a CPU MuJoCo evaluation and explicitly documents no physical-hardware evidence."}
+  },
+  "media": [
+    {"type": "video", "url": "https://raw.githubusercontent.com/ThomasBurgess2000/microduck-max-height-jump/7e5dc6028900f13d145e6710847378b007a675e9/media/preview-4x.mp4", "label": "Publisher maximum-height jump preview"}
+  ]
+}

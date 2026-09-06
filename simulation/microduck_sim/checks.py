@@ -35,7 +35,7 @@ def evaluate(result, spec) -> dict:
         check_results.append({"check": name, "passed": bool(passed), "detail": detail})
 
     # Baseline integrity checks always run and cannot be disabled by a
-    # descriptor. They say the rollout was numerically usable, nothing more.
+    # recipe. They say the rollout was numerically usable, nothing more.
     add("finite_outputs", metrics["all_finite"],
         f"max |action| = {metrics['max_abs_action']}")
     add("bounded_drift", metrics["displacement_m"] < MAX_DRIFT_M,

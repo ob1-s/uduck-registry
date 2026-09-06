@@ -1,28 +1,25 @@
 {
   "id": "flamingo-cycle",
   "source": {
+    "provider": "huggingface-model",
     "repo": "RemiFabre/microduck-flamingo-cycle",
     "revision": "6646428394c6997106d2dc07c1588f20f6fea026",
-    "manifest_sha256": "ac9b9ae16b4f21733990710275bd934c97558c6028e060bd2b34ec1f5341d302",
-    "artifact_sha256": "df77929c39d7695092bdaf810c2075e20a9ba91abd8192b4073d3de593d56904"
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "df77929c39d7695092bdaf810c2075e20a9ba91abd8192b4073d3de593d56904",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "ac9b9ae16b4f21733990710275bd934c97558c6028e060bd2b34ec1f5341d302"
   },
   "curation": {
     "category": "agility-tricks",
-    "tags": [
-      "community",
-      "balance",
-      "one-foot",
-      "flamingo",
-      "simulation-only",
-      "50hz"
-    ],
-    "summary": "One-foot balance cycle that lifts either leg on command and returns to a two-foot stand."
+    "tags": ["community", "balance", "one-foot", "flamingo", "simulation-only", "50hz"],
+    "name": "Flamingo Cycle",
+    "summary": "One-foot balance cycle that lifts either leg on command and returns to a two-foot stand.",
+    "details": "A maintainer-reviewed execution recipe covers the documented one-foot command hold; publisher evaluation and hardware statements remain separate from registry evidence.",
+    "authors": [{"name": "RemiFabre", "github": "RemiFabre", "url": "https://huggingface.co/RemiFabre"}],
+    "license": "Apache-2.0",
+    "notes": "The registry diagnostic is a five-second active-command hold under the pinned standard scene."
   },
   "media": [
-    {
-      "type": "video",
-      "url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/media/preview.mp4",
-      "label": "Publisher simulation of the one-foot balance cycle"
-    }
+    {"type": "video", "url": "https://huggingface.co/RemiFabre/microduck-flamingo-cycle/resolve/6646428394c6997106d2dc07c1588f20f6fea026/media/preview.mp4", "label": "Publisher one-foot balance simulation"}
   ]
 }

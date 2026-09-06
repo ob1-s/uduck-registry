@@ -11,7 +11,7 @@
   "description": "Spins on command with a daemon-driven twist the registry cannot derive.",
   "command": {
     "encoding": "constant",
-    "twist": ["spin rate follows a custom head-tracked target"],
+    "twist": ["spin rate follows a publisher-specific head-tracked target"],
     "head": "tracks a moving target",
     "body": "leans into the spin",
     "idle": [0, 0, 0]

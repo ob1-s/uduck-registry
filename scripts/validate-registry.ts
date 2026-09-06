@@ -1,91 +1,73 @@
 import fs from "node:fs";
-import { PolicyPointerSchema } from "../registry/schema/policy";
 import path from "node:path";
-import { BehaviorSchema, type Behavior } from "../registry/schema/behavior";
+import { PolicySchema, type Policy } from "../registry/schema/policy";
 
-const BEHAVIORS_DIR = path.resolve(process.cwd(), "registry/behaviors");
+const POLICIES_DIR = path.resolve(process.cwd(), "registry/policies");
 
-export function validateAllBehaviors(): {
+export function logicalSourceKey(policy: Policy): string {
+  return `${policy.source.provider}:${policy.source.repo.toLowerCase()}:${policy.source.artifact_path}`;
+}
+
+export function validatePolicies(directory = POLICIES_DIR): {
   valid: boolean;
-  behaviors: Behavior[];
+  policies: Policy[];
   errors: string[];
 } {
   const errors: string[] = [];
-  const behaviors: Behavior[] = [];
+  const policies: Policy[] = [];
+  const ids = new Set<string>();
+  const sources = new Set<string>();
 
-  if (!fs.existsSync(BEHAVIORS_DIR)) {
-    return { valid: false, behaviors: [], errors: [`Directory not found: ${BEHAVIORS_DIR}`] };
+  if (!fs.existsSync(directory)) {
+    return { valid: false, policies, errors: [`Directory not found: ${directory}`] };
   }
 
-  const files = fs.readdirSync(BEHAVIORS_DIR).filter((f) => f.endsWith(".json")).sort();
-
+  const files = fs.readdirSync(directory).filter((file) => file.endsWith(".json")).sort();
   if (files.length === 0) {
-    return { valid: false, behaviors: [], errors: ["No behavior files found in registry/behaviors/"] };
+    return { valid: false, policies, errors: [`No policy files found in ${directory}/`] };
   }
-
-  const idSet = new Set<string>();
 
   for (const file of files) {
-    const fullPath = path.join(BEHAVIORS_DIR, file);
+    const fullPath = path.join(directory, file);
     try {
-      const raw = fs.readFileSync(fullPath, "utf-8");
-      const parsed = JSON.parse(raw);
-      
-      const result = BehaviorSchema.safeParse(parsed);
+      const result = PolicySchema.safeParse(JSON.parse(fs.readFileSync(fullPath, "utf-8")));
       if (!result.success) {
         errors.push(`Validation failed for ${file}:\n${JSON.stringify(result.error.format(), null, 2)}`);
         continue;
       }
 
-      const behavior = result.data;
-      if (idSet.has(behavior.id)) {
-        errors.push(`Duplicate behavior ID detected: '${behavior.id}' in file ${file}`);
-      }
-      idSet.add(behavior.id);
+      const policy = result.data;
+      if (ids.has(policy.id)) errors.push(`Duplicate policy ID detected: '${policy.id}'`);
+      ids.add(policy.id);
+      if (file !== `${policy.id}.json`) errors.push(`Filename mismatch: file is '${file}' but policy.id requires '${policy.id}.json'`);
 
-      const expectedFilename = `${behavior.id}.json`;
-      if (file !== expectedFilename) {
-        errors.push(`Filename mismatch: file is '${file}' but behavior.id requires '${expectedFilename}'`);
-      }
-
-      behaviors.push(behavior);
-    } catch (err: any) {
-      errors.push(`Error parsing ${file}: ${err.message}`);
+      const sourceKey = logicalSourceKey(policy);
+      if (sources.has(sourceKey)) errors.push(`Duplicate logical source detected: '${policy.source.provider}:${policy.source.repo}/${policy.source.artifact_path}'`);
+      sources.add(sourceKey);
+      policies.push(policy);
+    } catch (error) {
+      errors.push(`Error parsing ${file}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  const policiesDir = path.resolve("registry/policies");
-  const repos = new Set<string>();
-  for (const file of fs.existsSync(policiesDir) ? fs.readdirSync(policiesDir).filter(f => f.endsWith('.json')) : []) {
-    try {
-      const policy = PolicyPointerSchema.parse(JSON.parse(fs.readFileSync(path.join(policiesDir, file), 'utf8')));
-      if (file !== `${policy.id}.json` || idSet.has(policy.id)) throw new Error('Duplicate or mismatched policy ID');
-      if (repos.has(policy.source.repo.toLowerCase())) throw new Error('Duplicate Hub repository');
-      repos.add(policy.source.repo.toLowerCase());
-      idSet.add(policy.id);
-    } catch (error) { errors.push(`Invalid policy ${file}: ${error}`); }
+  if (directory === POLICIES_DIR) {
+    const obsoleteDirectory = path.resolve(process.cwd(), "registry", "behaviors");
+    if (fs.existsSync(obsoleteDirectory)) errors.push("registry/policies must be the only authored registry directory");
   }
-  return {
-    valid: errors.length === 0,
-    behaviors,
-    errors,
-  };
+
+  return { valid: errors.length === 0, policies, errors };
 }
 
 if (process.argv[1]?.endsWith("validate-registry.ts")) {
-  console.log("Validating uDuck Registry entries...");
-  const { valid, behaviors, errors } = validateAllBehaviors();
+  console.log("Validating uDuck Registry policies...");
+  const { valid, policies, errors } = validatePolicies();
 
   if (!valid) {
     console.error(`\x1b[31mRegistry validation failed with ${errors.length} error(s):\x1b[0m`);
-    for (const err of errors) {
-      console.error(err);
-    }
+    for (const error of errors) console.error(error);
     process.exit(1);
   }
 
-  console.log(`\x1b[32mSuccessfully validated ${behaviors.length} registry behavior(s).\x1b[0m`);
-  for (const b of behaviors) {
-    console.log(`  - [${b.verification.status}] ${b.name} (${b.id})`);
-  }
+  console.log(`\x1b[32mSuccessfully validated ${policies.length} authored policy(ies).\x1b[0m`);
+  for (const policy of policies) console.log(`  - ${policy.id} (${policy.source.provider}:${policy.source.repo})`);
 }

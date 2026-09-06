@@ -1,0 +1,24 @@
+{
+  "id": "roulade",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "pollen-robotics/microduck-policies",
+    "revision": "088524a64e2557dc453256b6071dbb9d23888802",
+    "artifact_path": "roulade.onnx",
+    "artifact_sha256": "3d60da08fc13f29c1b57f41977aa898132c0d60042100149d8e775affcbca32b",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "d0c36e7b71129dd617339c63bcb1d704eab282c8617ebf14c2013a01abfb2dda"
+  },
+  "curation": {
+    "category": "agility-tricks",
+    "tags": ["official", "somersault", "gymnastics", "acrobatic", "full-body-dynamics", "50hz"],
+    "name": "Acrobatic Roulade (Forward Roll)",
+    "summary": "Dynamic forward somersault over the duck's head, rolling on its back and landing back onto its feet in a standing position.",
+    "details": "Publisher materials describe a full-contact forward roll maneuver from the official simulator policy set.",
+    "authors": [{"name": "Pollen Robotics", "affiliation": "Pollen Robotics", "github": "pollen-robotics", "url": "https://pollen-robotics.com"}],
+    "license": "Apache-2.0",
+    "notes": "Publisher hardware and recovery claims are not independent registry evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "claimed", "target": "Microduck v1 (Rockchip RK3566, 14 Dynamixel XL330-M077)", "source_url": "https://github.com/pollen-robotics/microduck", "note": "Upstream materials claim physical roulade use on padded mats and carpet; uDuck has not independently verified hardware."}
+  }
+}

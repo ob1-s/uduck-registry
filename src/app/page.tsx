@@ -22,7 +22,7 @@ export default function HomePage() {
             <div className="button-row">
               <QuackAnchor href="#catalog" className="button-primary">Choose a behavior <ArrowRight size={15} aria-hidden="true" /></QuackAnchor>
             </div>
-            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardware} maintainer-verified on hardware</p>
+            <p className="hero-meta"><span className="hero-meta-dot" /> {stats.total} moves · {stats.hardwareClaims} publisher hardware claims</p>
           </div>
 
           <div className="hero-art">
@@ -43,7 +43,7 @@ export default function HomePage() {
           {[0, 1].map((copy) => (
             <div className="ticker-group" key={copy}>
               <span>{stats.total} moves in the shelf</span><i>◆</i>
-              <span>{stats.hardware} maintainer-verified on hardware</span><i>◆</i>
+              <span>{stats.hardwareClaims} publisher hardware claims</span><i>◆</i>
               <span>{stats.community} experimental</span><i>◆</i>
               <span>open weights</span><i>◆</i>
               <span>your policy here</span><i>◆</i>

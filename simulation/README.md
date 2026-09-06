@@ -1,139 +1,54 @@
-# Registry simulation (`simulation/`)
+# Registry execution diagnostics
 
-The registry runner produces a deterministic diagnostic rollout and review
-media for policies that explicitly opt into its constrained environment. A
-render is not hardware verification and does not reproduce arbitrary publisher
-training environments.
+`simulation/` is a maintainer-owned, deterministic diagnostic runner. It executes only a concrete `ExecutionSpec` assembled from an authored policy, its resolved upstream manifest, and a reviewed recipe. A render is not hardware verification and does not reproduce an arbitrary publisher training or evaluation environment.
 
-## Recipe model
+The data flow is:
 
-Simulation is independent from `compatibility.robotd_slot`:
-
-```json
-"simulation": {
-  "runner": "microduck-standard-v1",
-  "scene": "flat-v1",
-  "start": { "preset": "standing_pose" },
-  "scenario": "velocity",
-  "duration_s": 6,
-  "checks": ["no_fall", "ends_upright", "velocity_tracking"],
-  "segments": [
-    { "duration_s": 1, "vx": 0, "vy": 0, "wz": 0 },
-    { "duration_s": 3, "vx": 0.25, "vy": 0, "wz": 0 },
-    { "duration_s": 2, "vx": 0, "vy": 0, "wz": 0 }
-  ]
-}
+```text
+registry/policies/<id>.json
+        ↓ resolve and verify
+resolved manifest + immutable artifact
+        ↓ maintainer recipe
+ExecutionSpec
+        ↓ preflight, download, MuJoCo rollout
+report.json + optional loop.mp4/poster.png
+        ↓ evidence store
+content-addressed Release blob
 ```
 
-- `scene` is persistent world geometry. V1 supports only the registry-owned
-  `flat-v1` scene; a rough-terrain policy rendered there is only a flat-world
-  diagnostic.
-- `model` selects the pinned robot asset variant and must match the behavior's
-  compatibility model. It defaults to that compatibility model; V1 supports
-  `microduck-standard` and the official `microduck-rollers` model.
-- `start` is the robot state at time zero. V1 supports the raw
-  `standing_pose` (contact is not implied), `settled_standing`, and a bounded
-  `airborne_drop` preset. An airborne reset is reported as such and is not
-  counted as takeoff.
-- `scenario` is the command schedule: `velocity`, `standing`, `sitstand`,
-  `oneshot_phase`, `oneshot_zero`, or `oneshot_trigger`.
-- `checks` selects runner-defined assertions. Descriptors cannot provide check
-  prose or results.
+## ExecutionSpec
 
-Before downloading a policy or starting MuJoCo, the runner performs a
-deterministic admission check. It verifies the declared contract, model, scene,
-start preset, scenario, and command schedule. Velocity schedules must be
-explicit, cover the rollout exactly, and stay within the runner's supported
-command range. A recipe that does not fit is rejected; command values are
-never silently clipped or replaced with a default.
+An `ExecutionSpec` must state the entry id, exact artifact URL and SHA-256, supported model, runner contract, reviewed recipe, source identity, and resolved manifest. The current runner owns one flat `flat-v1` scene with the official 61-observation/14-action Microduck contract. Recipes state the start preset, scenario, duration, explicit schedule, checks, and provenance.
 
-If the policy requires custom assets, a different observation/action contract,
-or a publisher-specific environment, declare that boundary instead of adding
-code to the registry runner:
+Preflight runs before download or inference. It verifies the runner, model, scene, start state, duration, schedule, contract, and HTTPS artifact URL. It rejects malformed or out-of-range commands; it never clips them and never substitutes defaults.
 
-```json
-"simulation": {
-  "runner": "external",
-  "reason": "custom_environment",
-  "notes": "Uses the publisher's obstacle scene."
-}
-```
+When no recipe covers an entry, the runner writes a report with `execution: "not-covered"` and a reason. This is visible evidence, not an escape hatch around preflight. Unsupported source environments are not run through a different execution mode.
 
-Having the fixed 61D/14D ONNX contract is not enough for admission: the
-command protocol and environment must also be represented. Do not give CI a
-convenient but inaccurate command schedule just so the policy can be rendered.
-If the policy's command protocol or environment is not supported, use
-`external` until it has a matching runner profile.
-
-Omitting `simulation` is also valid and produces an unsupported/no-recipe CI
-report when that descriptor changes.
-
-## What the report says
-
-Top-level execution is one of `rendered`, `unsupported`, `rejected`, or
-`failed`. A rendered report includes exact observations and individual check
-outcomes. It never emits a general policy-validation or hardware-validation
-claim.
-
-The report also records the preflight status and any runtime-fidelity warnings,
-such as a descriptor declaring BAM actuator dynamics while the registry runner
-uses its deterministic position-control diagnostic model. That warning does not
-turn a render into a reproduction claim.
-
-Baseline numerical-integrity and bounded-drift checks always run. Requested
-checks may additionally cover falls, final posture, velocity tracking,
-supported takeoff, and bilateral touchdown after takeoff. A failing requested
-check fails CI only after the report and media have been produced for review.
-
-## Usage and outputs
+## Usage
 
 ```bash
-python -m venv .venv && . .venv/bin/activate
-pip install -r simulation/requirements.txt   # + system: libegl1, ffmpeg
-python simulation/run_check.py --behavior alpha-walking --keep-media --out sim-results
+python3 -m venv .venv
+.venv/bin/pip install -r simulation/requirements.txt
+PYTHONPATH=simulation MUJOCO_GL=egl python simulation/run_check.py \
+  --entry flamingo-cycle --keep-media --out sim-results
 ```
 
-Outputs under `sim-results/<id>/`:
+Outputs under `sim-results/<id>/` are:
 
 | File | Meaning |
 | --- | --- |
-| `report.json` | Execution status, recipe, observations, checks, and provenance |
-| `loop.mp4` | 512×512 H.264, 30 fps, muted diagnostic rollout |
-| `poster.png` | 512×512 midpoint frame with an inset caption bar |
+| `report.json` | Execution status, source, recipe, checks, and identity |
+| `loop.mp4` | Registry-owned diagnostic rollout, when requested |
+| `poster.png` | Registry-owned diagnostic poster, when requested |
 
-Exit code 0 means rendered checks passed or the recipe is explicitly
-unsupported; 1 means a requested check failed; 2 means preflight rejected the
-recipe or execution failed.
+Exit code 0 means the diagnostic passed or was not-covered; 1 means measured checks failed; 2 means preflight or execution failed. Failed and not-covered reports remain publishable so the catalog can explain the boundary.
 
-To preview a result matching the current descriptor and executable runner in a local build:
+## Evidence identity
 
-```bash
-python simulation/publish_result.py sim-results/alpha-walking
-```
+`simulation/evidence.py` computes an entry-specific v3 identity from the immutable source, execution-relevant manifest fields, that entry's resolved recipe/status, the executable runner code, the asset lock, dependency pins, and the environment contract. Editorial curation does not enter the digest. The evidence key additionally binds the artifact SHA-256.
 
-Publisher media is never replaced. Published registry renders are used as card
-and hero fallbacks when publisher media is absent, and otherwise appear in a
-separate **Registry simulation** section on the behavior page.
+The evidence store archives deterministic reports and media as `<blob_sha256>.tar.gz` assets in the `registry-evidence` GitHub Release. Its mutable index maps current entry ids to immutable blobs while retaining historical blobs. Hydration accepts only an exact current entry identity and exact authored artifact hash.
 
-## CI isolation
+## Runtime boundary
 
-- `Sim Check` is a manual utility; `uDuck CI` owns PR and main evidence. This avoids duplicate concurrent downloads.
-- Pinned assets use the existing hash-checked Actions cache; transient download failures have bounded backoff.
-- The main CI workflow reruns the full legacy catalog before each build. Failed measured checks remain failed in the display; execution errors stop publication.
-- Main builds publish matching reports/media into the static site and archive the run in a GitHub Release. PR artifacts remain temporary diagnostics.
-- Generated media is ignored by git. No contributor or post-merge media commit is needed.
-- Report identity includes descriptor bytes, runner source, requirements, asset lock, and downloaded policy SHA256. The website rejects stale input identities.
-
-Fork PRs use read-only permissions, no secrets, and the `pull_request` event.
-The runner does not execute contributor Python, install per-policy dependencies,
-or accept contributor-provided scenes.
-
-## Render and runtime standard
-
-- MuJoCo EGL offscreen renderer, square 512×512 H.264 `yuv420p`, 30 fps;
-- fixed smoothed chase camera and registry-owned visual stage;
-- pinned official Microduck MJCF variant and deterministic CPU rollout;
-- 50 Hz control, decimation 4, 61 observations, and 14 actions.
-
-The runtime is a constrained compatibility aid. Publisher footage and external
-evaluation remain the source of truth for environments the runner does not own.
+Publisher media and evaluation may describe richer scenes, actuator models, command protocols, or hardware. Those claims remain publisher evidence. The registry runner reports only what its own stated scene, contract, recipe, and measured checks establish.

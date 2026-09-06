@@ -4,7 +4,7 @@ import type { SocialImageVariant } from "@/lib/social";
 interface HomeSocialCardProps {
   stats: {
     total: number;
-    hardware: number;
+    hardwareClaims: number;
   };
   variant: SocialImageVariant;
 }
@@ -68,7 +68,7 @@ export function HomeSocialCard({ stats, variant }: HomeSocialCardProps) {
           <span style={{ display: "flex", width: 12, height: 12, borderRadius: "50%", background: colors.orange }} />
           <span>{stats.total} MOVES</span>
           <span style={{ display: "flex", width: 7, height: 7, margin: "0 4px", borderRadius: "50%", background: colors.cyan }} />
-          <span>{stats.hardware} HARDWARE VERIFIED</span>
+          <span>{stats.hardwareClaims} PUBLISHER HARDWARE CLAIMS</span>
         </div>
 
         <div style={{ display: "flex", marginTop: 27, color: colors.muted, fontFamily: "monospace", fontSize: 17, letterSpacing: 3 }}>

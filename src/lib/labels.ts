@@ -1,6 +1,6 @@
-import type { BehaviorCategory, RobotDSlot } from "@registry/schema/behavior";
+import type { PolicyCategory } from "@registry/schema/policy";
 
-const categoryLabels: Record<BehaviorCategory, string> = {
+const categoryLabels: Record<PolicyCategory, string> = {
   locomotion: "Locomotion",
   "roller-skate": "Roller skating",
   "agility-tricks": "Agility & tricks",
@@ -9,7 +9,7 @@ const categoryLabels: Record<BehaviorCategory, string> = {
   experimental: "Experimental",
 };
 
-const robotdSlotLabels: Record<RobotDSlot, string> = {
+const robotdSlotLabels: Record<string, string> = {
   walk: "Walk",
   stand: "Stand",
   sitstand: "Sit ↔ stand",
@@ -18,10 +18,9 @@ const robotdSlotLabels: Record<RobotDSlot, string> = {
   kick_right: "Kick right",
   ground_pick: "Ground pick",
   roller: "Roller mode",
-  custom: "Custom",
 };
 
-export function formatCategory(category: BehaviorCategory | string) {
+export function formatCategory(category: PolicyCategory | string) {
   return (categoryLabels as Record<string, string>)[category] ?? category;
 }
 
@@ -34,6 +33,6 @@ export function formatAccessory(accessory: string) {
   return labels[accessory] ?? accessory.replaceAll("_", " ");
 }
 
-export function formatRobotdSlot(slot: RobotDSlot | string | null) {
-  return slot ? robotdSlotLabels[slot as RobotDSlot] ?? slot.replaceAll("_", " ") : "Unknown slot";
+export function formatRobotdSlot(slot: string | null) {
+  return slot ? robotdSlotLabels[slot] ?? slot.replaceAll("_", " ") : "Unknown slot";
 }

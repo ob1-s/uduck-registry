@@ -30,7 +30,6 @@ const categories = [
 
 const hardwareStatuses = [
   { id: "all", label: "Any status" },
-  { id: "maintainer-verified", label: "Hardware verified" },
   { id: "author-claimed", label: "Hardware claimed" },
   { id: "none", label: "No hardware evidence" },
 ];

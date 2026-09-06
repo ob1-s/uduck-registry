@@ -15,13 +15,16 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts/policy'))
 
-POINTER = {
+POLICY = {
     'id': 'test-move',
     'source': {
+        'provider': 'huggingface-model',
         'repo': 'o/r',
         'revision': 'a' * 40,
+        'artifact_path': 'policy.onnx',
         'artifact_sha256': 'b' * 64,
-        'manifest_sha256': 'c' * 64,
+        'manifest_path': None,
+        'manifest_sha256': None,
     },
     'curation': {'category': 'experimental', 'tags': []},
 }
@@ -33,13 +36,12 @@ class ProposeMethodTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'candidate/registry/policies').mkdir(parents=True)
-            (root / 'candidate/registry/policies/test-move.json').write_text(json.dumps(POINTER))
+            (root / 'candidate/registry/policies/test-move.json').write_text(json.dumps(POLICY))
             (root / 'candidate/submission.json').write_text(json.dumps({
-                'pointer': 'registry/policies/test-move.json',
-                'diagnosis': {'manifest': {}, 'unresolved': []},
+                'policy': 'registry/policies/test-move.json',
+                'diagnosis': {'manifest': None, 'unresolved': [], 'simulation': {'status': 'not-covered'}},
             }))
             (root / 'registry/policies').mkdir(parents=True)
-            (root / 'registry/behaviors').mkdir(parents=True)
 
             calls = []
 

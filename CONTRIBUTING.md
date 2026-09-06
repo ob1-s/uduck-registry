@@ -1,6 +1,6 @@
 # Add a Microduck policy
 
-Submit the **Hugging Face model repository URL** through [Register a policy](https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml). No fork, JSON, or local simulator required.
+Submit a **Hugging Face model repository URL or exact ONNX file URL** through [Register a policy](https://github.com/ob1-s/uduck-registry/issues/new?template=register-policy.yml). For a repository containing multiple ONNX files, use its `/blob/<revision>/<artifact>.onnx` URL so the resolver cannot guess which artifact you mean. The resolver pins one immutable upstream revision, verifies the exact artifact bytes, and reads a machine-readable manifest when the publisher provides one.
 
 For an agent using `gh`, the equivalent is:
 
@@ -18,9 +18,7 @@ experimental
 Optional reviewer context'
 ```
 
-The bot pins the Hub commit, reads Pollen's schema-2 manifest, hashes the manifest and `policy.onnx`, checks the ONNX interface and finite outputs, and opens a review PR. It explicitly starts CI for that branch. Maintainers review the license, commands, and curation before merging. Failed ingestion is reported back on the issue; correct the form and save the edit to retry automatically. Reopening also retries. Notes are bounded reviewer context and are not executed or treated as runtime evidence.
-
-Publish a package with [Pollen's publisher](https://github.com/pollen-robotics/microduck_rl#publishing-a-policy) first if you only have a raw ONNX file. If registry simulation reports a missing `action_scale`, republish with the policy's trained scale (`uv run publish ... --action-scale <trained-scale>`); uDuck deliberately does not guess one. If a Hub repository is already registered and you are publishing a new revision, use a normal PR to update its existing `registry/policies/<id>.json` pointer for now. Official multi-policy sets, custom runtimes, and legacy sources remain possible through a normal issue and maintainer review.
+The bot resolves the package without loading the ONNX in the write-capable job. It opens a review PR containing one file at `registry/policies/<id>.json`; CI performs package inspection and any covered registry diagnostic. Edit the issue to retry a failed resolution; reopening it is an alternative retry. Notes are bounded reviewer context and are never treated as runtime evidence.
 
 ## Local contribution
 
@@ -32,29 +30,40 @@ pnpm install
 pnpm uduck resolve https://huggingface.co/your-name/microduck-your-move
 pnpm uduck register https://huggingface.co/your-name/microduck-your-move --category agility-tricks
 pnpm policies:prepare
-pnpm check
+pnpm validate
+pnpm test
+pnpm compile
 ```
 
-Commit only `registry/policies/<id>.json`. You may edit its category, tags, summary, notes, and author media URLs. Runtime facts come from the pinned upstream manifest; hashes come from downloaded bytes. Do not invent missing values, translate prose into simulation commands, or label an ONNX smoke check a successful behavior test.
+Only `registry/policies/<id>.json` belongs in a contribution. It contains:
 
-`pnpm validate` is an offline schema/identity check. `pnpm policies:prepare` performs network resolution and ONNX inspection. `pnpm build` produces the public indexes and static site from prepared facts. CI does all three. Generated indexes, resolved facts, and simulation videos are build outputs and do not belong in contributions.
+- `source`: provider, repository, immutable 40-hex revision, safe ONNX path, artifact SHA-256, and optional manifest path/SHA-256;
+- `curation`: category, tags, editorial copy, authors, license, notes, optional author media, source-backed setup requirements, and separately labeled publisher hardware claims.
 
-## Custom and existing entries
+Runtime facts are resolved from the pinned upstream manifest. Missing facts remain unknown. Do not invent normalizers, action scales, slots, hardware evidence, command values, or environment details from prose. Do not commit `.generated/`, public indexes, or diagnostic media.
 
-`registry/behaviors/` contains the existing, manually reviewed descriptor format. Its fields are historical publisher/curator claims, not a second package standard. Keep existing URLs stable. Prefer migrating a published Pollen package to a pointer; do not mechanically infer missing metadata from an older descriptor.
+The accepted providers are GitHub, Hugging Face model repositories, and Hugging Face Spaces. Each entry identifies one ONNX artifact. A repository containing several policies needs a separately reviewed entry for each artifact, with the exact path and hash recorded. Cataloging a GitHub or Hugging Face Space artifact does not make it robotctl-installable; install commands are synthesized only for supported single-artifact Hugging Face model sources.
 
-`pnpm new-behavior id=my-move` emits an intentionally incomplete draft with unknown runtime sections set to `null`. Save it outside `registry/behaviors/`. `pnpm preflight <draft.json>` reports missing/invalid values. Resolve them from source evidence before proposing a custom entry. A default walk slot, action scale, normalizer flag, or simulated terrain is never evidence.
+## Maintainer execution recipes
 
-An explicit legacy simulation recipe remains a maintainer-owned diagnostic. Unsupported objects, scenes, command encodings, or actuator physics must be described honestly. See [simulation/README.md](simulation/README.md).
+Execution recipes live in `simulation/execution_recipes.py`, not in authored policy JSON. A recipe is allowed only when the maintainer can state the runner, model, scene, start state, command schedule, duration, checks, and provenance precisely. The resolver turns a covered recipe plus resolved manifest into one concrete `ExecutionSpec`.
+
+The runner accepts only a valid `ExecutionSpec`. A source without a recipe, an incomplete manifest, or an unsupported environment produces visible `not-covered` evidence; it is not coerced into a generic command or alternate runner. ONNX shape inspection is package evidence, not a behavior simulation, and a registry diagnostic is not hardware verification.
+
+See [simulation/README.md](simulation/README.md) for the runner contract.
 
 ## Evidence and media
 
-Author media is welcome, including bespoke scenes and hardware clips; link to the publisher's HTTPS media. It remains separate from registry evidence. Existing cached author media is retained for continuity.
+Author media may show bespoke environments or hardware, but remains publisher material. Registry evidence is produced by trusted CI, binds the exact source artifact to execution-relevant inputs, and is archived as a content-addressed Release blob named `<blob_sha256>.tar.gz`.
 
-CI runs registry diagnostics when their execution identity is not already represented by trusted durable evidence, publishes matching reports and renders into the static build, and archives main-branch outputs in a content-addressed GitHub Release. Contributors never commit generated videos. Reports bind the policy hash to execution-relevant inputs only (source revision, manifest/artifact hashes, maintainer recipe, simulator code, asset lock, dependency pins, environment contract). Curation-only edits such as tags or summaries do not rerun simulation. Changing execution inputs invalidates earlier display evidence. A failed measured check remains visible as failed. Package inspection (ONNX shape/smoke), registry simulation (pinned runner + recipe), publisher facts, and hardware claims are independent axes. No diagnostic establishes hardware verification.
+The execution identity v3 includes the immutable source, the resolved manifest fields used by the recipe, that entry's recipe, the executable runner code, asset/dependency locks, and the environment contract. Curation-only edits do not invalidate evidence. Changing one entry's source or recipe invalidates that entry's evidence only. Failed diagnostics remain visible as failed; uncovered diagnostics remain visible as not-covered.
 
 ## Repository setup
 
-The URL bot requires the repository label `policy-submission` and Actions to be allowed to create pull requests (repository Settings → Actions → General). Create the label once with `gh label create policy-submission --repo ob1-s/uduck-registry --color 0E8A16 --description 'Policy URL submissions processed by the registry bot'`. It uses `GITHUB_TOKEN`; no PAT or external storage credentials are needed. The existing Cloudflare deployment secrets remain the deployment mechanism. New workflows take effect after this change reaches the default branch.
+The URL bot requires the `policy-submission` label and Actions permission to create pull requests. Create the label once with:
 
-See [research/registry-direction.md](research/registry-direction.md) for responsibilities, upstream findings, and the branch reconciliation.
+```sh
+gh label create policy-submission --repo ob1-s/uduck-registry --color 0E8A16 --description 'Policy URL submissions processed by the registry bot'
+```
+
+The bot uses `GITHUB_TOKEN`; no contributor storage credentials are needed. See [AGENTS.md](AGENTS.md) for repository invariants.

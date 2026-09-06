@@ -1,68 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { validateAllBehaviors } from "./validate-registry";
-import { type CatalogEntry, type RegistryIndex } from "../registry/schema/catalog";
+import { validatePolicies } from "./validate-registry";
+import { type RegistryIndex } from "../registry/schema/catalog";
 import { getCatalogEntries } from "../src/lib/registry";
 
 const PUBLIC_DIR = path.resolve(process.cwd(), "public");
 const REGISTRY_OUT = path.join(PUBLIC_DIR, "registry.json");
-const README_PATH = path.resolve(process.cwd(), "README.md");
 const FALLBACK_UPDATED_AT = "1970-01-01T00:00:00.000Z";
-const README_TABLE_START = "<!-- BEGIN GENERATED BEHAVIOR TABLE -->";
-const README_TABLE_END = "<!-- END GENERATED BEHAVIOR TABLE -->";
-
-function escapeTableCell(value: string): string {
-  return value.replaceAll("|", "\\|").replace(/\r?\n/g, " ");
-}
-
-function formatLabel(value: string): string {
-  return value.replaceAll("_", " ").replaceAll("-", " ");
-}
-
-function mediaLabel(behavior: CatalogEntry): string {
-  const labels = [
-    behavior.media.registry?.loop_url && "registry loop",
-    behavior.media.author.some((item) => item.type === "video") && "author video",
-    behavior.media.author.some((item) => item.type === "image") && "author image",
-  ].filter(Boolean);
-  return labels.length > 0 ? labels.join(" + ") : "—";
-}
-
-export function renderReadmeCatalog(behaviors: CatalogEntry[]): string {
-  const rows = behaviors.map((behavior) => {
-    const authors = behavior.authors.map((author) => author.name).join(", ");
-    const accessories = behavior.runtime.compatibility.accessories_required == null
-      ? "unknown"
-      : behavior.runtime.compatibility.accessories_required.length > 0
-        ? behavior.runtime.compatibility.accessories_required.map(formatLabel).join(", ")
-        : "none";
-
-    return `| [${escapeTableCell(behavior.name)}](https://uduckmoves.com/behaviors/${behavior.id}) | \`${behavior.id}\` | ${escapeTableCell(formatLabel(behavior.category))} | ${formatLabel(behavior.hardware.status)} | ${escapeTableCell(authors)} | ${escapeTableCell(accessories)} | ${mediaLabel(behavior)} |`;
-  });
-
-  return [
-    README_TABLE_START,
-    "",
-    "| Behavior | ID | Category | Status | Publisher | Setup | Preview |",
-    "| --- | --- | --- | --- | --- | --- | --- |",
-    ...rows,
-    "",
-    README_TABLE_END,
-  ].join("\n");
-}
-
-export function updateReadmeCatalog(behaviors: CatalogEntry[], readmePath = README_PATH): void {
-  const readme = fs.readFileSync(readmePath, "utf-8");
-  const start = readme.indexOf(README_TABLE_START);
-  const end = readme.indexOf(README_TABLE_END);
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error(`README is missing the generated catalog markers: ${README_TABLE_START} / ${README_TABLE_END}`);
-  }
-
-  const before = readme.slice(0, start);
-  const after = readme.slice(end + README_TABLE_END.length);
-  fs.writeFileSync(readmePath, `${before}${renderReadmeCatalog(behaviors)}${after}`, "utf-8");
-}
 
 /**
  * Keep snapshot generation byte-for-byte stable. Release automation may set
@@ -98,18 +42,18 @@ export function getDeterministicUpdatedAt(
 }
 
 export function generateRegistryIndex(): RegistryIndex {
-  const { valid, errors } = validateAllBehaviors();
+  const { valid, errors } = validatePolicies();
   if (!valid) {
     throw new Error(`Cannot compile registry due to validation errors:\n${errors.join("\n")}`);
   }
 
   // The app loader and this compiler intentionally share the same boundary so
-  // the API/site/index cannot drift into separate behavior and policy shapes.
+  // the API/site/index cannot drift into separate policy shapes.
   // It also attaches any trusted build evidence already present in the static
   // media directory.
   const entries = getCatalogEntries();
   const index: RegistryIndex = {
-    version: "3.0.0",
+    version: "4.0.0",
     updated_at: getDeterministicUpdatedAt(),
     count: entries.length,
     entries,

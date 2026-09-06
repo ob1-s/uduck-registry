@@ -31,7 +31,6 @@ export function primaryMedia(entry: CatalogEntry): CatalogPreviewMedia {
 }
 
 export function hardwareLabel(status: CatalogHardware["status"]): string {
-  if (status === "maintainer-verified") return "Hardware verified";
   if (status === "author-claimed") return "Hardware claimed";
   return "No hardware evidence";
 }
@@ -44,9 +43,7 @@ export function coverageLabel(status: CatalogEntry["coverage"]["registry_simulat
 }
 
 export function runtimeLabel(runtime: CatalogRuntime): string {
-  if (runtime.classification === "pollen-hub") return "Pollen Hub package";
-  if (runtime.classification === "pollen-review") return "Pollen package · review needed";
-  return "Manual registry entry";
+  return runtime.status === "ready" ? "Runtime ready" : "Runtime review needed";
 }
 
 export function runtimeKindLabel(kind: CatalogRuntime["kind"]): string {
@@ -71,4 +68,3 @@ export function catalogSearchText(entry: CatalogEntry): string {
     ...(entry.runtime.compatibility.terrain ?? []),
   ].join(" ").toLowerCase();
 }
-

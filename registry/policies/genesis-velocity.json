@@ -1,0 +1,24 @@
+{
+  "id": "genesis-velocity",
+  "source": {
+    "provider": "github",
+    "repo": "Macmachi/microduck-rl-genesis",
+    "revision": "9d1f213879650f2623e3bbd7bf06fe63dbf71a10",
+    "artifact_path": "policies/velocity.onnx",
+    "artifact_sha256": "c315b9159a1b6f30976c90074ed6df2a33e7e1d14ef1505aed6c2c673f59061d",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "genesis", "velocity-tracking", "flat-ground", "50hz"],
+    "name": "Genesis Flat Walk",
+    "summary": "Velocity-tracking walking policy trained in a Genesis port of the Microduck environment for flat terrain.",
+    "details": "The standalone ONNX export comes from a community Genesis training port. No physical robot test is documented in the source.",
+    "authors": [{"name": "Macmachi", "github": "Macmachi", "url": "https://github.com/Macmachi"}],
+    "license": "Apache-2.0",
+    "notes": "No machine-readable package manifest is published with this artifact.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://github.com/Macmachi/microduck-rl-genesis", "note": "No physical Microduck test is documented in the source."}
+  }
+}

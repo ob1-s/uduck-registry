@@ -128,6 +128,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <dl className="detail-list">
                 <div><dt>Status</dt><dd>{hardwareLabel(entry.hardware.status)}</dd></div>
                 <div><dt>Target</dt><dd className="mono-value">{entry.hardware.target ?? "Unknown"}</dd></div>
+                {entry.hardware.source_url && <div><dt>Publisher source</dt><dd><a href={entry.hardware.source_url} target="_blank" rel="noopener noreferrer">Open source ↗</a></dd></div>}
                 {entry.hardware.note && <div><dt>Note</dt><dd>{entry.hardware.note}</dd></div>}
               </dl>
             </section>
@@ -144,14 +145,13 @@ export default async function BehaviorDetailPage({ params }: Props) {
 
           <section className="surface deployment-card">
             <div className="deployment-head">
-              <div><h2><Terminal size={17} aria-hidden="true" /> Source and installation</h2><p>Installation facts come from the package or the manually reviewed record.</p></div>
+              <div><h2><Terminal size={17} aria-hidden="true" /> Source and installation</h2><p>Installation facts come from the pinned package and maintainer review.</p></div>
               <span className="detail-chip">{runtimeKindLabel(entry.runtime.kind)}</span>
             </div>
-            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{install.route === "manual" ? "This entry has a manual registry configuration; its runtime setup is not independently verified." : install.route === "review" ? "The package needs a command or slot review before an install command can be offered." : "Review the publisher’s runtime and safety instructions before running a policy."}</span></div>
+            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{install.route === "review" ? (install.reason ?? "The package needs a command or slot review before an install command can be offered.") : "Review the publisher’s runtime and safety instructions before running a policy."}</span></div>
             <dl className="detail-list">
               <div><dt>Install route</dt><dd>{install.route ?? "Unknown"}</dd></div>
               {install.command && <div><dt>Suggested command</dt><dd><pre className="code-block"><code>{install.command}</code></pre></dd></div>}
-              {install.config && <div><dt>Manual configuration</dt><dd><pre className="code-block"><code>{install.config}</code></pre></dd></div>}
               {artifact?.url && <div><dt>Artifact</dt><dd><a className="download-link" href={artifact.url} target="_blank" rel="noopener noreferrer"><Download size={13} aria-hidden="true" /> {artifact.filename ?? "policy.onnx"}</a></dd></div>}
               {artifact?.sha256 && <div><dt>Artifact SHA256</dt><dd className="mono-value" style={{ overflowWrap: "anywhere" }}>{artifact.sha256}</dd></div>}
               {entry.source.revision && <div><dt>Source revision</dt><dd className="mono-value">{entry.source.revision}</dd></div>}
@@ -173,7 +173,6 @@ export default async function BehaviorDetailPage({ params }: Props) {
             <h2><ExternalLink size={17} aria-hidden="true" /> Sources</h2>
             <div className="provenance-grid">
               {sourceUrl && <a className="provenance-link" href={sourceUrl} target="_blank" rel="noopener noreferrer"><span><small>Repository</small>{sourceUrl.replace(/^https:\/\//, "")}</span><ExternalLink size={14} aria-hidden="true" /></a>}
-              {entry.source.upstream.runtime_url && <a className="provenance-link" href={entry.source.upstream.runtime_url} target="_blank" rel="noopener noreferrer"><span><small>Runtime</small>Pollen Microduck</span><ExternalLink size={14} aria-hidden="true" /></a>}
               {entry.source.upstream.training_url && <a className="provenance-link" href={entry.source.upstream.training_url} target="_blank" rel="noopener noreferrer"><span><small>Training source</small>{entry.source.upstream.task_id ?? "Open source"}</span><ExternalLink size={14} aria-hidden="true" /></a>}
               {entry.source.upstream.simulator_url && <a className="provenance-link" href={entry.source.upstream.simulator_url} target="_blank" rel="noopener noreferrer"><span><small>Simulator</small>Publisher simulator</span><ExternalLink size={14} aria-hidden="true" /></a>}
             </div>
@@ -183,4 +182,3 @@ export default async function BehaviorDetailPage({ params }: Props) {
     </div>
   );
 }
-

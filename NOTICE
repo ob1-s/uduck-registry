@@ -7,6 +7,6 @@ Microduck and its upstream robot materials are Pollen Robotics work. This
 repository links to upstream materials and does not relicense them. Follow the
 terms published by each upstream project when using them.
 
-Each behavior descriptor declares the license for its policy artifact. Third-
-party policies and media remain under their authors' licenses; this repository
-does not relicense them.
+Where an upstream license is known, authored policy records preserve it.
+Third-party policies and media remain under their authors' licenses; this
+repository does not relicense them or infer a missing license.

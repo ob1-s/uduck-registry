@@ -1,49 +1,46 @@
-"""Content identity for diagnostic execution inputs, independent of timestamps.
+"""Content identity for one policy's deterministic execution inputs."""
 
-Version 2 (uduck-execution-inputs-v2): only execution-relevant authored state
-participates. A category/tag/summary change must not consume simulator time.
-Mutable display names are not baked into renders (the runner captions by entry
-ID), so they are excluded here. Runner code, asset lock, dependency pins, and
-an explicit environment contract are all part of the identity.
-"""
+from __future__ import annotations
+
 import hashlib
 import json
 from pathlib import Path
-ROOT = Path(__file__).resolve().parent.parent
 
-IDENTITY_VERSION = "uduck-execution-inputs-v2"
-EVIDENCE_VERSION = "uduck-evidence-v2"
-# Bump when CI/runtime assumptions change (runner family, Python, system deps).
-# Python packages themselves are pinned in simulation/requirements.txt and are
-# hashed separately; this constant covers the surrounding environment.
-EVIDENCE_ENV = (
-    "uduck-evidence-env-v1"
-    ":ubuntu-24.04"
-    ":python3.12"
-    ":mujoco==3.12.0"
-    ":onnxruntime==1.29.0"
-    ":numpy==2.5.2"
-    ":pillow==12.3.0"
-)
+ROOT = Path(__file__).resolve().parent.parent
+IDENTITY_VERSION = "uduck-execution-inputs-v3"
+EVIDENCE_VERSION = "uduck-evidence-v3"
+EVIDENCE_ENV = "uduck-evidence-env-v1:ubuntu-24.04:python3.12:mujoco==3.12.0:onnxruntime==1.29.0:numpy==2.5.2:pillow==12.3.0"
+
+
+def _canonical_value(value):
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    if isinstance(value, list):
+        return [_canonical_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _canonical_value(item) for key, item in value.items()}
+    return value
 
 
 def canonical_json(value) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(_canonical_value(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
-def _runner_files():
-    files = sorted(
-        (p for p in (ROOT / "simulation").rglob("*.py") if "tests" not in p.parts),
-        key=lambda p: str(p.relative_to(ROOT)),
-    )
-    files = [*files, ROOT / "simulation/assets.lock.json", ROOT / "simulation/requirements.txt"]
-    return sorted(files, key=lambda p: str(p.relative_to(ROOT)))
+def _runner_files() -> list[Path]:
+    files = [
+        ROOT / "simulation/run_check.py",
+        ROOT / "simulation/execution.py",
+        ROOT / "simulation/fetch_assets.py",
+        ROOT / "simulation/http_download.py",
+    ]
+    files.extend(sorted((ROOT / "simulation/microduck_sim").glob("*.py"), key=lambda path: str(path.relative_to(ROOT))))
+    return sorted(files, key=lambda path: str(path.relative_to(ROOT)))
 
 
 def runner_digest() -> str:
     h = hashlib.sha256()
-    for p in _runner_files():
-        h.update(str(p.relative_to(ROOT)).encode() + b"\0" + p.read_bytes() + b"\0")
+    for path in _runner_files():
+        h.update(str(path.relative_to(ROOT)).encode() + b"\0" + path.read_bytes() + b"\0")
     return h.hexdigest()
 
 
@@ -51,48 +48,53 @@ def _file_digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def execution_descriptor(behavior_id: str) -> dict:
-    """Return only execution-relevant authored state for an entry."""
-    policy_path = ROOT / "registry/policies" / f"{behavior_id}.json"
-    behavior_path = ROOT / "registry/behaviors" / f"{behavior_id}.json"
-    if policy_path.is_file():
-        data = json.loads(policy_path.read_text())
-        source = data.get("source", {}) if isinstance(data, dict) else {}
-        return {
-            "kind": "policy",
-            "id": data.get("id"),
+def _execution_manifest(manifest: object) -> dict:
+    if not isinstance(manifest, dict):
+        return {}
+    keys = (
+        "schema_version", "model_api", "obs_len", "action_len", "action_scale",
+        "kind", "duration_s", "unwind_s", "entry_pose", "command", "robot",
+        "decimation", "actuator_model",
+    )
+    return {key: manifest[key] for key in keys if key in manifest}
+
+
+def execution_inputs(entry_id: str) -> dict:
+    """Return only immutable and execution-relevant state for an entry."""
+
+    policy_path = ROOT / "registry/policies" / f"{entry_id}.json"
+    if not policy_path.is_file():
+        raise FileNotFoundError(f"authored policy not found: {policy_path}")
+    policy = json.loads(policy_path.read_text())
+    source = policy["source"]
+    generated_path = ROOT / ".generated/policies" / f"{entry_id}.json"
+    resolved = json.loads(generated_path.read_text()).get("resolved", {}) if generated_path.is_file() else {}
+    simulation = resolved.get("simulation") if isinstance(resolved, dict) else None
+    if not isinstance(simulation, dict):
+        simulation = {"status": "not-covered", "reason": "Policy resolution is not available."}
+    execution = {
+        "id": policy.get("id"),
+        "source": {
+            "provider": source.get("provider"),
             "repo": source.get("repo"),
             "revision": source.get("revision"),
-            "manifest_sha256": source.get("manifest_sha256"),
+            "artifact_path": source.get("artifact_path"),
             "artifact_sha256": source.get("artifact_sha256"),
-        }
-    data = json.loads(behavior_path.read_text())
-    contract = data.get("contract", {}) if isinstance(data, dict) else {}
-    compatibility = data.get("compatibility", {}) if isinstance(data, dict) else {}
-    simulation = data.get("simulation") if isinstance(data, dict) else None
-    artifacts = data.get("artifacts", {}) if isinstance(data, dict) else {}
-    onnx = artifacts.get("onnx", {}) if isinstance(artifacts, dict) else {}
-    return {
-        "kind": "manual",
-        "id": data.get("id"),
-        "contract": {
-            "observation_dim": contract.get("observation_dim"),
-            "action_dim": contract.get("action_dim"),
-            "control_frequency_hz": contract.get("control_frequency_hz"),
-            "decimation": contract.get("decimation"),
-            "actuator_model": contract.get("actuator_model"),
-            "action_scale": contract.get("action_scale"),
+            "manifest_path": source.get("manifest_path"),
+            "manifest_sha256": source.get("manifest_sha256"),
         },
-        "compatibility": {
-            "robot_model": compatibility.get("robot_model"),
+        "manifest": _execution_manifest(resolved.get("manifest") if isinstance(resolved, dict) else None),
+        "simulation": {
+            "status": simulation.get("status"),
+            "recipe": simulation.get("recipe") if simulation.get("status") == "covered" else None,
+            "reason": simulation.get("reason") if simulation.get("status") != "covered" else None,
         },
-        "simulation": simulation,
-        "artifact_url": onnx.get("url"),
     }
+    return execution
 
 
-def inputs_digest(behavior_id):
-    execution = execution_descriptor(behavior_id)
+def inputs_digest(entry_id: str) -> str:
+    execution = execution_inputs(entry_id)
     h = hashlib.sha256()
     h.update(IDENTITY_VERSION.encode() + b"\0")
     h.update(canonical_json(execution) + b"\0")
@@ -103,9 +105,5 @@ def inputs_digest(behavior_id):
     return h.hexdigest()
 
 
-def evidence_key(inputs_sha256, artifact_sha256):
-    return hashlib.sha256(
-        EVIDENCE_VERSION.encode() + b"\0"
-        + inputs_sha256.encode() + b"\0"
-        + artifact_sha256.encode()
-    ).hexdigest()
+def evidence_key(inputs_sha256: str, artifact_sha256: str) -> str:
+    return hashlib.sha256(EVIDENCE_VERSION.encode() + b"\0" + inputs_sha256.encode() + b"\0" + artifact_sha256.encode()).hexdigest()

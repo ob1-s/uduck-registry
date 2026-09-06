@@ -155,6 +155,7 @@ class RolloutResult:
             max_unilateral_s = max(max_unilateral_s, run)
         return {
             "duration_s": round(self.duration_s, 3),
+            "final_sample_time_s": round(float(self.samples[-1].t), 3),
             "control_steps": self.control_steps,
             "obs_dim": self.obs_dim,
             "command_dim": 13 if self.use_13d else 3,

@@ -92,6 +92,28 @@ def preflight_execution(spec: "ExecutionSpec") -> PreflightResult:
     if duration_value is None or not 0 < duration_value <= 30:
         errors.append("execution duration_s must be finite, positive, and at most 30 seconds")
 
+    capture_duration = recipe.get("capture_duration_s", duration)
+    capture_value = float(capture_duration) if _finite(capture_duration) else None
+    if capture_value is None or not 0 < capture_value <= 30:
+        errors.append("execution capture_duration_s must be finite, positive, and at most 30 seconds")
+    elif duration_value is not None and abs(capture_value - duration_value) > 1e-9:
+        errors.append("execution capture_duration_s must equal execution duration_s")
+
+    command_duration = recipe.get("command_duration_s", duration)
+    command_value = float(command_duration) if _finite(command_duration) else None
+    if command_value is None or command_value <= 0:
+        errors.append("execution command_duration_s must be finite and positive")
+
+    settle = recipe.get("post_command_settle_s", 0.0)
+    settle_value = float(settle) if _finite(settle) else None
+    if settle_value is None or settle_value < 0:
+        errors.append("execution post_command_settle_s must be finite and non-negative")
+    if command_value is not None and settle_value is not None and capture_value is not None and abs(command_value + settle_value - capture_value) > 1e-9:
+        errors.append("execution command duration plus settle tail must equal capture duration")
+    has_settle_tail = command_value is not None and settle_value is not None and settle_value > 0
+    schedule_value = command_value if has_settle_tail else duration_value
+    schedule_name = "command_duration_s" if has_settle_tail else "duration_s"
+
     segments = recipe.get("segments")
     if scenario == "velocity":
         if not isinstance(segments, list) or not segments:
@@ -109,8 +131,8 @@ def preflight_execution(spec: "ExecutionSpec") -> PreflightResult:
                 else:
                     total += float(segment_duration)
                 errors.extend(_velocity_errors(segment.get("vx"), segment.get("vy"), segment.get("wz"), prefix))
-            if duration_value is not None and abs(total - duration_value) > 1e-9:
-                errors.append(f"execution segments cover {total:g}s but execution duration_s={duration_value:g}s")
+            if schedule_value is not None and abs(total - schedule_value) > 1e-9:
+                errors.append(f"execution segments cover {total:g}s but execution {schedule_name}={schedule_value:g}s")
     elif scenario == "command_schedule":
         if not isinstance(segments, list) or not segments:
             errors.append("execution segments are required for the command_schedule scenario")
@@ -133,8 +155,8 @@ def preflight_execution(spec: "ExecutionSpec") -> PreflightResult:
                     for axis, value in enumerate(command):
                         if not _finite(value) or value < -3 or value > 3:
                             errors.append(f"{prefix}.command[{axis}] must be finite and in [-3, 3]")
-            if duration_value is not None and abs(total - duration_value) > 1e-9:
-                errors.append(f"execution segments cover {total:g}s but execution duration_s={duration_value:g}s")
+            if schedule_value is not None and abs(total - schedule_value) > 1e-9:
+                errors.append(f"execution segments cover {total:g}s but execution {schedule_name}={schedule_value:g}s")
     elif "segments" in recipe:
         errors.append("execution segments are only valid with velocity and command_schedule scenarios")
 

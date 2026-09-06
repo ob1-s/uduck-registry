@@ -29,6 +29,11 @@ class ScenarioSpec:
     hold_s: float = 2.0
     # oneshot_zero: seconds the zeroed command window lasts (kicks, roulade).
     duration_s: float = 0.5
+    # A diagnostic can keep recording after the policy command window so final
+    # checks observe recovery at the end of the rollout, not mid-trajectory.
+    command_duration_s: float = 0.5
+    post_command_settle_s: float = 0.0
+    capture_duration_s: float = 0.5
     # oneshot_trigger: binary launch request followed by the zero command
     # (publisher-specific one-shot policies such as jumps).
     trigger_s: float = 0.2
@@ -75,7 +80,31 @@ def scenario_from_recipe(sim_block: dict) -> ScenarioSpec:
     spec.kind = sim_block["scenario"]
     spec.name = spec.kind
     spec.checks = list(sim_block.get("checks", []))
-    spec.duration_s = float(sim_block["duration_s"])
+    def duration_field(name: str, value: object, *, allow_zero: bool = False) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value):
+            raise ValueError(f"simulation.{name} must be a finite number")
+        result = float(value)
+        invalid = result < 0 if allow_zero else result <= 0
+        if invalid:
+            qualifier = "non-negative" if allow_zero else "positive"
+            raise ValueError(f"simulation.{name} must be {qualifier}")
+        return result
+
+    duration = duration_field("duration_s", sim_block.get("duration_s"))
+    spec.duration_s = duration
+    spec.command_duration_s = duration_field(
+        "command_duration_s", sim_block.get("command_duration_s", duration)
+    )
+    spec.post_command_settle_s = duration_field(
+        "post_command_settle_s", sim_block.get("post_command_settle_s", 0.0), allow_zero=True
+    )
+    spec.capture_duration_s = duration_field(
+        "capture_duration_s", sim_block.get("capture_duration_s", duration)
+    )
+    if abs(spec.capture_duration_s - spec.duration_s) > 1e-9:
+        raise ValueError("simulation.capture_duration_s must equal simulation.duration_s")
+    if abs(spec.command_duration_s + spec.post_command_settle_s - spec.capture_duration_s) > 1e-9:
+        raise ValueError("simulation command duration plus settle tail must equal capture duration")
     if spec.kind == "oneshot_trigger":
         if "trigger_s" not in sim_block:
             raise ValueError("oneshot_trigger requires an explicit trigger_s")
@@ -140,6 +169,17 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
             return cmd.astype(np.float32)
         return np.concatenate([cmd, np.zeros(10, dtype=np.float32)]).astype(np.float32)
 
+    def with_settle_tail(command_fn: Callable[[float], np.ndarray]) -> Callable[[float], np.ndarray]:
+        if spec.post_command_settle_s <= 0:
+            return command_fn
+
+        def scheduled_fn(t: float) -> np.ndarray:
+            if t >= spec.command_duration_s:
+                return wrap(np.zeros(3, dtype=np.float32))
+            return command_fn(t)
+
+        return scheduled_fn
+
     if spec.kind == "velocity":
         if not spec.segments:
             raise ValueError("velocity scenario requires explicit segments")
@@ -156,7 +196,7 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
             _, vx, vy, wz = chosen
             return wrap(np.array(validate_velocity(vx, vy, wz), dtype=np.float32))
 
-        return vel_fn
+        return with_settle_tail(vel_fn)
 
     if spec.kind == "command_schedule":
         if not spec.command_segments:
@@ -173,12 +213,12 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
                 remaining -= duration
             return wrap(np.asarray(chosen, dtype=np.float32))
 
-        return command_fn
+        return with_settle_tail(command_fn)
 
     if spec.kind == "standing":
         def stand_fn(t: float) -> np.ndarray:
             return wrap(np.zeros(3, dtype=np.float32))
-        return stand_fn
+        return with_settle_tail(stand_fn)
 
     if spec.kind == "sitstand":
         # Posture flag in the twist-x slot: 1 = sit, 0 = stand (upstream docs).
@@ -188,7 +228,7 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
             flag = 1.0 if t < hold else 0.0
             return wrap(np.array([flag, 0.0, 0.0], dtype=np.float32))
 
-        return sitstand_fn
+        return with_settle_tail(sitstand_fn)
 
     if spec.kind == "oneshot_phase":
         # Phase encoding in the twist slots: [cos(2pi phi), sin(2pi phi), 0],
@@ -203,13 +243,13 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
                 cmd = np.array([math.cos(phi), math.sin(phi), 0.0], dtype=np.float32)
             return wrap(cmd)
 
-        return phase_fn
+        return with_settle_tail(phase_fn)
 
     if spec.kind == "oneshot_zero":
         # Blind one-shot window with an all-zero command (kicks, roulade).
         def zero_fn(t: float) -> np.ndarray:
             return wrap(np.zeros(3, dtype=np.float32))
-        return zero_fn
+        return with_settle_tail(zero_fn)
 
     if spec.kind == "oneshot_trigger":
         # Publisher-specific one-shot policies documented by their authors as a binary
@@ -221,6 +261,6 @@ def make_command_fn(spec: ScenarioSpec, use_13d: bool) -> Callable[[float], np.n
                    if t < trigger_s else np.zeros(3, dtype=np.float32))
             return wrap(cmd)
 
-        return trigger_fn
+        return with_settle_tail(trigger_fn)
 
     raise ValueError(f"Unknown simulation scenario kind: {spec.kind!r}")

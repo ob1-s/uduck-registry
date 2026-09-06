@@ -863,6 +863,10 @@ code {
 .registry-check span { display: grid; gap: 0.18rem; }
 .registry-check strong { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .registry-check small { color: var(--quiet); font-size: 0.7rem; line-height: 1.45; }
+.registry-media-block { display: grid; gap: 0.65rem; margin-top: 1rem; }
+.registry-media-block h3 { margin: 0; font-size: 0.82rem; }
+.registry-media-block p { margin: 0; }
+.registry-media-frame { margin-top: 0.15rem; }
 
 .detail-list { margin: 0; }
 .detail-list div { padding: 0.55rem 0; border-bottom: 1px dashed var(--line); }

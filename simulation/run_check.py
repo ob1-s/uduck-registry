@@ -134,7 +134,7 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
 
     simulation_model = spec.model
     scenario = scenario_from_recipe(spec.recipe)
-    duration = float(spec.recipe["duration_s"])
+    duration = scenario.capture_duration_s
     with tempfile.TemporaryDirectory(prefix="uduck-sim-") as temporary:
         onnx_path = download_onnx(spec, Path(temporary))
         from fetch_assets import fetch
@@ -164,6 +164,10 @@ def run(entry_id: str, out_dir: Path, keep_media: bool) -> int:
             "manifest": spec.manifest,
             "recipe": spec.recipe,
             "duration_s": duration,
+            "command_duration_s": scenario.command_duration_s,
+            "post_command_settle_s": scenario.post_command_settle_s,
+            "capture_duration_s": scenario.capture_duration_s,
+            "evaluation_final_sample_s": report["observations"].get("final_sample_time_s"),
             "policy": {"url": spec.artifact_url, "sha256": spec.artifact_sha256},
             "media": media,
             "preflight": {"status": "passed", "warnings": list(preflight.warnings)},

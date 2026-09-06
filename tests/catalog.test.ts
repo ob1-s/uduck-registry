@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import { catalogEntries, catalogEntryFromPolicy } from "../registry/schema/catalog";
 import { PolicySchema, type ResolvedPolicy } from "../registry/schema/policy";
+import { primaryMedia } from "../src/lib/catalog";
 
 function flamingoPolicy(): ResolvedPolicy {
   const policy = PolicySchema.parse(JSON.parse(fs.readFileSync("registry/policies/flamingo-cycle.json", "utf8")));
@@ -133,7 +134,7 @@ describe("policy catalog boundary", () => {
     expect(entry.coverage.registry_simulation.status).toBe("passed");
   });
 
-  it("uses complete registry evidence media as the primary catalog media", () => {
+  it("keeps source media primary while retaining complete registry evidence media", () => {
     const entry = catalogEntryFromPolicy(flamingoPolicy(), {
       status: "failed",
       evidence_key: "a".repeat(64),
@@ -147,13 +148,68 @@ describe("policy catalog boundary", () => {
       checks: [{ check: "no_fall", passed: false, detail: "measured" }],
       reason: "The requested diagnostic check failed.",
     });
-    expect(entry.media.primary).toBe("registry");
+    expect(entry.media.primary).toBe("author");
     expect(entry.media.registry).toEqual({
       loop_url: "/media/registry-sim/flamingo-cycle/loop.mp4",
       poster_url: "/media/registry-sim/flamingo-cycle/poster.png",
       report_url: "/media/registry-sim/flamingo-cycle/report.json",
     });
+    expect(primaryMedia(entry).hero_type).toBe("video");
+    expect(primaryMedia(entry).video_url).toBe(entry.media.author.find((item) => item.type === "video")?.url);
     expect(entry.coverage.registry_simulation.status).toBe("failed");
+  });
+
+  it("uses registry evidence as the hero only when source media is absent", () => {
+    const policy = flamingoPolicy();
+    policy.media = [];
+    const entry = catalogEntryFromPolicy(policy, {
+      status: "failed",
+      evidence_key: "a".repeat(64),
+      inputs_sha256: "b".repeat(64),
+      runner: "microduck-standard-v1",
+      scene: "flat-v1",
+      scenario: "oneshot_zero",
+      report_url: "/media/registry-sim/flamingo-cycle/report.json",
+      loop_url: "/media/registry-sim/flamingo-cycle/loop.mp4",
+      poster_url: "/media/registry-sim/flamingo-cycle/poster.png",
+      checks: [{ check: "recover_upright", passed: true, detail: "measured" }],
+    });
+    expect(entry.media.primary).toBe("registry");
+    expect(primaryMedia(entry)).toMatchObject({
+      hero_type: "video",
+      loop_url: "/media/registry-sim/flamingo-cycle/loop.mp4",
+      thumbnail_url: "/media/registry-sim/flamingo-cycle/poster.png",
+    });
+  });
+
+  it("keeps publisher media primary for a not-covered Courier entry", () => {
+    const policy = PolicySchema.parse(JSON.parse(fs.readFileSync("registry/policies/courier.json", "utf8")));
+    const entry = catalogEntryFromPolicy({
+      ...policy,
+      resolved: {
+        source: policy.source,
+        manifest: null,
+        license: policy.curation.license ?? null,
+        resolution: "review",
+        install_route: "review",
+        unresolved: ["No machine-readable package manifest is published with this artifact."],
+        install_unresolved: [],
+        policy_set: false,
+        onnx: { input: [], output: [], smoke: "failed", scope: "Shape inspection only." },
+        simulation: { status: "not-covered", reason: "No maintainer-owned execution recipe covers this source." },
+      },
+    }, null);
+    expect(entry.media.primary).toBe("author");
+    expect(primaryMedia(entry).video_url).toBe(entry.media.author.find((item) => item.type === "video")?.url);
+    expect(entry.coverage.registry_simulation.status).toBe("not-covered");
+  });
+
+  it("falls back to the duckmark when neither source nor registry media exists", () => {
+    const policy = flamingoPolicy();
+    policy.media = [];
+    const entry = catalogEntryFromPolicy(policy, null);
+    expect(entry.media.primary).toBe("none");
+    expect(primaryMedia(entry)).toEqual({ hero_type: "badge" });
   });
 
   it("only synthesizes exact robotctl targets for single-artifact Hugging Face models", () => {

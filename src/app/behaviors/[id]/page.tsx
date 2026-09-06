@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ArrowUpRight, Box, CheckCircle2, Download, ExternalLink, GitFork, Layers, ShieldCheck, Terminal, XCircle } from "lucide-react";
 import { getCatalogEntries, getCatalogEntryById } from "@/lib/registry";
-import { coverageLabel, hardwareLabel, primaryMedia, runtimeLabel, runtimeKindLabel } from "@/lib/catalog";
+import { coverageLabel, hardwareLabel, primaryMedia, registryMediaPreview, runtimeLabel, runtimeKindLabel } from "@/lib/catalog";
 import { formatAccessory, formatCategory } from "@/lib/labels";
 import { ContractSpec } from "@/components/ContractSpec";
 import { MediaPreview } from "@/components/MediaPreview";
@@ -50,6 +50,7 @@ function renderNullable(value: string | number | null): string {
 function EvidenceBlock({ entry }: { entry: import("@registry/schema/catalog").CatalogEntry }) {
   const inspection = entry.coverage.package_inspection;
   const simulation = entry.coverage.registry_simulation;
+  const registryPreview = registryMediaPreview(entry);
   return (
     <section className="surface detail-card">
       <h2><CheckCircle2 size={17} aria-hidden="true" /> Registry evidence</h2>
@@ -70,6 +71,19 @@ function EvidenceBlock({ entry }: { entry: import("@registry/schema/catalog").Ca
               <span><strong>{check.passed ? "PASS" : "FAIL"} · {check.check.replaceAll("_", " ")}</strong><small>{check.detail}</small></span>
             </div>
           ))}
+        </div>
+      )}
+      {registryPreview && (
+        <div className="registry-media-block">
+          <h3>Registry simulation media</h3>
+          <p>This diagnostic render is evidence for the pinned artifact and is kept separate from publisher media.</p>
+          <div className="media-frame registry-media-frame">
+            <MediaPreview media={registryPreview} title={`${entry.name} registry simulation`} variant="detail" />
+          </div>
+          <div className="provenance-grid">
+            <a className="provenance-link" href={entry.media.registry?.loop_url} target="_blank" rel="noopener noreferrer"><span><small>Loop video</small>Open registry render</span><ExternalLink size={14} aria-hidden="true" /></a>
+            <a className="provenance-link" href={entry.media.registry?.poster_url} target="_blank" rel="noopener noreferrer"><span><small>Poster</small>Open registry thumbnail</span><ExternalLink size={14} aria-hidden="true" /></a>
+          </div>
         </div>
       )}
       {simulation.report_url && <p><a href={simulation.report_url}>Read the complete diagnostic report ↗</a></p>}
@@ -163,8 +177,8 @@ export default async function BehaviorDetailPage({ params }: Props) {
 
           {entry.media.author.length > 0 && (
             <section className="surface detail-card">
-              <h2><ExternalLink size={17} aria-hidden="true" /> Author showcase</h2>
-              <p>Publisher media is presented as a showcase and is separate from registry evidence.</p>
+              <h2><ExternalLink size={17} aria-hidden="true" /> Publisher media</h2>
+              <p>Publisher/source media is presented as a showcase and is separate from registry evidence.</p>
               <div className="provenance-grid">{entry.media.author.map((media) => <a className="provenance-link" href={media.url} target="_blank" rel="noopener noreferrer" key={media.url}><span><small>{media.type === "video" ? "Video" : "Image"}</small>{media.label}</span><ExternalLink size={14} aria-hidden="true" /></a>)}</div>
             </section>
           )}

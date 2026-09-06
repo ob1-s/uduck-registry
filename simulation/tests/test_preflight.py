@@ -73,6 +73,36 @@ class SimulationPreflightTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exceeds"):
             require_valid(candidate)
 
+    def test_validates_a_separate_command_and_capture_horizon(self) -> None:
+        candidate = spec()
+        candidate.recipe.update({
+            "duration_s": 4.0,
+            "command_duration_s": 1.0,
+            "post_command_settle_s": 3.0,
+            "capture_duration_s": 4.0,
+            "scenario": "oneshot_zero",
+        })
+        candidate.recipe.pop("segments")
+        result = preflight_execution(candidate)
+        self.assertTrue(result.valid, result.errors)
+
+        scheduled = spec()
+        scheduled.recipe.update({
+            "duration_s": 2.0,
+            "command_duration_s": 1.0,
+            "post_command_settle_s": 1.0,
+            "capture_duration_s": 2.0,
+            "scenario": "command_schedule",
+            "segments": [{"duration_s": 1.0, "command": [1.0, 0.0, 0.0]}],
+        })
+        result = preflight_execution(scheduled)
+        self.assertTrue(result.valid, result.errors)
+
+        candidate.recipe["capture_duration_s"] = 1.0
+        result = preflight_execution(candidate)
+        self.assertFalse(result.valid)
+        self.assertIn("command duration plus settle tail", " ".join(result.errors))
+
 
 if __name__ == "__main__":
     unittest.main()

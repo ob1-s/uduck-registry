@@ -463,7 +463,7 @@ export function catalogEntryFromPolicy(
     media: {
       author: authorMedia,
       registry,
-      primary: registry ? "registry" : authorMedia.length > 0 ? "author" : "none",
+      primary: authorMedia.length > 0 ? "author" : registry ? "registry" : "none",
     },
   });
 }

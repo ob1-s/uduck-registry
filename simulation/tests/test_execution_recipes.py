@@ -8,6 +8,7 @@ from pathlib import Path
 from execution import execution_spec_from_policy
 from execution_recipes import (
     POLLEN_ARTIFACT_SHA256,
+    POLLEN_MANIFEST_PATH,
     POLLEN_MANIFEST_SHA256,
     POLLEN_POLICY_REPO,
     POLLEN_POLICY_REVISION,
@@ -139,6 +140,42 @@ class ExecutionRecipeTests(unittest.TestCase):
         assert kick is not None
         self.assertEqual(kick["duration_s"], 0.5)
         self.assertEqual(kick["scenario"], "oneshot_zero")
+
+    def test_roulade_keeps_command_and_recovery_windows_distinct(self) -> None:
+        manifest = {"file": "roulade.onnx", "kind": "episodic", "duration_s": 1.0, "chain": True}
+        source = {
+            "provider": "huggingface-model",
+            "repo": POLLEN_POLICY_REPO,
+            "revision": POLLEN_POLICY_REVISION,
+            "artifact_path": "roulade.onnx",
+            "artifact_sha256": POLLEN_ARTIFACT_SHA256["roulade.onnx"],
+            "manifest_path": POLLEN_MANIFEST_PATH,
+            "manifest_sha256": POLLEN_MANIFEST_SHA256,
+        }
+        recipe = recipe_for_policy(POLLEN_POLICY_REPO, manifest, source)
+        self.assertIsNotNone(recipe)
+        assert recipe is not None
+        self.assertEqual(recipe["command_duration_s"], 1.0)
+        self.assertGreater(recipe["post_command_settle_s"], 0.0)
+        self.assertEqual(recipe["capture_duration_s"], recipe["duration_s"])
+        self.assertGreater(recipe["capture_duration_s"], recipe["command_duration_s"])
+
+        scenario = scenario_from_recipe(recipe)
+        self.assertEqual(scenario.capture_duration_s, 4.0)
+
+    def test_settle_tail_returns_to_idle_after_command_window(self) -> None:
+        scenario = scenario_from_recipe({
+            "runner": "microduck-standard-v1",
+            "scenario": "command_schedule",
+            "duration_s": 2.0,
+            "command_duration_s": 1.0,
+            "post_command_settle_s": 1.0,
+            "capture_duration_s": 2.0,
+            "segments": [{"duration_s": 1.0, "command": [1.0, 0.0, 0.0]}],
+        })
+        command_fn = make_command_fn(scenario, use_13d=False)
+        self.assertEqual(command_fn(0.99).tolist(), [1.0, 0.0, 0.0])
+        self.assertEqual(command_fn(1.0).tolist(), [0.0, 0.0, 0.0])
 
     def test_exact_no_manifest_recipes_supply_only_their_pinned_contract(self) -> None:
         from execution_recipes import GENESIS_ARTIFACT_SHA256, GENESIS_REPO, GENESIS_REVISION

@@ -34,6 +34,7 @@ UPSTREAM_PIN = "bc41fb5c9a9b39894669c1e022e375cf83800382"
 UPSTREAM_MANIFEST_URL = f"https://github.com/pollen-robotics/microduck/blob/{UPSTREAM_PIN}/docs/policy-manifest.md"
 UPSTREAM_CHEATSHEET_URL = f"https://github.com/pollen-robotics/microduck/blob/{UPSTREAM_PIN}/docs/robot/cheatsheet.md"
 UPSTREAM_CONTROL_URL = f"https://github.com/pollen-robotics/microduck/blob/{UPSTREAM_PIN}/robotd/src/control.rs"
+ROULADE_RECOVERY_TAIL_S = 3.0
 
 POLLEN_POLICY_REPO = "pollen-robotics/microduck-policies"
 POLLEN_POLICY_REVISION = "088524a64e2557dc453256b6071dbb9d23888802"
@@ -257,7 +258,9 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
             return None
         if manifest.get("command") not in (None, {}):
             return None
-        duration = float(manifest["duration_s"])
+        command_duration = float(manifest["duration_s"])
+        recovery_tail = ROULADE_RECOVERY_TAIL_S if artifact_path == "roulade.onnx" else 0.0
+        capture_duration = command_duration + recovery_tail
         checks = ["recover_upright"] if artifact_path == "roulade.onnx" else ["no_fall", "ends_upright"]
         return {
             "runner": RUNNER,
@@ -265,14 +268,20 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
             "scene": SCENE,
             "start": deepcopy(START),
             "scenario": "oneshot_zero",
-            "duration_s": duration,
+            # duration_s remains the runner's full rollout horizon. The
+            # explicit fields keep the upstream activation window distinct
+            # from the registry-owned recovery/evaluation tail.
+            "duration_s": capture_duration,
+            "command_duration_s": command_duration,
+            "post_command_settle_s": recovery_tail,
+            "capture_duration_s": capture_duration,
             "checks": checks,
             "action_scale": 1.0,
             "chain": bool(manifest.get("chain", False)),
             "provenance": _provenance(
                 "Exact per-file Pollen schema-2 manifest and the pinned robotd zero-command skill contract",
                 UPSTREAM_MANIFEST_URL,
-                "Registry diagnostic rollout of the exact policy window under flat-v1; this does not establish intended-task success or hardware verification.",
+                "Registry diagnostic rollout of the exact policy command window followed by an explicit recovery/settle tail under flat-v1; final checks cover the full capture horizon and this does not establish intended-task success or hardware verification.",
                 policy_set_revision=POLLEN_POLICY_REVISION,
                 manifest_sha256=POLLEN_MANIFEST_SHA256,
                 artifact_path=artifact_path,
@@ -281,6 +290,9 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
                 action_scale=1.0,
                 action_scale_source=UPSTREAM_CONTROL_URL,
                 chain=bool(manifest.get("chain", False)),
+                command_duration_s=command_duration,
+                post_command_settle_s=recovery_tail,
+                capture_duration_s=capture_duration,
             ),
         }
 

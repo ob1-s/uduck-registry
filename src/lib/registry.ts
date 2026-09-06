@@ -110,7 +110,7 @@ export function getRegistryStats() {
   const entries = getCatalogEntries();
   return {
     total: entries.length,
-    hardware: entries.filter((entry) => entry.hardware.status === "maintainer-verified").length,
+    hardwareClaims: entries.filter((entry) => entry.hardware.status === "author-claimed").length,
     community: entries.filter((entry) => entry.category === "experimental").length,
   };
 }

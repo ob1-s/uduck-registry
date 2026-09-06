@@ -206,6 +206,26 @@ def _official_phase_recipe(manifest: dict[str, Any], source: dict[str, Any], *, 
     }
 
 
+def _official_stand_handoff(at_s: float) -> dict[str, Any]:
+    return {
+        "at_s": at_s,
+        "name": "stand",
+        "source": _pollen_source("alpha_stand.onnx"),
+        "action_scale": 1.0,
+        "provenance": _provenance(
+            "Exact pinned Pollen alpha stand artifact and the pinned robotd skill-expiry selection",
+            UPSTREAM_CONTROL_URL,
+            "At the released episodic skill deadline, the zero external twist hands control back to the exact pinned stand policy; this is part of the registry diagnostic execution, not publisher hardware evidence.",
+            policy_set_revision=POLLEN_POLICY_REVISION,
+            manifest_sha256=POLLEN_MANIFEST_SHA256,
+            artifact_path="alpha_stand.onnx",
+            artifact_sha256=POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
+            action_scale=1.0,
+            selection="zero external command selects stand after the active skill expires",
+        ),
+    }
+
+
 def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[str, Any] | None:
     artifact_path = source.get("artifact_path")
     if not isinstance(artifact_path, str) or artifact_path not in POLLEN_ARTIFACT_SHA256:
@@ -263,7 +283,34 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
         recovery_tail = ROULADE_RECOVERY_TAIL_S if artifact_path == "roulade.onnx" else 0.0
         capture_duration = command_duration + recovery_tail
         checks = ["recover_upright"] if artifact_path == "roulade.onnx" else ["no_fall", "ends_upright"]
-        return {
+        handoff = _official_stand_handoff(command_duration) if artifact_path == "roulade.onnx" else None
+        scope = (
+            "Registry diagnostic rollout of the exact policy command window followed by the pinned stand-policy handoff under flat-v1; final checks cover the full capture horizon and this does not establish intended-task success or hardware verification."
+            if handoff is not None
+            else "Registry diagnostic rollout of the exact policy command window under flat-v1; this does not establish intended-task success or hardware verification."
+        )
+        provenance = _provenance(
+            "Exact per-file Pollen schema-2 manifest and the pinned robotd zero-command skill contract",
+            UPSTREAM_MANIFEST_URL,
+            scope,
+            policy_set_revision=POLLEN_POLICY_REVISION,
+            manifest_sha256=POLLEN_MANIFEST_SHA256,
+            artifact_path=artifact_path,
+            command=[0.0, 0.0, 0.0],
+            command_semantics="Selecting an ordinary constant episodic skill is the trigger; the upstream runtime feeds the all-zero twist.",
+            action_scale=1.0,
+            action_scale_source=UPSTREAM_CONTROL_URL,
+            chain=bool(manifest.get("chain", False)),
+            command_duration_s=command_duration,
+            post_command_settle_s=recovery_tail,
+            capture_duration_s=capture_duration,
+        )
+        if handoff is not None:
+            provenance.update({
+                "handoff_artifact_path": "alpha_stand.onnx",
+                "handoff_artifact_sha256": POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
+            })
+        recipe = {
             "runner": RUNNER,
             "model": MODEL,
             "scene": SCENE,
@@ -279,42 +326,11 @@ def _official_recipe(manifest: dict[str, Any], source: dict[str, Any]) -> dict[s
             "checks": checks,
             "action_scale": 1.0,
             "chain": bool(manifest.get("chain", False)),
-            "handoff": {
-                "at_s": command_duration,
-                "name": "stand",
-                "source": _pollen_source("alpha_stand.onnx"),
-                "action_scale": 1.0,
-                "provenance": _provenance(
-                    "Exact pinned Pollen alpha stand artifact and the pinned robotd skill-expiry selection",
-                    UPSTREAM_CONTROL_URL,
-                    "At the released episodic skill deadline, the zero external twist hands control back to the exact pinned stand policy; this is part of the registry diagnostic execution, not publisher hardware evidence.",
-                    policy_set_revision=POLLEN_POLICY_REVISION,
-                    manifest_sha256=POLLEN_MANIFEST_SHA256,
-                    artifact_path="alpha_stand.onnx",
-                    artifact_sha256=POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
-                    action_scale=1.0,
-                    selection="zero external command selects stand after the active skill expires",
-                ),
-            },
-            "provenance": _provenance(
-                "Exact per-file Pollen schema-2 manifest and the pinned robotd zero-command skill contract",
-                UPSTREAM_MANIFEST_URL,
-                "Registry diagnostic rollout of the exact policy command window followed by the pinned stand-policy handoff under flat-v1; final checks cover the full capture horizon and this does not establish intended-task success or hardware verification.",
-                policy_set_revision=POLLEN_POLICY_REVISION,
-                manifest_sha256=POLLEN_MANIFEST_SHA256,
-                artifact_path=artifact_path,
-                command=[0.0, 0.0, 0.0],
-                command_semantics="Selecting an ordinary constant episodic skill is the trigger; the upstream runtime feeds the all-zero twist.",
-                action_scale=1.0,
-                action_scale_source=UPSTREAM_CONTROL_URL,
-                chain=bool(manifest.get("chain", False)),
-                command_duration_s=command_duration,
-                post_command_settle_s=recovery_tail,
-                capture_duration_s=capture_duration,
-                handoff_artifact_path="alpha_stand.onnx",
-                handoff_artifact_sha256=POLLEN_ARTIFACT_SHA256["alpha_stand.onnx"],
-            ),
+            "provenance": provenance,
         }
+        if handoff is not None:
+            recipe["handoff"] = handoff
+        return recipe
 
     if artifact_path == "alpha_sitstand.onnx":
         command = manifest.get("command")

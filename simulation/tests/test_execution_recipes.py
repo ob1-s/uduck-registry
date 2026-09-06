@@ -201,6 +201,24 @@ class ExecutionRecipeTests(unittest.TestCase):
         self.assertEqual(command_fn(0.99).tolist(), [1.0, 0.0, 0.0])
         self.assertEqual(command_fn(1.0).tolist(), [0.0, 0.0, 0.0])
 
+    def test_kicks_do_not_declare_a_post_window_policy_handoff(self) -> None:
+        common = {
+            "provider": "huggingface-model",
+            "repo": POLLEN_POLICY_REPO,
+            "revision": POLLEN_POLICY_REVISION,
+            "manifest_path": POLLEN_MANIFEST_PATH,
+            "manifest_sha256": POLLEN_MANIFEST_SHA256,
+        }
+        for artifact_path in ("ball_kick_left.onnx", "ball_kick_right.onnx"):
+            recipe = recipe_for_policy(
+                POLLEN_POLICY_REPO,
+                {"file": artifact_path, "kind": "episodic", "duration_s": 0.5},
+                {**common, "artifact_path": artifact_path, "artifact_sha256": POLLEN_ARTIFACT_SHA256[artifact_path]},
+            )
+            self.assertIsNotNone(recipe)
+            assert recipe is not None
+            self.assertNotIn("handoff", recipe)
+
     def test_exact_no_manifest_recipes_supply_only_their_pinned_contract(self) -> None:
         from execution_recipes import GENESIS_ARTIFACT_SHA256, GENESIS_REPO, GENESIS_REVISION
 

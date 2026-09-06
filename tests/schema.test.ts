@@ -54,6 +54,14 @@ describe("authored policy schema", () => {
     expect(PolicySchema.safeParse(mismatchedManifest).success).toBe(false);
   });
 
+  it("requires provenance for claimed publisher hardware", () => {
+    const claimed = fixture();
+    claimed.curation.publisher_hardware.source_url = null;
+    expect(PolicySchema.safeParse(claimed).success).toBe(false);
+    claimed.curation.publisher_hardware.source_url = "https://github.com/pollen-robotics/microduck";
+    expect(PolicySchema.safeParse(claimed).success).toBe(true);
+  });
+
   it("rejects unknown nested curation fields", () => {
     const bad = fixture();
     bad.curation.unexpected = true;

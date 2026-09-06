@@ -60,6 +60,7 @@ describe("policy catalog boundary", () => {
     expect(entry.runtime.compatibility.terrain).toBeNull();
     expect(entry.hardware.status).toBe("none");
     expect(entry.hardware.target).toBeNull();
+    expect(entry.hardware.source_url).toBeNull();
     expect(entry.media.author.length).toBeGreaterThan(0);
   });
 
@@ -127,6 +128,7 @@ describe("policy catalog boundary", () => {
     });
     expect(entry.hardware.status).toBe("author-claimed");
     expect(entry.hardware.target).toBe("Microduck v1");
+    expect(entry.hardware.source_url).toBe("https://github.com/pollen-robotics/microduck");
     expect(entry.runtime.compatibility.accessories_required).toEqual(["70mm_practice_ball"]);
     expect(entry.coverage.registry_simulation.status).toBe("passed");
   });
@@ -164,6 +166,7 @@ describe("policy catalog boundary", () => {
     }, null);
     expect(officialSet.runtime.install.route).toBe("review");
     expect(officialSet.runtime.install.command).toBeNull();
+    expect(officialSet.runtime.install.reason).toContain("updated as a set");
   });
 
   it("emits one entries collection", () => {

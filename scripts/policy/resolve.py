@@ -517,6 +517,8 @@ def validate_policy(policy: dict) -> dict:
             if value is not None and (not isinstance(value, str) or not 0 < len(value) <= limit):
                 raise ValueError("invalid publisher hardware facts")
         source_url = publisher_hardware["source_url"]
+        if publisher_hardware["status"] == "claimed" and source_url is None:
+            raise ValueError("claimed publisher hardware facts require source_url")
         if source_url is not None:
             parsed = urllib.parse.urlsplit(source_url)
             if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
@@ -529,6 +531,76 @@ def validate_policy(policy: dict) -> dict:
         if not isinstance(item, dict) or set(item) != {"type", "url", "label"} or item["type"] not in ("video", "image") or parsed is None or parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or not isinstance(item["label"], str) or not 0 < len(item["label"]) <= 240:
             raise ValueError("invalid author media")
     return policy
+
+
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
+def _logical_source_identity(source: dict) -> str:
+    return f"{source['provider']}:{source['repo'].lower()}:{source['artifact_path']}"
+
+
+def _bounded_policy_id(candidate: str, identity: str) -> str:
+    if len(candidate) <= 100:
+        return candidate
+    suffix = digest(identity.encode())[:12]
+    prefix = candidate[: 100 - len(suffix) - 1].rstrip("-") or "policy"
+    return f"{prefix}-{suffix}"
+
+
+def default_policy_id(source: dict, occupied_ids: set[str] | None = None) -> str:
+    """Derive a readable ID from the logical artifact, not only its repository."""
+
+    occupied_ids = occupied_ids or set()
+    identity = _logical_source_identity(source)
+    repo_slug = _slug(source["repo"])
+    artifact_path = source["artifact_path"]
+    if artifact_path == "policy.onnx":
+        candidate = repo_slug
+    else:
+        artifact_slug = _slug(artifact_path[:-len(".onnx")])
+        candidate = f"{repo_slug}-{artifact_slug}"
+    candidate = _bounded_policy_id(candidate, identity)
+    if candidate not in occupied_ids:
+        return candidate
+
+    suffix = digest(identity.encode())[:12]
+    prefix = candidate[: 100 - len(suffix) - 1].rstrip("-") or "policy"
+    fallback = f"{prefix}-{suffix}"
+    if fallback in occupied_ids:
+        raise ValueError("unable to derive a unique policy id; maintainer must supply --id")
+    return fallback
+
+
+def register_policy(url: str, category: str = "experimental", requested_id: str | None = None) -> dict:
+    """Resolve and write one candidate while preserving logical-source uniqueness."""
+
+    result = resolve(url)
+    source = result["source"]
+    policies_dir = ROOT / "registry/policies"
+    policies_dir.mkdir(parents=True, exist_ok=True)
+    occupied_ids: set[str] = set()
+
+    for file in sorted(policies_dir.glob("*.json")):
+        existing = json.loads(file.read_text())
+        existing_id = existing.get("id")
+        if isinstance(existing_id, str):
+            occupied_ids.add(existing_id)
+        existing_source = existing.get("source", {})
+        if (existing_source.get("provider"), existing_source.get("repo", "").lower(), existing_source.get("artifact_path")) == (
+            source["provider"], source["repo"].lower(), source["artifact_path"]
+        ):
+            raise ValueError(f"logical source already registered as {existing['id']}; update that policy in a normal PR")
+
+    policy_id = requested_id or default_policy_id(source, occupied_ids)
+    if policy_id in occupied_ids:
+        raise ValueError(f"policy id already registered: {policy_id}; choose another --id")
+    policy = validate_policy({"id": policy_id, "source": source, "curation": {"category": category, "tags": []}})
+    destination = policies_dir / f"{policy_id}.json"
+    with destination.open("x") as output:
+        output.write(json.dumps(policy, indent=2) + "\n")
+    return {"policy": str(destination.relative_to(ROOT)), "diagnosis": result}
 
 
 def main() -> None:
@@ -552,23 +624,10 @@ def main() -> None:
         return
     if not args.url:
         parser.error("URL is required")
-    result = resolve(args.url)
     if args.command == "resolve":
-        print(json.dumps(result, indent=2))
+        print(json.dumps(resolve(args.url), indent=2))
         return
-    policy_id = args.id or re.sub(r"[^a-z0-9]+", "-", result["source"]["repo"].lower()).strip("-")
-    policy = validate_policy({"id": policy_id, "source": result["source"], "curation": {"category": args.category, "tags": []}})
-    for file in (ROOT / "registry/policies").glob("*.json"):
-        existing = json.loads(file.read_text())
-        existing_source = existing.get("source", {})
-        if (existing_source.get("provider"), existing_source.get("repo", "").lower(), existing_source.get("artifact_path")) == (
-            policy["source"]["provider"], policy["source"]["repo"].lower(), policy["source"]["artifact_path"]
-        ):
-            raise ValueError(f"logical source already registered as {existing['id']}; update that policy in a normal PR")
-    destination = ROOT / "registry/policies" / f"{policy_id}.json"
-    with destination.open("x") as output:
-        output.write(json.dumps(policy, indent=2) + "\n")
-    print(json.dumps({"policy": str(destination.relative_to(ROOT)), "diagnosis": result}, indent=2))
+    print(json.dumps(register_policy(args.url, args.category, args.id), indent=2))
 
 
 if __name__ == "__main__":

@@ -31,7 +31,6 @@ export function primaryMedia(entry: CatalogEntry): CatalogPreviewMedia {
 }
 
 export function hardwareLabel(status: CatalogHardware["status"]): string {
-  if (status === "maintainer-verified") return "Hardware verified";
   if (status === "author-claimed") return "Hardware claimed";
   return "No hardware evidence";
 }

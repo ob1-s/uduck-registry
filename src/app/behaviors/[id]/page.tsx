@@ -128,6 +128,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <dl className="detail-list">
                 <div><dt>Status</dt><dd>{hardwareLabel(entry.hardware.status)}</dd></div>
                 <div><dt>Target</dt><dd className="mono-value">{entry.hardware.target ?? "Unknown"}</dd></div>
+                {entry.hardware.source_url && <div><dt>Publisher source</dt><dd><a href={entry.hardware.source_url} target="_blank" rel="noopener noreferrer">Open source ↗</a></dd></div>}
                 {entry.hardware.note && <div><dt>Note</dt><dd>{entry.hardware.note}</dd></div>}
               </dl>
             </section>
@@ -147,7 +148,7 @@ export default async function BehaviorDetailPage({ params }: Props) {
               <div><h2><Terminal size={17} aria-hidden="true" /> Source and installation</h2><p>Installation facts come from the pinned package and maintainer review.</p></div>
               <span className="detail-chip">{runtimeKindLabel(entry.runtime.kind)}</span>
             </div>
-            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{install.route === "review" ? "The package needs a command or slot review before an install command can be offered." : "Review the publisher’s runtime and safety instructions before running a policy."}</span></div>
+            <div className="callout"><AlertTriangle size={15} aria-hidden="true" /><span>{install.route === "review" ? (install.reason ?? "The package needs a command or slot review before an install command can be offered.") : "Review the publisher’s runtime and safety instructions before running a policy."}</span></div>
             <dl className="detail-list">
               <div><dt>Install route</dt><dd>{install.route ?? "Unknown"}</dd></div>
               {install.command && <div><dt>Suggested command</dt><dd><pre className="code-block"><code>{install.command}</code></pre></dd></div>}

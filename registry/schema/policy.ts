@@ -70,6 +70,14 @@ const PublisherHardwareSchema = strict({
   target: z.string().min(1).max(400).nullable(),
   source_url: HttpsUrlSchema.nullable(),
   note: z.string().min(1).max(4000).nullable(),
+}).superRefine((hardware, context) => {
+  if (hardware.status === "claimed" && hardware.source_url === null) {
+    context.addIssue({
+      code: "custom",
+      path: ["source_url"],
+      message: "Claimed publisher hardware facts require a source URL",
+    });
+  }
 });
 
 const PolicyCurationSchema = strict({

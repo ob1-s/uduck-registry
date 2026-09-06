@@ -57,6 +57,7 @@ const CatalogCompatibilitySchema = strict({
 const CatalogInstallSchema = strict({
   route: z.enum(["skill", "slot", "review"]),
   command: NullableString,
+  reason: NullableString,
 });
 
 const CatalogRuntimeSchema = strict({
@@ -116,8 +117,9 @@ export type CatalogCoverage = z.infer<typeof CatalogCoverageSchema>;
 
 const CatalogHardwareSchema = strict({
   /** Hardware proof is never inferred from upstream identity or media. */
-  status: z.enum(["none", "author-claimed", "maintainer-verified"]),
+  status: z.enum(["none", "author-claimed"]),
   target: NullableString,
+  source_url: NullableUrl,
   note: NullableString,
 });
 export type CatalogHardware = z.infer<typeof CatalogHardwareSchema>;
@@ -437,6 +439,7 @@ export function catalogEntryFromPolicy(
       install: {
         route,
         command: installCommand(policy, manifest, route),
+        reason: route === "review" ? nullableString(policy.resolved.install_unresolved?.[0]) : null,
       },
       unresolved,
     },
@@ -444,6 +447,7 @@ export function catalogEntryFromPolicy(
     hardware: {
       status: publisherHardware?.status === "claimed" ? "author-claimed" : "none",
       target: publisherHardware?.target ?? null,
+      source_url: publisherHardware?.status === "claimed" ? publisherHardware.source_url : null,
       note: publisherHardware?.note ?? "No independent registry hardware evidence is recorded; upstream media and evaluation remain publisher claims.",
     },
     media: {

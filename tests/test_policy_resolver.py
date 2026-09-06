@@ -1,13 +1,14 @@
 import copy
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts/policy'))
 from ingest_issue import parse_issue
-from resolve import _discover_source, classify, digest, parse_artifact_url, parse_source_url, parse_url, resolve, resolve_source, select_manifest_for_artifact, validate_policy
+from resolve import _discover_source, classify, digest, parse_artifact_url, parse_source_url, parse_url, register_policy, resolve, resolve_source, select_manifest_for_artifact, validate_policy
 
 
 MANIFEST = {
@@ -192,6 +193,59 @@ class ResolverTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'multiple ONNX'):
                 _discover_source('huggingface-model', 'owner/policy-set', 'main')
 
+    def test_multi_onnx_registration_uses_distinct_artifact_aware_ids(self):
+        def result_for(artifact_path: str, payload: bytes) -> dict:
+            return {
+                "source": {
+                    "provider": "huggingface-model",
+                    "repo": "owner/policy-set",
+                    "revision": "a" * 40,
+                    "artifact_path": artifact_path,
+                    "artifact_sha256": digest(payload),
+                    "manifest_path": None,
+                    "manifest_sha256": None,
+                }
+            }
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first_result = result_for("moves/first.onnx", b"first")
+            second_result = result_for("moves/second.onnx", b"second")
+            with patch("resolve.ROOT", root), patch("resolve.resolve", side_effect=[first_result, second_result]):
+                first = register_policy("https://huggingface.co/owner/policy-set/blob/" + "a" * 40 + "/moves/first.onnx")
+                second = register_policy("https://huggingface.co/owner/policy-set/blob/" + "a" * 40 + "/moves/second.onnx")
+
+            self.assertEqual(first["policy"], "registry/policies/owner-policy-set-moves-first.json")
+            self.assertEqual(second["policy"], "registry/policies/owner-policy-set-moves-second.json")
+            self.assertTrue((root / first["policy"]).is_file())
+            self.assertTrue((root / second["policy"]).is_file())
+
+    def test_artifact_aware_id_falls_back_to_source_hash_on_slug_collision(self):
+        def result_for(artifact_path: str, payload: bytes) -> dict:
+            return {
+                "source": {
+                    "provider": "huggingface-model",
+                    "repo": "owner/policy-set",
+                    "revision": "a" * 40,
+                    "artifact_path": artifact_path,
+                    "artifact_sha256": digest(payload),
+                    "manifest_path": None,
+                    "manifest_sha256": None,
+                }
+            }
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first_result = result_for("moves/foo-bar.onnx", b"first")
+            second_result = result_for("moves/foo/bar.onnx", b"second")
+            with patch("resolve.ROOT", root), patch("resolve.resolve", side_effect=[first_result, second_result]):
+                first = register_policy("first")
+                second = register_policy("second")
+
+            self.assertEqual(first["policy"], "registry/policies/owner-policy-set-moves-foo-bar.json")
+            self.assertNotEqual(first["policy"], second["policy"])
+            self.assertRegex(second["policy"], r"owner-policy-set-moves-foo-bar-[a-f0-9]{12}\.json$")
+
     def test_named_recipe_marks_flamingo_simulation_covered(self):
         result = classify(FLAMINGO, FLAMINGO_SOURCE['repo'], FLAMINGO_SOURCE)
         self.assertEqual(result['simulation']['status'], 'covered')
@@ -253,6 +307,19 @@ class ResolverTests(unittest.TestCase):
             candidate = copy.deepcopy(policy)
             candidate.update(change)
             with self.assertRaises(ValueError): validate_policy(candidate)
+
+    def test_claimed_hardware_requires_source_url(self):
+        policy = policy_fixture()
+        policy["curation"]["publisher_hardware"] = {
+            "status": "claimed",
+            "target": "Microduck v1",
+            "source_url": None,
+            "note": "Publisher claim only.",
+        }
+        with self.assertRaisesRegex(ValueError, "require source_url"):
+            validate_policy(policy)
+        policy["curation"]["publisher_hardware"]["source_url"] = "https://github.com/pollen-robotics/microduck"
+        self.assertEqual(validate_policy(policy), policy)
 
     def test_issue_input_is_data(self):
         body = '### Policy URL\n\nhttps://huggingface.co/a/b\n\n### Category\n\nexperimental\n\n### Notes\n\nhello @maintainer\n'

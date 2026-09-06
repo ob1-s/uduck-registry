@@ -157,6 +157,7 @@ describe("policy catalog boundary", () => {
       }, null);
       expect(entry.runtime.install.route).toBe("review");
       expect(entry.runtime.install.command).toBeNull();
+      expect(entry.runtime.install.reason).toContain("No supported robotctl install route");
     }
 
     const officialSet = catalogEntryFromPolicy({

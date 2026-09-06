@@ -337,6 +337,16 @@ function publicInstallRoute(policy: ResolvedPolicy): CatalogRuntime["install"]["
   return policy.resolved.install_route;
 }
 
+function installReviewReason(policy: ResolvedPolicy): string | null {
+  if (policy.source.provider !== "huggingface-model") {
+    return "No supported robotctl install route exists for GitHub or Hugging Face Space sources.";
+  }
+  if (policy.resolved.policy_set) {
+    return "Official policy-set artifacts are updated as a set; no per-entry robotctl install command is synthesized.";
+  }
+  return nullableString(policy.resolved.install_unresolved?.[0]);
+}
+
 function installCommand(policy: ResolvedPolicy, manifest: Record<string, unknown>, route: CatalogRuntime["install"]["route"]): string | null {
   if (route === "review" || policy.source.provider !== "huggingface-model" || policy.resolved.policy_set) return null;
   const selector = policy.source.artifact_path === "policy.onnx" ? "" : `:${policy.source.artifact_path}`;
@@ -439,7 +449,7 @@ export function catalogEntryFromPolicy(
       install: {
         route,
         command: installCommand(policy, manifest, route),
-        reason: route === "review" ? nullableString(policy.resolved.install_unresolved?.[0]) : null,
+        reason: route === "review" ? installReviewReason(policy) : null,
       },
       unresolved,
     },

@@ -1,0 +1,23 @@
+{
+  "id": "koyogi-hf-microduck-policy-run2",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "koyogi-hf/microduck-policy-run2",
+    "revision": "08cacedb1f40b985b8c3ab35b15327cfc1835626",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "7f31c6929cc4f868ca4f125d613f75179507fc2ca66dd14b4b24ec51b9264b29",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "9f637dd30fb46ac7cdee726cbdc0f2140291da5d9ec48615b88ae37f9bed3feb"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "velocity-walk", "perpetual", "50hz", "simulation-only"],
+    "name": "Velocity Walk Run2",
+    "summary": "Self-trained perpetual walking policy on Mjlab-Velocity-Flat-MicroDuck (run1 plus resume, 8749 checkpoint iterations) that runs until told otherwise.",
+    "details": "Standing-entry policy with an unused zero command block. Upstream metadata declares no license and the manifest omits action_scale, so installation and reuse need maintainer review.",
+    "authors": [{"name": "koyogi-hf", "url": "https://huggingface.co/koyogi-hf"}],
+    "notes": "The package manifest is resolved and inspected; action_scale is undeclared and upstream metadata declares no license. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/koyogi-hf/microduck-policy-run2", "note": "The publisher reports a self-trained walking policy with no physical MicroDuck deployment evidence."}
+  }
+}

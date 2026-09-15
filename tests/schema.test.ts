@@ -20,7 +20,7 @@ describe("authored policy schema", () => {
   it("accepts every checked-in policy", () => {
     const directory = path.resolve("registry/policies");
     const files = fs.readdirSync(directory).filter((file) => file.endsWith(".json")).sort();
-    expect(files.length).toBe(18);
+    expect(files.length).toBe(35);
     for (const file of files) expect(PolicySchema.safeParse(JSON.parse(fs.readFileSync(path.join(directory, file), "utf8"))).success, file).toBe(true);
   });
 

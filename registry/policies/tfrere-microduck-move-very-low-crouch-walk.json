@@ -1,0 +1,24 @@
+{
+  "id": "tfrere-microduck-move-very-low-crouch-walk",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "tfrere/microduck-move-very-low-crouch-walk",
+    "revision": "a03cc79047ea6e0b5feb4aa068b7b7713c4cb10e",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "8186135b7ead420869287f5d16c8e1a229516166a9146a29f83c7abc8dc56312",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "248d71d42e662e4c98241235ce3d226d55b184d8e8583090f7e1b99148bd4f0c"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "microduck-academy", "crouch-walk", "perpetual", "50hz", "simulation-only"],
+    "name": "Very Low Crouch Walk",
+    "summary": "Microduck Academy perpetual walk-slot policy for steady forward walking with the trunk at about three quarters of standing height and deeply bent knees.",
+    "details": "Published with a schema-v2 manifest carrying Academy lineage (judge_score 1.0, VLM pass on the crouched posture). The Academy judge verdict is publisher-provided evidence, not registry verification; model_api, hw_rev, control_hz, servos and action_scale are not declared in the manifest.",
+    "authors": [{"name": "tfrere", "url": "https://huggingface.co/tfrere"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; several manifest fields are undeclared so installation needs review. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/tfrere/microduck-move-very-low-crouch-walk", "note": "The publisher reports simulation judge evaluation only and no physical MicroDuck deployment evidence."}
+  }
+}

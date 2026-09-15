@@ -1,0 +1,24 @@
+{
+  "id": "tfrere-microduck-move-flat-out-sprint",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "tfrere/microduck-move-flat-out-sprint",
+    "revision": "23dc53aec67f667931a5283c34e6715f5fde20a0",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "6a28c41095286eb117d6e305018f6c9fdcd7a26bdeea4e63ff8d7f3cfb1389dd",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "fbb86a0b92dfad233d37d99718d49288ed73808c789e68b7decf8947aaaa0ff4"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "microduck-academy", "sprint", "perpetual", "50hz", "simulation-only"],
+    "name": "Flat-Out Sprint",
+    "summary": "Microduck Academy perpetual walk-slot policy trained to sprint at maximum speed (~0.35 m/s) with fast driving strides while staying balanced.",
+    "details": "Published with a schema-v2 manifest carrying Academy lineage (prompt, judge_score 1.0, VLM pass). The Academy judge verdict is publisher-provided evidence, not registry verification; model_api, hw_rev, control_hz, servos and action_scale are not declared in the manifest.",
+    "authors": [{"name": "tfrere", "url": "https://huggingface.co/tfrere"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; several manifest fields are undeclared so installation needs review. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/tfrere/microduck-move-flat-out-sprint", "note": "The publisher reports simulation judge evaluation only and no physical MicroDuck deployment evidence."}
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "fffiloni-microduck-polite-bow-b1d864",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "fffiloni/microduck-polite-bow-b1d864",
+    "revision": "9a9d21a85cf7b5cbd1854c03ad58bd949502a5ea",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "f2f777919cee080d2d172c635d4b6ead14c0e01a7065ac64bd21cc5fad14158c",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "agility-tricks",
+    "tags": ["community", "motion-lab", "polite-bow", "simulation-only", "50hz"],
+    "name": "Polite Bow",
+    "summary": "Small gentle bow with head and body lowering, returning to standing; generated with Microduck Motion Lab from the official sim-to-real stack.",
+    "details": "No machine-readable policy manifest is published with this artifact, so runtime facts remain unknown. The publisher task is Mjlab-PoliteBow-Flat-MicroDuck (standup recipe, 4096 envs, 1000 PPO iterations); its deployment checks report passed export, 61D/14D contract and CPU rehearsal with the motion-quality gate passed. Upstream metadata declares no license, so reuse needs maintainer review.",
+    "authors": [{"name": "fffiloni", "url": "https://huggingface.co/fffiloni"}],
+    "notes": "No manifest is published and upstream metadata declares no license; the ONNX interface is inspected only. The publisher warns a simulation preview is not a guarantee of safe real-robot behavior. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/fffiloni/microduck-polite-bow-b1d864", "note": "The publisher reports a headless CPU MuJoCo deployment rehearsal only and no physical MicroDuck deployment evidence."}
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/fffiloni/microduck-polite-bow-b1d864/resolve/9a9d21a85cf7b5cbd1854c03ad58bd949502a5ea/preview.mp4", "label": "Publisher headless CPU deployment rehearsal"}
+  ]
+}

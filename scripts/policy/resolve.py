@@ -34,6 +34,22 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _token_for_host(hostname: str | None) -> str | None:
+    """Return a configured read token for one upstream host, else None.
+
+    Anonymous requests from shared CI egress IPs are rate-limited aggressively
+    (Hugging Face answers some of them with 401). A read-only token raises the
+    quota; it is only ever attached to its own provider's API host.
+    """
+
+    import os
+    if hostname == "huggingface.co" or (hostname or "").endswith(".huggingface.co"):
+        return os.environ.get("HF_TOKEN", "").strip() or None
+    if hostname == "api.github.com":
+        return os.environ.get("GITHUB_TOKEN", "").strip() or None
+    return None
+
+
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         parsed = urllib.parse.urlsplit(newurl)
@@ -54,7 +70,11 @@ def fetch(url: str, limit: int = 2 * 1024 * 1024) -> bytes:
     for attempt in range(5):
         try:
             opener = urllib.request.build_opener(SafeRedirect())
-            request = urllib.request.Request(url, headers={"User-Agent": "uduck-registry"})
+            headers = {"User-Agent": "uduck-registry"}
+            token = _token_for_host(parsed.hostname)
+            if token is not None:
+                headers["Authorization"] = f"Bearer {token}"
+            request = urllib.request.Request(url, headers=headers)
             with opener.open(request, timeout=120) as response:
                 data = response.read(limit + 1)
             if len(data) > limit:
@@ -62,6 +82,12 @@ def fetch(url: str, limit: int = 2 * 1024 * 1024) -> bytes:
             return data
         except urllib.error.HTTPError as exc:
             last = exc
+            if exc.code == 401 and _token_for_host(parsed.hostname) is None:
+                raise ValueError(
+                    f"upstream rejected the request as unauthorized for {url}; "
+                    "configure HF_TOKEN (Hugging Face) or GITHUB_TOKEN (GitHub API) "
+                    "to raise anonymous rate limits"
+                ) from exc
             if exc.code not in (429, 502, 503, 504) or attempt == 4:
                 raise
             retry_after = exc.headers.get("Retry-After", "")

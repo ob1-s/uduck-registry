@@ -25,6 +25,12 @@ jobs:
     name: Resolve pinned upstream policy artifacts
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      # Anonymous requests from shared runner IPs are rate-limited aggressively
+      # (HF answers some with 401). A read-only HF_TOKEN secret raises the quota;
+      # empty means anonymous, as before. GITHUB_TOKEN lifts api.github.com limits.
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

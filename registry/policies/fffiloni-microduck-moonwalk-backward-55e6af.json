@@ -1,0 +1,26 @@
+{
+  "id": "fffiloni-microduck-moonwalk-backward-55e6af",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "fffiloni/microduck-moonwalk-backward-55e6af",
+    "revision": "951073cb7791a898e3e5ecb242c5bcccf40aa72f",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "924e0bb28bc4ea5610cc8eeb9e5973e2bad467698984da2f13a8426a84c518c4",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "agility-tricks",
+    "tags": ["community", "motion-lab", "moonwalk", "simulation-only", "50hz"],
+    "name": "Moonwalk Backward",
+    "summary": "Moonwalk-style backward gliding gait with alternating feet and stable upright torso, finishing in standing; generated with Microduck Motion Lab.",
+    "details": "No machine-readable policy manifest is published with this artifact, so runtime facts remain unknown. The publisher task is Mjlab-MotionLabMoonwalkBackward-Flat-MicroDuck (velocity recipe, 4000 PPO iterations); its deployment checks report a needs-review motion-quality gate with semantic match explicitly unverified. Upstream metadata declares no license, so reuse needs maintainer review.",
+    "authors": [{"name": "fffiloni", "url": "https://huggingface.co/fffiloni"}],
+    "notes": "No manifest is published and upstream metadata declares no license; the ONNX interface is inspected only. The publisher's own quality gate needs review and the semantic match is unverified. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/fffiloni/microduck-moonwalk-backward-55e6af", "note": "The publisher reports a headless CPU MuJoCo deployment rehearsal only and no physical MicroDuck deployment evidence."}
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/fffiloni/microduck-moonwalk-backward-55e6af/resolve/951073cb7791a898e3e5ecb242c5bcccf40aa72f/preview.mp4", "label": "Publisher headless CPU deployment rehearsal"}
+  ]
+}

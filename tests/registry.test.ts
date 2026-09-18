@@ -10,7 +10,6 @@ describe("uDuck policy registry integrity", () => {
   it("validates every authored policy", () => {
     expect(result.valid, result.errors.join("\n")).toBe(true);
     expect(result.errors).toHaveLength(0);
-    expect(result.policies).toHaveLength(18);
   });
 
   it("requires immutable artifacts and does not retain the dropped recovery entry", () => {

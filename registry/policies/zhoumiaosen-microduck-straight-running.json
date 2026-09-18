@@ -1,0 +1,27 @@
+{
+  "id": "zhoumiaosen-microduck-straight-running",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "zhoumiaosen/microduck-straight-running",
+    "revision": "3132125749ff800720f1047a87d72ea2d9d8d072",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "fc4fcb5dd8ec7e2a4f5d68f5840f4a9610ee8137a78480d6baa1a15d62095026",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "running", "straight-running", "flat-ground", "simulation-only", "50hz"],
+    "name": "Microduck Straight Running",
+    "summary": "PPO running policy with a required heading-hold controller; the publisher reports 1.802 m/s straight progress over 30 seconds and states the 1.9 m/s target was not reached.",
+    "details": "No machine-readable policy manifest is published with this artifact, so runtime facts remain unknown. The publisher describes the gain over the previous public model as small (+0.38% 30-second straight speed) and below its predeclared useful-improvement threshold, publishing it as a research update with comparison evidence.",
+    "authors": [{"name": "zhoumiaosen", "url": "https://huggingface.co/zhoumiaosen"}],
+    "license": "Apache-2.0",
+    "notes": "No manifest is published; the ONNX interface is inspected only. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/zhoumiaosen/microduck-straight-running", "note": "The publisher reports held-out simulation tests only and no physical MicroDuck deployment evidence."}
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/zhoumiaosen/microduck-straight-running/resolve/3132125749ff800720f1047a87d72ea2d9d8d072/run.mp4", "label": "Publisher 10-second simulation replay"}
+  ]
+}

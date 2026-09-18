@@ -1,0 +1,24 @@
+{
+  "id": "nupr-haokun-microduck-step-up",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "Nupr-Haokun/microduck-step-up",
+    "revision": "b98b48650ac443a17cd25eaee472d1844eb2b3e4",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "7294afa51c7c025ae8b1aabcc117d56bb52a31d73535b8c7a4bfa96a4fa68191",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "aaddc606fb7b3af3ed059afc74cf195224735586e865a9e1e419ed6f759cee1e"
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "step-up", "perpetual", "50hz", "simulation-only"],
+    "name": "Microduck Step-Up",
+    "summary": "Perpetual walk-slot policy for ascending a 25 mm square-edged household step; simulation-validated and hardware-unvalidated per its manifest.",
+    "details": "Standing-entry policy trained on Mjlab-StepUpFull-MicroDuck (checkpoint 1000) with an unused zero command block. The publisher notes the policy does not detect the step itself; the richer two-policy step-up plus head-brake recovery package is published separately.",
+    "authors": [{"name": "Nupr-Haokun", "url": "https://huggingface.co/Nupr-Haokun"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; action_scale is not declared so installation needs review. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": ["25 mm square-edged step"], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/Nupr-Haokun/microduck-step-up", "note": "The publisher manifest describes the policy as simulation-validated and hardware-unvalidated."}
+  }
+}

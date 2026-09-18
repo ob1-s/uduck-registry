@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -407,6 +408,61 @@ class ResolverTests(unittest.TestCase):
                     raise urllib.error.HTTPError('url', 404, 'missing', FakeHeaders(), None)
             return Opener()
         with patch.object(resolve_mod.urllib.request, 'build_opener', always_404), patch('time.sleep', return_value=None) as slept:
+            with self.assertRaises(urllib.error.HTTPError):
+                resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/manifest.json', limit=10)
+            slept.assert_not_called()
+
+    def test_fetch_scopes_read_tokens_per_provider(self):
+        import urllib.error
+        import resolve as resolve_mod
+        seen = {}
+        def recording_opener(*args, **kwargs):
+            class Resp:
+                def read(self_inner, n=-1): return b'ok'
+                def __enter__(self_inner): return self_inner
+                def __exit__(self_inner, *a): return False
+            class Opener:
+                def open(self_inner, req, timeout=None):
+                    seen[req.full_url] = req.get_header('Authorization')
+                    return Resp()
+            return Opener()
+        env = {'HF_TOKEN': 'hf-read-token', 'GITHUB_TOKEN': 'gh-read-token'}
+        with patch.object(resolve_mod.urllib.request, 'build_opener', recording_opener), patch.dict(os.environ, env):
+            resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/policy.onnx', limit=10)
+            resolve_mod.fetch('https://api.github.com/repos/o/r/commits/abc', limit=10)
+            resolve_mod.fetch('https://raw.githubusercontent.com/o/r/main/policy.onnx', limit=10)
+        self.assertEqual(seen['https://huggingface.co/o/r/resolve/main/policy.onnx'], 'Bearer hf-read-token')
+        self.assertEqual(seen['https://api.github.com/repos/o/r/commits/abc'], 'Bearer gh-read-token')
+        self.assertIsNone(seen['https://raw.githubusercontent.com/o/r/main/policy.onnx'])
+
+    def test_fetch_401_without_token_points_at_token_config(self):
+        import urllib.error
+        import resolve as resolve_mod
+        class FakeHeaders(dict):
+            def get(self, key, default=''):
+                return super().get(key, default)
+        def always_401(*args, **kwargs):
+            class Opener:
+                def open(self_inner, req, timeout=None):
+                    raise urllib.error.HTTPError('url', 401, 'Unauthorized', FakeHeaders(), None)
+            return Opener()
+        with patch.object(resolve_mod.urllib.request, 'build_opener', always_401), patch('time.sleep', return_value=None) as slept, patch.dict(os.environ, {'HF_TOKEN': '', 'GITHUB_TOKEN': ''}):
+            with self.assertRaisesRegex(ValueError, 'HF_TOKEN'):
+                resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/manifest.json', limit=10)
+            slept.assert_not_called()
+
+    def test_fetch_401_with_token_fails_fast(self):
+        import urllib.error
+        import resolve as resolve_mod
+        class FakeHeaders(dict):
+            def get(self, key, default=''):
+                return super().get(key, default)
+        def always_401(*args, **kwargs):
+            class Opener:
+                def open(self_inner, req, timeout=None):
+                    raise urllib.error.HTTPError('url', 401, 'Unauthorized', FakeHeaders(), None)
+            return Opener()
+        with patch.object(resolve_mod.urllib.request, 'build_opener', always_401), patch('time.sleep', return_value=None) as slept, patch.dict(os.environ, {'HF_TOKEN': 'hf-read-token'}):
             with self.assertRaises(urllib.error.HTTPError):
                 resolve_mod.fetch('https://huggingface.co/o/r/resolve/main/manifest.json', limit=10)
             slept.assert_not_called()

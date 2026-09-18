@@ -1,0 +1,28 @@
+{
+  "id": "joanfox-microduck-happy-hop",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "joanfox/microduck-happy-hop",
+    "revision": "c0447da668255436eea070e862ad8eb89bad2ba1",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "abd6db1bca2f2a583508cfd9a6fd144a7cce65b302827b9b9a0c5227fc2acae9",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "c3e351d46a0401d437916aa7520127505b50065cc0cd3225fc8408357f345089"
+  },
+  "curation": {
+    "category": "agility-tricks",
+    "tags": ["community", "happy-hop", "vertical-hop", "episodic", "50hz"],
+    "name": "Microduck Happy Hop",
+    "summary": "Short vertical two-foot hop for Microduck: stabilize in a standing pose, crouch, extend for takeoff, absorb the landing, then return toward HOME.",
+    "details": "Episodic one-shot policy with a 3.0 s nominal window and zero command block. The publisher contract requires a one-step (20 ms at 50 Hz) action delay, action scale 1.0, pass-through action low-pass, and a stable standing entry (trained from the Backlash walking policy after 1.0 s of exact-zero velocity command; not trained to take off from an active walking stride).",
+    "authors": [{"name": "joanfox", "url": "https://huggingface.co/joanfox"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; the registry records no independent hardware evidence. Publisher reports a successful physical MicroDuck test by Pollen Robotics on 2026-09-01 with the one-step action delay restored.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "claimed", "target": "Microduck (BAM XL330, output-side Backlash encoder view)", "source_url": "https://huggingface.co/joanfox/microduck-happy-hop", "note": "Publisher reports the policy ran successfully on a physical MicroDuck after Pollen Robotics restored the required one-step action delay (tested 2026-09-01); validation video is published in the source repository."}
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/joanfox/microduck-happy-hop/resolve/c0447da668255436eea070e862ad8eb89bad2ba1/media/preview.mp4", "label": "Publisher simulation preview of one hop cycle"},
+    {"type": "video", "url": "https://huggingface.co/joanfox/microduck-happy-hop/resolve/c0447da668255436eea070e862ad8eb89bad2ba1/media/PXL_20260901_133625139.TS~2.mp4", "label": "Publisher physical-robot validation video"}
+  ]
+}

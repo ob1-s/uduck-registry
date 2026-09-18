@@ -1,0 +1,27 @@
+{
+  "id": "zhoumiaosen-microduck-running",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "zhoumiaosen/microduck-running",
+    "revision": "49f70558bd8f42f0f05fcdea64f4bec596c9a3a6",
+    "artifact_path": "policy.onnx",
+    "artifact_sha256": "0281e6886b487a5df9760521a1c45a210b05113da03f3f3e5c894edc810d361a",
+    "manifest_path": null,
+    "manifest_sha256": null
+  },
+  "curation": {
+    "category": "locomotion",
+    "tags": ["community", "running", "fast-locomotion", "flat-ground", "simulation-only", "50hz"],
+    "name": "Microduck Running",
+    "summary": "PPO locomotion policy for the 14-actuator MicroDuck biped; the publisher reports 1.50 m/s mean body-forward speed in simulation at a 2.0 m/s command and states the sustained 2.0 m/s goal was not met.",
+    "details": "No machine-readable policy manifest is published with this artifact, so runtime facts remain unknown. The publisher ships the normalized ONNX policy, final training checkpoint, simulation video and raw evaluation JSON, and describes this release as a simulation research checkpoint whose hardware performance has not been evaluated.",
+    "authors": [{"name": "zhoumiaosen", "url": "https://huggingface.co/zhoumiaosen"}],
+    "license": "Apache-2.0",
+    "notes": "No manifest is published; the ONNX interface is inspected only. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": [], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck v1 (14 Dynamixel XL330 servos)", "source_url": "https://huggingface.co/zhoumiaosen/microduck-running", "note": "The publisher states hardware performance has not been evaluated for this release."}
+  },
+  "media": [
+    {"type": "video", "url": "https://huggingface.co/zhoumiaosen/microduck-running/resolve/49f70558bd8f42f0f05fcdea64f4bec596c9a3a6/run.mp4", "label": "Publisher 10-second simulation replay"}
+  ]
+}

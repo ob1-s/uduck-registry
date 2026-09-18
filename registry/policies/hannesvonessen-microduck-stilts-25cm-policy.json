@@ -1,0 +1,24 @@
+{
+  "id": "hannesvonessen-microduck-stilts-25cm-policy",
+  "source": {
+    "provider": "huggingface-model",
+    "repo": "HannesVonEssen/microduck-stilts",
+    "revision": "8ec310d8f3a254b0f08b9d241f9f6f7bd04ee2ed",
+    "artifact_path": "25cm/policy.onnx",
+    "artifact_sha256": "04eb9e3cf42f08fc15500ef08b0c5c8524c75383ae13aeed0a5c85247efeb393",
+    "manifest_path": "manifest.json",
+    "manifest_sha256": "f1157f97be6b732092ecfe88119cc8ead14e19c5896c59a026330ee2cb4075a2"
+  },
+  "curation": {
+    "category": "experimental",
+    "tags": ["community", "stilts", "25cm", "perpetual", "50hz", "simulation-only", "hardware-mod-required"],
+    "name": "Stilts Walk 25 cm",
+    "summary": "Perpetual stilt-walking policy for the 25 cm hardware variant, entered upright on matching stilts; simulation-only per its manifest.",
+    "details": "Trained on Mjlab-Stilt-Flat-MicroDuck with action_scale 1.0. The manifest requires hardware modifications (printable stilt geometry from Vottivott/microduck-playground hardware/stilts) and a held-pose command review, so there is no generic install route. This entry pins the 25 cm variant artifact; each stilt height is a separately reviewed entry.",
+    "authors": [{"name": "HannesVonEssen", "url": "https://huggingface.co/HannesVonEssen"}],
+    "license": "Apache-2.0",
+    "notes": "The package manifest is resolved and inspected; the held pose requires an explicit command and hold/unwind review. The registry records no independent hardware evidence.",
+    "requirements": {"robot_model": "microduck-standard", "accessories": ["25 cm printable stilts"], "terrain": ["flat"]},
+    "publisher_hardware": {"status": "not-claimed", "target": "Microduck with 25 cm printable stilt hardware", "source_url": "https://huggingface.co/HannesVonEssen/microduck-stilts", "note": "The publisher manifest marks this policy simulation-only and requires hardware modifications; no physical MicroDuck deployment evidence is recorded."}
+  }
+}
